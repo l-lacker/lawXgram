@@ -25,8 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import ru.llacker.lawxgram.Extra;
 import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.LawxEnvironment;
 import ru.llacker.lawxgram.helpers.PreferencesMigrationHelper;
 import ru.llacker.lawxgram.helpers.InlineBotHelper;
 
@@ -125,7 +125,7 @@ public abstract class BaseRemoteHelper {
     private boolean loading;
 
     public void load(Delegate delegate) {
-        var botInfo = Extra.getHelperBot();
+        var botInfo = LawxEnvironment.getHelperBot();
         if (botInfo == null) {
             return;
         }

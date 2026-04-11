@@ -26,7 +26,7 @@ import org.telegram.ui.LaunchActivity;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import ru.llacker.lawxgram.Extra;
+import ru.llacker.lawxgram.LawxEnvironment;
 import ru.llacker.lawxgram.LawxConfig;
 import ru.llacker.lawxgram.helpers.AnalyticsHelper;
 import ru.llacker.lawxgram.helpers.PopupHelper;
@@ -67,7 +67,7 @@ public class LawxExperimentalSettingsActivity extends BaseLawxSettingsActivity {
         items.add(UItem.asCheck(autoInlineBotRow, LocaleController.getString(R.string.AutoInlineBot), LocaleController.getString(R.string.AutoInlineBotDesc)).slug("autoInlineBot").setChecked(LawxConfig.autoInlineBot));
         items.add(UItem.asCheck(forceFontWeightFallbackRow, LocaleController.getString(R.string.ForceFontWeightFallback)).slug("forceFontWeightFallback").setChecked(LawxConfig.forceFontWeightFallback));
         items.add(UItem.asCheck(mapDriftingFixRow, LocaleController.getString(R.string.MapDriftingFix)).slug("mapDriftingFix").setChecked(LawxConfig.mapDriftingFix));
-        if (Extra.isDirectApp()) {
+        if (LawxEnvironment.isDirectApp()) {
             items.add(UItem.asCheck(contentRestrictionRow, LocaleController.getString(R.string.IgnoreContentRestriction)).slug("contentRestriction").setChecked(LawxConfig.ignoreContentRestriction));
         }
         items.add(UItem.asCheck(showRPCErrorRow, LocaleController.getString(R.string.ShowRPCError), LocaleController.formatString(R.string.ShowRPCErrorException, "FILE_REFERENCE_EXPIRED")).slug("showRPCError").setChecked(LawxConfig.showRPCError));

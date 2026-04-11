@@ -10,7 +10,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.function.BiConsumer;
 
-import ru.llacker.lawxgram.Extra;
+import ru.llacker.lawxgram.LawxEnvironment;
 import ru.llacker.lawxgram.helpers.remote.BaseRemoteHelper;
 
 public class RegDateHelper {
@@ -26,7 +26,7 @@ public class RegDateHelper {
     }
 
     public static void getRegDate(long userId, BiConsumer<Integer, String> callback) {
-        InlineBotHelper.getInstance(UserConfig.selectedAccount).query(Extra.getHelperBot(), "get_regdate " + userId + BaseRemoteHelper.getRequestExtra(), (results, error) -> {
+        InlineBotHelper.getInstance(UserConfig.selectedAccount).query(LawxEnvironment.getHelperBot(), "get_regdate " + userId + BaseRemoteHelper.getRequestExtra(), (results, error) -> {
             if (error != null) {
                 callback.accept(0, error);
                 return;
@@ -52,7 +52,7 @@ public class RegDateHelper {
         if (settings == null || settings.registration_month == null) {
             return;
         }
-        InlineBotHelper.getInstance(UserConfig.selectedAccount).query(Extra.getHelperBot(), String.format("set_regdate %s %s %s %s", dialogId, settings.registration_month, settings.phone_country, BaseRemoteHelper.getRequestExtra()), (results, error) -> {
+        InlineBotHelper.getInstance(UserConfig.selectedAccount).query(LawxEnvironment.getHelperBot(), String.format("set_regdate %s %s %s %s", dialogId, settings.registration_month, settings.phone_country, BaseRemoteHelper.getRequestExtra()), (results, error) -> {
             if (error != null) {
                 FileLog.e("Failed to set reg date: " + error);
             }

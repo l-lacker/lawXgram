@@ -12,8 +12,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import ru.llacker.lawxgram.Extra;
 import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.LawxEnvironment;
 
 public class ConfigHelper extends BaseRemoteHelper {
     private static final String NEWS_METHOD = "get_config";
@@ -60,14 +60,14 @@ public class ConfigHelper extends BaseRemoteHelper {
     private static List<News> getNews() {
         Config config = getInstance().getConfig();
         if (config == null || config.news == null) {
-            return Extra.getDefaultNews();
+            return LawxEnvironment.getDefaultNews();
         }
         ArrayList<News> newsItems = new ArrayList<>();
         config.news.forEach(news -> {
             if (news.mcc != null && news.mcc != LawxConfig.userMcc) {
                 return;
             }
-            if (news.direct != null && news.direct && !Extra.isDirectApp()) {
+            if (news.direct != null && news.direct && !LawxEnvironment.isDirectApp()) {
                 return;
             }
             if (news.source != null && news.source.equals(BuildConfig.BUILD_TYPE)) {

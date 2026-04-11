@@ -24,8 +24,8 @@ import org.telegram.ui.web.BotWebViewContainer;
 
 import java.util.function.Consumer;
 
-import ru.llacker.lawxgram.Extra;
 import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.LawxEnvironment;
 
 public class WebAppHelper {
     public static final int INTERNAL_BOT_TLV = 1;
@@ -56,7 +56,11 @@ public class WebAppHelper {
         if (TextUtils.isEmpty(serialized)) {
             return;
         }
-        var url = Extra.TLV_URL + "#m=" + serialized + "&l=" + TLRPC.LAYER;
+        var tlViewerUrl = LawxEnvironment.getTlViewerUrl();
+        if (TextUtils.isEmpty(tlViewerUrl)) {
+            return;
+        }
+        var url = tlViewerUrl + "#m=" + serialized + "&l=" + TLRPC.LAYER;
         openInternalWebApp(fragment, url, INTERNAL_BOT_TLV, true);
     }
 
@@ -68,7 +72,10 @@ public class WebAppHelper {
     }
 
     private static void openInternalWebApp(BaseFragment fragment, String url, int type, boolean searchUser) {
-        var botInfo = Extra.getHelperBot();
+        var botInfo = LawxEnvironment.getHelperBot();
+        if (botInfo == null) {
+            return;
+        }
         var bot = fragment.getMessagesController().getUser(botInfo.getId());
         if (bot == null) {
             if (searchUser) {

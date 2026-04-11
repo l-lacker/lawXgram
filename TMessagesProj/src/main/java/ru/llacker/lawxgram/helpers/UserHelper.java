@@ -19,7 +19,7 @@ import org.telegram.ui.TopicsFragment;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-import ru.llacker.lawxgram.Extra;
+import ru.llacker.lawxgram.LawxEnvironment;
 
 public class UserHelper extends BaseController {
 
@@ -128,7 +128,7 @@ public class UserHelper extends BaseController {
     }
 
     private void searchUser(long userId, Consumer<TLRPC.User> callback, ParsedPeer parsedPeer, boolean fallback) {
-        searchPeer(Extra.getUserInfoBot(fallback), userId, String.valueOf(userId), fakeUser -> {
+        searchPeer(LawxEnvironment.getUserInfoBot(fallback), userId, String.valueOf(userId), fakeUser -> {
             var user = getMessagesController().getUser(userId);
             if (user != null) {
                 callback.accept(user);
@@ -145,7 +145,7 @@ public class UserHelper extends BaseController {
     }
 
     private void searchChat(long chatId, Consumer<TLRPC.Chat> callback, ParsedPeer parsedPeer, boolean fallback) {
-        searchPeer(Extra.getUserInfoBot(fallback), chatId, String.valueOf(-1000000000000L - chatId), fakeChat -> {
+        searchPeer(LawxEnvironment.getUserInfoBot(fallback), chatId, String.valueOf(-1000000000000L - chatId), fakeChat -> {
             var chat = getMessagesController().getChat(chatId);
             if (chat != null) {
                 callback.accept(chat);

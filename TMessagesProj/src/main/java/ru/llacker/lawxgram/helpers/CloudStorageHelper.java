@@ -11,7 +11,7 @@ import org.telegram.tgnet.tl.TL_bots;
 
 import java.util.HashMap;
 
-import ru.llacker.lawxgram.Extra;
+import ru.llacker.lawxgram.LawxEnvironment;
 
 public class CloudStorageHelper extends AccountInstance {
 
@@ -41,8 +41,11 @@ public class CloudStorageHelper extends AccountInstance {
     }
 
     private void invokeWebViewCustomMethod(String method, String data, boolean searchUser, Utilities.Callback2<String, String> callback) {
-        var botInfo = Extra.getHelperBot();
+        var botInfo = LawxEnvironment.getHelperBot();
         if (botInfo == null) {
+            if (callback != null) {
+                callback.run(null, "EMPTY_BOT_INFO");
+            }
             return;
         }
         TLRPC.User user = getMessagesController().getUser(botInfo.getId());

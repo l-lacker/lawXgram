@@ -20,7 +20,7 @@ import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import io.sentry.android.core.SentryAndroid;
 import io.sentry.protocol.User;
-import ru.llacker.lawxgram.Extra;
+import ru.llacker.lawxgram.LawxEnvironment;
 
 public class AnalyticsHelper {
     private static final String PREFS_NAME = "lawxanalytics";
@@ -36,8 +36,8 @@ public class AnalyticsHelper {
 
     public static void start(Application application) {
         preferences = PreferencesMigrationHelper.getSharedPreferences(application, PREFS_NAME, LEGACY_PREFS_NAME);
-        analyticsDisabled = !Extra.FORCE_ANALYTICS && preferences.getBoolean("analyticsDisabled", false);
-        sendBugReport = Extra.FORCE_ANALYTICS || preferences.getBoolean("sendBugReport", true);
+        analyticsDisabled = !LawxEnvironment.forceAnalytics() && preferences.getBoolean("analyticsDisabled", false);
+        sendBugReport = LawxEnvironment.forceAnalytics() || preferences.getBoolean("sendBugReport", true);
         if (analyticsDisabled) {
             FileLog.d("Analytics: userId = disabled");
             return;
@@ -49,19 +49,22 @@ public class AnalyticsHelper {
         firebaseAnalytics = FirebaseAnalytics.getInstance(application);
         firebaseAnalytics.setAnalyticsCollectionEnabled(true);
         firebaseAnalytics.setUserId(userId);
-        SentryAndroid.init(application, options -> {
-            options.setDsn(Extra.SENTRY_DSN);
-            options.setEnvironment(BuildConfig.BUILD_TYPE);
-            options.setPrintUncaughtStackTrace(true);
-            options.setSendDefaultPii(true);
-            options.setEnableUserInteractionTracing(true);
-            options.setAttachViewHierarchy(true);
-            options.setEnableSystemEventBreadcrumbsExtras(true);
-            options.setTracesSampleRate(0.01);
-        });
-        var user = new User();
-        user.setId(userId);
-        Sentry.setUser(user);
+        var sentryDsn = LawxEnvironment.getSentryDsn();
+        if (!sentryDsn.isEmpty()) {
+            SentryAndroid.init(application, options -> {
+                options.setDsn(sentryDsn);
+                options.setEnvironment(BuildConfig.BUILD_TYPE);
+                options.setPrintUncaughtStackTrace(true);
+                options.setSendDefaultPii(true);
+                options.setEnableUserInteractionTracing(true);
+                options.setAttachViewHierarchy(true);
+                options.setEnableSystemEventBreadcrumbsExtras(true);
+                options.setTracesSampleRate(0.01);
+            });
+            var user = new User();
+            user.setId(userId);
+            Sentry.setUser(user);
+        }
 
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("Analytics: userId = " + userId);
@@ -101,7 +104,7 @@ public class AnalyticsHelper {
     }
 
     public static boolean isSettingsAvailable() {
-        return !Extra.FORCE_ANALYTICS;
+        return !LawxEnvironment.forceAnalytics();
     }
 
     public static void setAnalyticsDisabled() {

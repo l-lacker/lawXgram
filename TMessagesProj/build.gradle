@@ -6,6 +6,45 @@ plugins {
     id 'org.lsposed.lsparanoid'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
+
+def getLocalString = { String key, String defaultValue = "" ->
+    def value = localProperties.getProperty(key, defaultValue)
+    return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+}
+
+def getLocalInt = { String key, int defaultValue = 0 ->
+    def value = localProperties.getProperty(key)
+    if (value == null) {
+        return Integer.toString(defaultValue)
+    }
+    try {
+        Integer.parseInt(value)
+        return value
+    } catch (NumberFormatException ignored) {
+        return Integer.toString(defaultValue)
+    }
+}
+
+def getLocalBoolean = { String key, boolean defaultValue = false ->
+    def value = localProperties.getProperty(key)
+    return Boolean.toString(value == null ? defaultValue : Boolean.parseBoolean(value))
+}
+
+def telegramApiId = getLocalInt("telegramApiId", 0)
+def telegramApiHash = getLocalString("telegramApiHash", "")
+def lawxPlaystoreAppUrl = getLocalString("lawxPlaystoreAppUrl", "")
+def lawxForceAnalytics = getLocalBoolean("lawxForceAnalytics", false)
+def lawxSentryDsn = getLocalString("lawxSentryDsn", "")
+def lawxTlvUrl = getLocalString("lawxTlvUrl", "")
+def lawxTwpicBotUsername = getLocalString("lawxTwpicBotUsername", "")
+
 configurations.configureEach {
     exclude group: 'androidx.recyclerview', module: 'recyclerview'
     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
@@ -100,6 +139,13 @@ android {
             buildConfigField("long", "BUILD_VERSION", "${TG_APP_VERSION_CODE}")
             buildConfigField("String","BUILD_VERSION_STRING","\"${TG_APP_VERSION_NAME}\"")
             buildConfigField("boolean", "DEBUG_PRIVATE_VERSION", "false")
+            buildConfigField("int", "LAWX_TELEGRAM_API_ID", telegramApiId)
+            buildConfigField("String", "LAWX_TELEGRAM_API_HASH", telegramApiHash)
+            buildConfigField("String", "LAWX_PLAYSTORE_APP_URL", lawxPlaystoreAppUrl)
+            buildConfigField("boolean", "LAWX_FORCE_ANALYTICS", lawxForceAnalytics)
+            buildConfigField("String", "LAWX_SENTRY_DSN", lawxSentryDsn)
+            buildConfigField("String", "LAWX_TLV_URL", lawxTlvUrl)
+            buildConfigField("String", "LAWX_TWPIC_BOT_USERNAME", lawxTwpicBotUsername)
         }
 
         release {
@@ -108,6 +154,13 @@ android {
             buildConfigField("long", "BUILD_VERSION", "${TG_APP_VERSION_CODE}")
             buildConfigField("String","BUILD_VERSION_STRING","\"${TG_APP_VERSION_NAME}\"")
             buildConfigField("boolean", "DEBUG_PRIVATE_VERSION", "false")
+            buildConfigField("int", "LAWX_TELEGRAM_API_ID", telegramApiId)
+            buildConfigField("String", "LAWX_TELEGRAM_API_HASH", telegramApiHash)
+            buildConfigField("String", "LAWX_PLAYSTORE_APP_URL", lawxPlaystoreAppUrl)
+            buildConfigField("boolean", "LAWX_FORCE_ANALYTICS", lawxForceAnalytics)
+            buildConfigField("String", "LAWX_SENTRY_DSN", lawxSentryDsn)
+            buildConfigField("String", "LAWX_TLV_URL", lawxTlvUrl)
+            buildConfigField("String", "LAWX_TWPIC_BOT_USERNAME", lawxTwpicBotUsername)
         }
     }
     namespace 'org.telegram.messenger'

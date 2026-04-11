@@ -162,7 +162,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import ru.llacker.lawxgram.Extra;
+import ru.llacker.lawxgram.LawxEnvironment;
 import ru.llacker.lawxgram.helpers.WebAppHelper;
 
 public abstract class BotWebViewContainer extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
@@ -1332,7 +1332,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
         d("onEventReceived " + eventType);
         switch (eventType) {
             case "neko_event":{
-                if (Extra.isTrustedBot(botUser.id)) {
+                if (LawxEnvironment.isTrustedBot(botUser.id)) {
                     WebAppHelper.processBotEvents(delegate, eventData, data -> notifyEvent_fast("neko_event", data));
                 }
             }

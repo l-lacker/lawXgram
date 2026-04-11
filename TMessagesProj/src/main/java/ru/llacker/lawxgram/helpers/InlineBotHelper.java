@@ -10,8 +10,8 @@ import org.telegram.tgnet.TLRPC;
 
 import java.util.ArrayList;
 
-import ru.llacker.lawxgram.Extra;
 import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.LawxEnvironment;
 
 public class InlineBotHelper extends BaseController {
 
@@ -89,7 +89,7 @@ public class InlineBotHelper extends BaseController {
         var text = s.trim();
         if (text.contains(" ")) return null;
         if (text.startsWith("https://x.com/") || text.startsWith("https://twitter.com/")) {
-            return Extra.TWPIC_BOT_USERNAME;
+            return LawxEnvironment.getTwitterInlineBotUsername();
         }
         return null;
     }

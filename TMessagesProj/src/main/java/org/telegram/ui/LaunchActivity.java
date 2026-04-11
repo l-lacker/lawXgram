@@ -248,9 +248,9 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import ru.llacker.lawxgram.Extra;
 import ru.llacker.lawxgram.forward.ForwardContext;
 import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.LawxEnvironment;
 import ru.llacker.lawxgram.helpers.MonetHelper;
 import ru.llacker.lawxgram.helpers.remote.UpdateHelper;
 
@@ -5924,7 +5924,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         BaseFragment fragment = getLastFragment();
                         if (fragment != null) {
                             if (error == null) {
-                                if (Extra.isDirectApp()) {
+                                if (LawxEnvironment.isDirectApp()) {
                                     BulletinFactory.of(fragment).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.YourVersionIsLatest)).show();
                                 } else {
                                     showBulletin(factory -> factory.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.NoUpdateAvailablePlay), LocaleController.getString(R.string.NoUpdateAvailablePlayDelay)));
