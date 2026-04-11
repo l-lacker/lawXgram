@@ -4,8 +4,8 @@
 #define LOG_DISABLED
 #endif
 #define PACKAGE_NAME "ru.llacker.lawxgram"_iobfs.c_str()
-#define CERT_HASH 0x693cc8c5
-#define CERT_SIZE 0x2d7
+#define CERT_HASH 0xeb04a51a
+#define CERT_SIZE 0x368
 
 #ifdef __cplusplus
 extern "C" {

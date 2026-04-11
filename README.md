@@ -25,6 +25,9 @@ lawXgram is a third-party Telegram client based on Telegram for Android and the 
 6. Build from Android Studio or with Gradle:
    - Debug/beta APK: `.\gradlew.bat :TMessagesProj_App:assembleDebug`
    - Release APK: `.\gradlew.bat :TMessagesProj_App:assembleRelease`
+   - Convenience wrappers on Windows:
+     - `.\scripts\assemble-debug.cmd` enables Gradle configuration cache for debug builds
+     - `.\scripts\assemble-release.cmd` disables Gradle configuration cache for release builds
 
 ## References
 

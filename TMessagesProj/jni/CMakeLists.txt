@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10.2)
+project(lawXgramNative LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
@@ -644,5 +645,13 @@ target_link_libraries(${NATIVE_LIB}
 #            c)
 #endif()
 
-include(AndroidNdkModules)
-android_ndk_import_module_cpufeatures()
+if (ANDROID AND NOT TARGET cpufeatures)
+    set(CPUFEATURES_DIR "${CMAKE_ANDROID_NDK}/sources/android/cpufeatures")
+    if (NOT EXISTS "${CPUFEATURES_DIR}/cpu-features.c" AND DEFINED ANDROID_NDK)
+        set(CPUFEATURES_DIR "${ANDROID_NDK}/sources/android/cpufeatures")
+    endif()
+
+    include_directories("${CPUFEATURES_DIR}")
+    add_library(cpufeatures STATIC "${CPUFEATURES_DIR}/cpu-features.c")
+    target_link_libraries(cpufeatures PUBLIC dl)
+endif()
