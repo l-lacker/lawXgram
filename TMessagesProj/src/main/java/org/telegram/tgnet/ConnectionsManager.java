@@ -41,8 +41,8 @@ import org.telegram.messenger.Utilities;
 import org.telegram.ui.Components.VideoPlayer;
 import org.telegram.ui.LoginActivity;
 
-import tw.nekomimi.nekogram.ErrorDatabase;
-import tw.nekomimi.nekogram.NekoConfig;
+import ru.llacker.lawxgram.ErrorDatabase;
+import ru.llacker.lawxgram.LawxConfig;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -406,7 +406,7 @@ public class ConnectionsManager extends BaseController {
                         if (BuildVars.LOGS_ENABLED && error.code != -2000) {
                             FileLog.e(object + " got error " + error.code + " " + error.text);
                         }
-                        if (NekoConfig.showRPCError) {
+                        if (LawxConfig.showRPCError) {
                             ErrorDatabase.showErrorToast(object, errorText);
                         }
                     }
@@ -1088,7 +1088,7 @@ public class ConnectionsManager extends BaseController {
                 }
             }
             if (hasIpv6) {
-                if (NekoConfig.preferIPv6 || forceTryIpV6) {
+                if (LawxConfig.preferIPv6 || forceTryIpV6) {
                     return USE_IPV6_ONLY;
                 }
                 if (hasStrangeIpv4) {

@@ -336,13 +336,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import tw.nekomimi.nekogram.BackButtonMenuRecent;
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.SimpleTextViewSwitcher;
-import tw.nekomimi.nekogram.helpers.PopupHelper;
-import tw.nekomimi.nekogram.helpers.remote.ConfigHelper;
-import tw.nekomimi.nekogram.settings.NekoSettingsActivity;
-import tw.nekomimi.nekogram.translator.Translator;
+import ru.llacker.lawxgram.BackButtonMenuRecent;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.SimpleTextViewSwitcher;
+import ru.llacker.lawxgram.helpers.PopupHelper;
+import ru.llacker.lawxgram.helpers.remote.ConfigHelper;
+import ru.llacker.lawxgram.settings.LawxSettingsActivity;
+import ru.llacker.lawxgram.translator.Translator;
 import me.vkryl.android.animator.BoolAnimator;
 
 public class ProfileActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate, DialogsActivity.DialogsActivityDelegate, SharedMediaLayout.SharedMediaPreloaderDelegate, ImageUpdater.ImageUpdaterDelegate, SharedMediaLayout.Delegate, MainTabsActivity.TabFragmentDelegate {
@@ -4493,7 +4493,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 builder1.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                 showDialog(builder1.create());
             } else if (position == nekoRow) {
-                presentFragment(new NekoSettingsActivity());
+                presentFragment(new LawxSettingsActivity());
             } else if (position == languageRow) {
                 presentFragment(new LanguageSelectActivity());
             } else if (position == setUsernameRow) {
@@ -5595,7 +5595,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 return false;
             }
         };
-        idTextView.setVisibility(NekoConfig.idType == NekoConfig.ID_TYPE_HIDDEN ? View.GONE : View.VISIBLE);
+        idTextView.setVisibility(LawxConfig.idType == LawxConfig.ID_TYPE_HIDDEN ? View.GONE : View.VISIBLE);
         idTextView.setFactory(() -> {
             SimpleTextView view = new SimpleTextView(context);
             view.setTextColor(applyPeerColor(getThemedColor(Theme.key_actionBarDefaultSubtitle), true, false));
@@ -8796,7 +8796,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 mediaCounterTextView.setTranslationY(onlineY);
                 updateCollectibleHint();
 
-                if (NekoConfig.idType != NekoConfig.ID_TYPE_HIDDEN && !searchMode) {
+                if (LawxConfig.idType != LawxConfig.ID_TYPE_HIDDEN && !searchMode) {
                     idTextView.setAlpha(diff);
                     idTextView.setTag(diff);
                     if (diff == 0) {
@@ -12562,7 +12562,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         nameTextView[1].setVisibility(View.VISIBLE);
         onlineTextView[1].setVisibility(View.VISIBLE);
         onlineTextView[3].setVisibility(View.VISIBLE);
-        if (NekoConfig.idType != NekoConfig.ID_TYPE_HIDDEN) idTextView.setVisibility(View.VISIBLE);
+        if (LawxConfig.idType != LawxConfig.ID_TYPE_HIDDEN) idTextView.setVisibility(View.VISIBLE);
 
         actionBar.onSearchFieldVisibilityChanged(searchTransitionProgress > 0.5f);
         int itemVisibility = searchTransitionProgress > 0.5f ? View.VISIBLE : View.GONE;
@@ -12688,7 +12688,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         nameTextView[1].setVisibility(hide);
         onlineTextView[1].setVisibility(hide);
         onlineTextView[3].setVisibility(hide);
-        if (NekoConfig.idType != NekoConfig.ID_TYPE_HIDDEN) idTextView.setVisibility(hide);
+        if (LawxConfig.idType != LawxConfig.ID_TYPE_HIDDEN) idTextView.setVisibility(hide);
 
         if (otherItem != null) {
             otherItem.setAlpha(1f);
@@ -13765,7 +13765,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         textCell.setColors(-1, Theme.key_text_RedRegular);
                         textCell.setColors(-1, Theme.key_text_RedRegular);
                     } else if (position == nekoRow) {
-                        textCell.setTextAndIcon(LocaleController.getString(R.string.NekoSettings), R.drawable.msg_settings, false);
+                        textCell.setTextAndIcon(LocaleController.getString(R.string.LawxSettings), R.drawable.msg_settings, false);
                     } else if (position == languageRow) {
                         textCell.setTextAndValueAndIcon(LocaleController.getString(R.string.Language), LocaleController.getCurrentLanguageName(), false, R.drawable.msg2_language, false);
                         textCell.setImageLeft(23);
@@ -15701,7 +15701,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     }
 
     private void updateIdText(boolean showDate, boolean animated, boolean chatFull) {
-        if (idTextView == null || NekoConfig.idType == NekoConfig.ID_TYPE_HIDDEN) {
+        if (idTextView == null || LawxConfig.idType == LawxConfig.ID_TYPE_HIDDEN) {
             return;
         }
         if (!showDate && isPulledDown && (!animated || chatFull)) {
@@ -15725,7 +15725,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             } else if (chatId != 0) {
                 var chat = getMessagesController().getChat(chatId);
                 if (chat == null) return;
-                if (NekoConfig.idType == NekoConfig.ID_TYPE_BOTAPI) {
+                if (LawxConfig.idType == LawxConfig.ID_TYPE_BOTAPI) {
                     if (ChatObject.isChannel(chat)) {
                         id = -1000000000000L - chat.id;
                     } else {

@@ -165,10 +165,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.forward.ForwardContext;
-import tw.nekomimi.nekogram.forward.ForwardDrawable;
-import tw.nekomimi.nekogram.forward.ForwardItem;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.forward.ForwardContext;
+import ru.llacker.lawxgram.forward.ForwardDrawable;
+import ru.llacker.lawxgram.forward.ForwardItem;
 
 @SuppressWarnings("unchecked")
 public class SharedMediaLayout extends FrameLayout implements NotificationCenter.NotificationCenterDelegate, DialogCell.DialogCellDelegate, ForwardContext {
@@ -2213,7 +2213,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                 forwardItem.setOnClickListener(v -> onActionBarItemClick(v, forward));
                 forwardItem.setDelegate(id -> onActionBarItemClick(forwardItem, id));
 
-                if (NekoConfig.showNoQuoteForward) {
+                if (LawxConfig.showNoQuoteForward) {
                     forwardNoQuoteItem = new ActionBarMenuItem(context, null, getThemedColor(Theme.key_actionBarActionModeDefaultSelector), getThemedColor(Theme.key_actionBarActionModeDefaultIcon), false);
                     forwardNoQuoteItem.setIcon(R.drawable.msg_forward);
                     forwardNoQuoteItem.setContentDescription(LocaleController.getString(R.string.NoQuoteForward));
@@ -5191,7 +5191,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
             }
             ForwardItem.setLastForwardOption(id);
             setForwardParams(id == forward_noquote, id == forward_nocaption);
-            if (NekoConfig.quickForward) {
+            if (LawxConfig.quickForward) {
                 openShareAlert(profileActivity, null, () -> {
                     for (int a = 1; a >= 0; a--) {
                         selectedFiles[a].clear();

@@ -97,9 +97,9 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.helpers.MessageFilterHelper;
-import tw.nekomimi.nekogram.helpers.PasscodeHelper;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.helpers.MessageFilterHelper;
+import ru.llacker.lawxgram.helpers.PasscodeHelper;
 
 public class NotificationsController extends BaseController {
 
@@ -4312,7 +4312,7 @@ public class NotificationsController extends BaseController {
                 notifyDisabled = true;
             }
 
-            if (NekoConfig.silenceNonContacts && chat == null && getContactsController().contactsDict.get(userId) == null) {
+            if (LawxConfig.silenceNonContacts && chat == null && getContactsController().contactsDict.get(userId) == null) {
                 notifyDisabled = true;
             }
 
@@ -4553,7 +4553,7 @@ public class NotificationsController extends BaseController {
                     .setGroupSummary(true)
                     .setShowWhen(true)
                     .setWhen(((long) lastMessageObject.messageOwner.date) * 1000)
-                    .setColor(NekoConfig.getNotificationColor());
+                    .setColor(LawxConfig.getNotificationColor());
 
             long[] vibrationPattern = null;
             Uri sound = null;
@@ -5527,7 +5527,7 @@ public class NotificationsController extends BaseController {
                     .setContentText(text.toString())
                     .setAutoCancel(true)
                     .setNumber(dialogKey.story ? storyPushMessages.size() : messageObjects.size())
-                    .setColor(NekoConfig.getNotificationColor())
+                    .setColor(LawxConfig.getNotificationColor())
                     .setGroupSummary(false)
                     .setWhen(date)
                     .setShowWhen(true)

@@ -63,7 +63,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Timer;
 
-import tw.nekomimi.nekogram.settings.NekoGeneralSettingsActivity;
+import ru.llacker.lawxgram.settings.LawxGeneralSettingsActivity;
 
 public class LanguageSelectActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
@@ -287,7 +287,7 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
 //                            .show();
 //                            return;
 //                    }
-                    presentFragment(new NekoGeneralSettingsActivity());
+                    presentFragment(new LawxGeneralSettingsActivity());
                     return;
                 }
                 if (getParentActivity() == null || parentLayout == null || !(view instanceof TextRadioCell)) {
@@ -757,7 +757,7 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
                     if (doNotTranslateCellValue == null) {
                         doNotTranslateCellValue = String.format(LocaleController.getPluralString("Languages", langCodes.size()), langCodes.size());
                     }*/
-                    settingsCell.setText(LocaleController.getString(R.string.NekoSettings), false);
+                    settingsCell.setText(LocaleController.getString(R.string.LawxSettings), false);
                     break;
                 }
                 case VIEW_TYPE_SETTINGS_2: {

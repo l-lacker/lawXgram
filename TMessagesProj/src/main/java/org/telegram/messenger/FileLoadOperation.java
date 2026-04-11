@@ -31,7 +31,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
-import tw.nekomimi.nekogram.NekoConfig;
+import ru.llacker.lawxgram.LawxConfig;
 
 public class FileLoadOperation {
 
@@ -288,11 +288,11 @@ public class FileLoadOperation {
     }
 
     private void updateParams() {
-        if ((NekoConfig.downloadSpeedBoost == NekoConfig.BOOST_AVERAGE || preloadPrefixSize > 0 || MessagesController.getInstance(currentAccount).getfileExperimentalParams) && !forceSmallChunk) {
+        if ((LawxConfig.downloadSpeedBoost == LawxConfig.BOOST_AVERAGE || preloadPrefixSize > 0 || MessagesController.getInstance(currentAccount).getfileExperimentalParams) && !forceSmallChunk) {
             downloadChunkSizeBig = 1024 * 512;
             maxDownloadRequests = 8;
             maxDownloadRequestsBig = 8;
-        } else if (NekoConfig.downloadSpeedBoost == NekoConfig.BOOST_EXTREME) {
+        } else if (LawxConfig.downloadSpeedBoost == LawxConfig.BOOST_EXTREME) {
             downloadChunkSizeBig = 1024 * 1024;
             maxDownloadRequests = 12;
             maxDownloadRequestsBig = 12;

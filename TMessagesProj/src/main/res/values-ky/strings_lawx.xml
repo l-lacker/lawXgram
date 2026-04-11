@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="AppNameLawx" translatable="false">@string/lawXgram</string>
+    <string name="lawXgram" translatable="false">локсграм</string>
+    <string name="lawXgramBeta" translatable="false">локсграм бета</string>
+    <string name="LawxSettings">Настройки локсграм</string>
+    <!-- Accessibility -->
+</resources>

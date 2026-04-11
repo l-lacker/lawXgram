@@ -234,8 +234,8 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import me.vkryl.core.BitwiseUtils;
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.helpers.TypefaceHelper;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.helpers.TypefaceHelper;
 
 public class AndroidUtilities {
     public final static int LIGHT_STATUS_BAR_OVERLAY = 0x0f000000, DARK_STATUS_BAR_OVERLAY = 0x33000000;
@@ -2980,8 +2980,8 @@ public class AndroidUtilities {
     }
 
     public static boolean isTabletForce() {
-        if (NekoConfig.tabletMode != NekoConfig.TABLET_AUTO) {
-            return NekoConfig.tabletMode == NekoConfig.TABLET_ENABLE;
+        if (LawxConfig.tabletMode != LawxConfig.TABLET_AUTO) {
+            return LawxConfig.tabletMode == LawxConfig.TABLET_ENABLE;
         }
         return ApplicationLoader.applicationContext != null && ApplicationLoader.applicationContext.getResources().getBoolean(R.bool.isTablet);
     }
@@ -3690,7 +3690,7 @@ public class AndroidUtilities {
         }
         File storageDir = null;
         if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Nekogram");
+            storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "lawXgram");
             if (!storageDir.mkdirs()) {
                 if (!storageDir.exists()) {
                     if (BuildVars.LOGS_ENABLED) {
@@ -6708,7 +6708,7 @@ public class AndroidUtilities {
             PackageInfo pInfo = ApplicationLoader.applicationContext.getPackageManager().getPackageInfo(ApplicationLoader.applicationContext.getPackageName(), 0);
             int code = pInfo.versionCode / 10;
             String abi = BuildConfig.BUILD_TYPE + " " + Build.SUPPORTED_ABIS[0];
-            return formatString(R.string.NekogramVersion, String.format(Locale.US, "v%s (%d) %s", pInfo.versionName, code, abi), String.format(Locale.US, "v%s (%d)", BuildVars.BUILD_VERSION_STRING, BuildConfig.BUILD_VERSION), "@Duang");
+            return formatString(R.string.lawXgramVersion, String.format(Locale.US, "v%s (%d) %s", pInfo.versionName, code, abi), String.format(Locale.US, "v%s (%d)", BuildVars.BUILD_VERSION_STRING, BuildConfig.BUILD_VERSION), "l-lacker");
         } catch (Exception e) {
             FileLog.e(e);
         }

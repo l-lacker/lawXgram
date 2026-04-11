@@ -141,8 +141,8 @@ import java.util.Set;
 
 import me.vkryl.android.animator.BoolAnimator;
 import me.vkryl.android.animator.FactorAnimator;
-import tw.nekomimi.nekogram.helpers.PasscodeHelper;
-import tw.nekomimi.nekogram.settings.NekoSettingsActivity;
+import ru.llacker.lawxgram.helpers.PasscodeHelper;
+import ru.llacker.lawxgram.settings.LawxSettingsActivity;
 
 public class SettingsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate, ImageUpdater.ImageUpdaterDelegate, MainTabsActivity.TabFragmentDelegate, FactorAnimator.Target {
 
@@ -694,7 +694,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
         items.add(UItem.asShadow(null));
 
-        items.add(SettingCell.Factory.of(50, 0xFFD1E4FF, 0xFF9EC5FF, R.drawable.filled_profile_settings, getString(R.string.NekoSettings)));
+        items.add(SettingCell.Factory.of(50, 0xFFD1E4FF, 0xFF9EC5FF, R.drawable.filled_profile_settings, getString(R.string.LawxSettings)));
 
         items.add(UItem.asShadow(null));
 
@@ -864,7 +864,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 break;
             }
             case 50: {
-                presentFragment(new NekoSettingsActivity());
+                presentFragment(new LawxSettingsActivity());
                 break;
             }
         }

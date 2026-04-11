@@ -69,9 +69,9 @@ import java.util.Collections;
 
 import me.vkryl.android.animator.BoolAnimator;
 import me.vkryl.android.animator.FactorAnimator;
-import tw.nekomimi.nekogram.BackButtonMenuRecent;
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.helpers.PasscodeHelper;
+import ru.llacker.lawxgram.BackButtonMenuRecent;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.helpers.PasscodeHelper;
 
 public class MainTabsActivity extends ViewPagerActivity implements NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
     public static final int TABS_COUNT = 4;
@@ -633,7 +633,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     }
 
     private boolean canScrollInternal(MotionEvent ev, boolean forward) {
-        if (NekoConfig.hideBottomNavigationBar) {
+        if (LawxConfig.hideBottomNavigationBar) {
             return false;
         }
         final BaseFragment fragment = getCurrentVisibleFragment();
@@ -661,7 +661,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
         ViewGroup.MarginLayoutParams lp;
         {
-            final int height = navigationBarHeight + updateLayoutHeight + dp(NekoConfig.hideBottomNavigationBar ? 0 : DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS);
+            final int height = navigationBarHeight + updateLayoutHeight + dp(LawxConfig.hideBottomNavigationBar ? 0 : DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS);
             lp = (ViewGroup.MarginLayoutParams) fadeView.getLayoutParams();
             if (lp.height != height) {
                 lp.height = height;
@@ -796,7 +796,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     }
 
     private void checkUi_fadeView() {
-        if (viewPager == null || fadeView == null || NekoConfig.hideBottomNavigationBar) {
+        if (viewPager == null || fadeView == null || LawxConfig.hideBottomNavigationBar) {
             return;
         }
 
@@ -811,7 +811,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     }
 
     private void checkUi_tabsPosition() {
-        if (NekoConfig.hideBottomNavigationBar) {
+        if (LawxConfig.hideBottomNavigationBar) {
             tabsView.setVisibility(View.GONE);
             return;
         }
@@ -905,7 +905,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private boolean accountSwitchHintShown;
 
     private void showAccountChangeHint() {
-        if (accountSwitchHintShown || NekoConfig.hideBottomNavigationBar) return;
+        if (accountSwitchHintShown || LawxConfig.hideBottomNavigationBar) return;
 
         if (accountSwitchHint == null && MessagesController.getGlobalMainSettings().getInt("accountswitchhint", 0) < 2) {
             AndroidUtilities.runOnUIThread(() -> {

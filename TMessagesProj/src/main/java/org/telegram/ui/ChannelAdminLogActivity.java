@@ -154,9 +154,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import tw.nekomimi.nekogram.MessageDetailsActivity;
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.helpers.WebAppHelper;
+import ru.llacker.lawxgram.MessageDetailsActivity;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.helpers.WebAppHelper;
 
 public class ChannelAdminLogActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
@@ -1796,7 +1796,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
             }
         }
 
-        if (NekoConfig.showMessageDetails && selectedObject.currentEvent != null) {
+        if (LawxConfig.showMessageDetails && selectedObject.currentEvent != null) {
             items.add(LocaleController.getString(R.string.MessageDetails));
             options.add(OPTION_DETAILS);
             icons.add(R.drawable.msg_info);

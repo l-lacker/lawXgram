@@ -77,7 +77,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import tw.nekomimi.nekogram.NekoConfig;
+import ru.llacker.lawxgram.LawxConfig;
 
 public class EditTextBoldCursor extends EditTextEffects {
 
@@ -177,7 +177,7 @@ public class EditTextBoldCursor extends EditTextEffects {
 
     private static Method canUndoMethod;
     private static Method canRedoMethod;
-    public static boolean disableMarkdown = NekoConfig.disableMarkdownByDefault;
+    public static boolean disableMarkdown = LawxConfig.disableMarkdownByDefault;
     private boolean showDisableMarkdown = false;
 
     static {

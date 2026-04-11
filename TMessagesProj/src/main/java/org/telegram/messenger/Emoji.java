@@ -44,8 +44,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.helpers.EmojiHelper;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.helpers.EmojiHelper;
 
 public class Emoji {
 
@@ -89,7 +89,7 @@ public class Emoji {
     public static boolean isSelectedEmojiPack;
 
     private static void reloadCache() {
-        isSelectedEmojiPack = EmojiHelper.getInstance().isSelectedEmojiPack() || NekoConfig.useSystemEmoji;
+        isSelectedEmojiPack = EmojiHelper.getInstance().isSelectedEmojiPack() || LawxConfig.useSystemEmoji;
     }
 
     public static void reloadEmoji() {

@@ -72,8 +72,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 
-import tw.nekomimi.nekogram.helpers.SettingsHelper;
-import tw.nekomimi.nekogram.helpers.UserHelper;
+import ru.llacker.lawxgram.helpers.SettingsHelper;
+import ru.llacker.lawxgram.helpers.UserHelper;
 
 public class LinkManager {
 
@@ -146,9 +146,9 @@ public class LinkManager {
         if ("oauth".equalsIgnoreCase(first))
             return handleOAuth(uri, uri.getQueryParameter("startapp"));
 
-        if ("nekosettings".equals(first)) {
+        if (SettingsHelper.isSettingsDeepLink(first)) {
             SettingsHelper.processDeepLink(uri, this::presentFragment,
-                    () -> getBulletinFactory().createErrorBulletin(LocaleController.getString(R.string.UnknownNekoSettingsOption)).show(), progress);
+                    () -> getBulletinFactory().createErrorBulletin(LocaleController.getString(R.string.UnknownLawxSettingsOption)).show(), progress);
             return true;
         }
 

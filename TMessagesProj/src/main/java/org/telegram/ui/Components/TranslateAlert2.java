@@ -83,8 +83,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.translator.Translator;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.translator.Translator;
 
 public class TranslateAlert2 extends BottomSheet implements NotificationCenter.NotificationCenterDelegate {
 
@@ -1242,7 +1242,7 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
             targetLanguages.add(0, "app");
 
             boolean first = true;
-            int checkedItem = targetLanguages.indexOf(NekoConfig.translationTarget);
+            int checkedItem = targetLanguages.indexOf(LawxConfig.translationTarget);
             for (int i = 0; i < targetLanguages.size(); ++i) {
                 String language = targetLanguages.get(i);
                 ActionBarMenuSubItem button = new ActionBarMenuSubItem(getContext(), 2, first, i == targetLanguages.size() - 1, resourcesProvider);
@@ -1620,10 +1620,10 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
     }
 
     public static void setToLanguage(String toLang) {
-        NekoConfig.setTranslationTarget(toLang);
+        LawxConfig.setTranslationTarget(toLang);
     }
 
     public static void resetToLanguage() {
-        NekoConfig.setTranslationTarget("app");
+        LawxConfig.setTranslationTarget("app");
     }
 }

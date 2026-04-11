@@ -90,7 +90,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
-import tw.nekomimi.nekogram.NekoConfig;
+import ru.llacker.lawxgram.LawxConfig;
 
 public class StoriesController {
 
@@ -284,7 +284,7 @@ public class StoriesController {
     }
 
     public boolean hasStories() {
-        if (NekoConfig.hideStories) {
+        if (LawxConfig.hideStories) {
             return false;
         }
         return (dialogListStories != null && dialogListStories.size() > 0) || hasSelfStories();

@@ -58,7 +58,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import tw.nekomimi.nekogram.NekoConfig;
+import ru.llacker.lawxgram.LawxConfig;
 
 public class LocaleController {
 
@@ -75,7 +75,7 @@ public class LocaleController {
 
     private volatile FastDateFormat formatterDay;
     public FastDateFormat getFormatterDay() {
-        if (NekoConfig.formatTimeWithSeconds) {
+        if (LawxConfig.formatTimeWithSeconds) {
             return getFormatterDayWithSeconds();
         }
         if (formatterDay == null) {
@@ -1433,14 +1433,14 @@ public class LocaleController {
     private String getStringInternal(String key, String fallback, int fallbackRes, int res) {
         if (key.equals("AppName")) {
             try {
-                return ApplicationLoader.applicationContext.getString(R.string.Nekogram);
+                return ApplicationLoader.applicationContext.getString(R.string.lawXgram);
             } catch (Exception e) {
                 FileLog.e(e);
             }
         }
         if (key.equals("AppNameBeta")) {
             try {
-                return ApplicationLoader.applicationContext.getString(R.string.NekogramBeta);
+                return ApplicationLoader.applicationContext.getString(R.string.lawXgramBeta);
             } catch (Exception e) {
                 FileLog.e(e);
             }
@@ -2920,7 +2920,7 @@ public class LocaleController {
     }
 
     public static String formatShortNumber(int number, int[] rounded) {
-        if (NekoConfig.disableNumberRounding) {
+        if (LawxConfig.disableNumberRounding) {
             if (rounded != null) {
                 rounded[0] = number;
             }

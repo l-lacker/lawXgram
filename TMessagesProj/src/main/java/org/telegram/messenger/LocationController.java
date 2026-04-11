@@ -39,8 +39,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.location.NekoLocationSource;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.location.LawxLocationSource;
 
 @SuppressLint("MissingPermission")
 public class LocationController extends BaseController implements NotificationCenter.NotificationCenterDelegate, ILocationServiceProvider.IAPIConnectionCallbacks, ILocationServiceProvider.IAPIOnConnectionFailedListener {
@@ -529,8 +529,8 @@ public class LocationController extends BaseController implements NotificationCe
         if (location != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && (SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()) / 1000000000 > 60 * 5) {
             return;
         }
-        if (NekoConfig.mapDriftingFix && location != null) {
-            NekoLocationSource.transform(location);
+        if (LawxConfig.mapDriftingFix && location != null) {
+            LawxLocationSource.transform(location);
         }
         lastKnownLocation = location;
         if (lastKnownLocation != null) {

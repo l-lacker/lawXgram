@@ -1,29 +1,24 @@
-# 🐾 Nekogram
-[![Crowdin](https://badges.crowdin.net/e/a094217ac83905ae1625526d59bba8dc/localized.svg)](https://neko.crowdin.com/nekogram)  
-Nekogram is a third-party Telegram client with not many but useful modifications.
+# lawXgram
 
-- Website: https://nekogram.app
-- Telegram channel: https://t.me/nekoupdates
-- Downloads: https://nekogram.app/download
-- Feedback: https://github.com/Nekogram/Nekogram/issues
+lawXgram is a third-party Telegram client based on Telegram for Android and the retained parts of the previous fork.
 
-## API, Protocol documentation
+- Repository: https://github.com/l-lacker/lawXgram
+- Releases: https://github.com/l-lacker/lawXgram/releases
+- Issues: https://github.com/l-lacker/lawXgram/issues
 
-Telegram API manuals: https://core.telegram.org/api
+## Build
 
-MTProto protocol manuals: https://core.telegram.org/mtproto
+1. Clone the repository: `git clone https://github.com/l-lacker/lawXgram.git`
+2. Create `local.properties` and fill in `storeFile`, `storePassword`, `keyAlias`, `keyPassword` for release signing.
+3. Create two Firebase Android apps with package names `ru.llacker.lawxgram` and `ru.llacker.lawxgram.beta`.
+4. Download matching `google-services.json` files and place them into `TMessagesProj_App/src/release/google-services.json` for `ru.llacker.lawxgram` and `TMessagesProj_App/src/debug/google-services.json` for `ru.llacker.lawxgram.beta`.
+5. Create `TMessagesProj/src/main/java/ru/llacker/lawxgram/Extra.java` from `Extra.java.example` and fill the required values.
+6. Build from Android Studio or with Gradle:
+   - Debug/beta APK: `.\gradlew.bat :TMessagesProj_App:assembleDebug`
+   - Release APK: `.\gradlew.bat :TMessagesProj_App:assembleRelease`
 
-## Compilation Guide
+## References
 
-1. Download the Nekogram source code ( `git clone https://github.com/Nekogram/Nekogram.git` )
-1. Fill out storeFile, storePassword, keyAlias, keyPassword in local.properties to access your release.keystore
-1. Go to https://console.firebase.google.com/, create two android apps with application IDs tw.nekomimi.nekogram and tw.nekomimi.nekogram.beta, turn on firebase messaging and download `google-services.json`, which should be copied into `TMessagesProj` folder.
-1. Open the project in the Studio (note that it should be opened, NOT imported).
-1. Fill out values in `TMessagesProj/src/main/java/tw/nekomimi/nekogram/Extra.java` – there’s a link for each of the variables showing where and which data to obtain.
-1. You are ready to compile Nekogram.
-
-## Localization
-
-Nekogram is forked from Telegram, thus most locales follows the translations of Telegram for Android, checkout https://translations.telegram.org/en/android/.
-
-As for the Nekogram specialized strings, we use Crowdin to translate Nekogram. Join project at https://neko.crowdin.com/nekogram. Help us bring Nekogram to the world!
+- Telegram API: https://core.telegram.org/api
+- MTProto: https://core.telegram.org/mtproto
+- Telegram Android translations: https://translations.telegram.org/en/android/

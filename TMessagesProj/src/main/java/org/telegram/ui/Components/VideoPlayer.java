@@ -106,7 +106,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.function.Consumer;
 
-import tw.nekomimi.nekogram.NekoConfig;
+import ru.llacker.lawxgram.LawxConfig;
 
 @SuppressLint("NewApi")
 public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsListener, NotificationCenter.NotificationCenterDelegate {
@@ -425,7 +425,7 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
     }
 
     public static Quality getSavedQuality(ArrayList<Quality> qualities, MessageObject messageObject) {
-        if (NekoConfig.preferOriginalQuality) {
+        if (LawxConfig.preferOriginalQuality) {
             for (Quality q : qualities) {
                 if (q.original) return q;
             }
@@ -947,7 +947,7 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
     public static VideoUri getQualityForPlayer(ArrayList<Quality> qualities) {
         for (final Quality q : qualities) {
             for (final VideoUri v : q.uris) {
-                if (v.original && (v.isCached() || NekoConfig.preferOriginalQuality))
+                if (v.original && (v.isCached() || LawxConfig.preferOriginalQuality))
                     return v;
             }
         }

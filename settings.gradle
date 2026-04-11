@@ -22,7 +22,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Nekogram"
+rootProject.name = "lawXgram"
 include ':TMessagesProj'
 include ':TMessagesProj_App'
 //include ':TMessagesProj_AppHuawei'

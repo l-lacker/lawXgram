@@ -130,7 +130,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import tw.nekomimi.nekogram.NekoConfig;
+import ru.llacker.lawxgram.LawxConfig;
 
 public class MessagesController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
 
@@ -6564,7 +6564,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isChatNoForwards(TLRPC.Chat chat) {
-        if (NekoConfig.shouldNOTTrustMe) {
+        if (LawxConfig.shouldNOTTrustMe) {
             return false;
         }
         if (chat == null) {
@@ -21223,7 +21223,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public String getRestrictionReason(ArrayList<TLRPC.RestrictionReason> reasons) {
-        if (reasons.isEmpty() || NekoConfig.ignoreContentRestriction) {
+        if (reasons.isEmpty() || LawxConfig.ignoreContentRestriction) {
             return null;
         }
         for (int a = 0, N = reasons.size(); a < N; a++) {

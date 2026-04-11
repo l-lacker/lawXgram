@@ -328,13 +328,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.forward.ForwardItem;
-import tw.nekomimi.nekogram.helpers.LensHelper;
-import tw.nekomimi.nekogram.helpers.MessageHelper;
-import tw.nekomimi.nekogram.helpers.QrHelper;
-import tw.nekomimi.nekogram.streaming.MediaStreamingProvider;
-import tw.nekomimi.nekogram.translator.Translator;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.forward.ForwardItem;
+import ru.llacker.lawxgram.helpers.LensHelper;
+import ru.llacker.lawxgram.helpers.MessageHelper;
+import ru.llacker.lawxgram.helpers.QrHelper;
+import ru.llacker.lawxgram.streaming.MediaStreamingProvider;
+import ru.llacker.lawxgram.translator.Translator;
 import me.vkryl.core.reference.ReferenceList;
 
 @SuppressLint("WrongConstant")
@@ -5272,7 +5272,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         msgs.add(currentMessageObject);
                     }
 
-                    if ((isChannel || NekoConfig.quickForward) && msgs.size() <= 1) {
+                    if ((isChannel || LawxConfig.quickForward) && msgs.size() <= 1) {
                         showShareAlert(msgs, id == gallery_menu_send_noquote, id == gallery_menu_send_nocaption);
                     } else if (msgs.size() > 1) {
                         boolean photos = true;
@@ -18685,7 +18685,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (photoPaintView != null) {
             photoPaintView.onResume();
         }
-        if (pausedOnPause && NekoConfig.autoPauseVideo && videoPlayer != null && !videoPlayer.isPlaying()) {
+        if (pausedOnPause && LawxConfig.autoPauseVideo && videoPlayer != null && !videoPlayer.isPlaying()) {
             pausedOnPause = false;
             videoPlayer.play();
         }
@@ -18704,7 +18704,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (videoPlayer != null && playerLooping) {
             videoPlayer.setLooping(allowLoopingOnPause());
         }
-        if (NekoConfig.autoPauseVideo && videoPlayer != null && videoPlayer.isPlaying()) {
+        if (LawxConfig.autoPauseVideo && videoPlayer != null && videoPlayer.isPlaying()) {
             pausedOnPause = true;
             videoPlayer.pause();
         }

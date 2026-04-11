@@ -91,8 +91,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.helpers.AnalyticsHelper;
+import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.helpers.AnalyticsHelper;
 
 public class ActionBarLayout extends FrameLayout implements INavigationLayout, FloatingDebugProvider {
 
@@ -614,7 +614,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
 
         if (layerShadowDrawable == null) {
             layerShadowDrawable = getResources().getDrawable(R.drawable.layer_shadow);
-            headerShadowDrawable = NekoConfig.disableAppBarShadow ? null : getResources().getDrawable(R.drawable.header_shadow).mutate();
+            headerShadowDrawable = LawxConfig.disableAppBarShadow ? null : getResources().getDrawable(R.drawable.header_shadow).mutate();
             scrimPaint = new Paint();
         }
 
