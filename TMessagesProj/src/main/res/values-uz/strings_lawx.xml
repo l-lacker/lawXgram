@@ -283,4 +283,9 @@
     <string name="IgnoreContentRestriction">Kontent cheklovlarini olib tashlash</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Maxsus imkoniyatlar sozlamalari</string>
+    <string name="HideBusinessBotPanel">Bot bannerini yashirish</string>
+    <string name="HideBusinessBotPanelAbout">Faol bot haqidagi biznes rejimi banneri barcha chatlarda yashiriladi.</string>
+    <string name="HideBusinessBotPanelAction">Panelni yashirish</string>
+    <string name="BusinessBotPanelHiddenTitle">Bot paneli barcha chatlarda yashirilgan.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Uni klient sozlamalarida yana yoqishingiz mumkin.</string>
 </resources>

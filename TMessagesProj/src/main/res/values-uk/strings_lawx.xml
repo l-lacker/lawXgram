@@ -324,4 +324,9 @@
     <string name="TabsPositionBottom">Знизу</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Налаштування спеціальних можливостей</string>
+    <string name="HideBusinessBotPanel">Приховати плашку бота</string>
+    <string name="HideBusinessBotPanelAbout">Банер бізнес-режиму про активного бота буде приховано в усіх чатах.</string>
+    <string name="HideBusinessBotPanelAction">Приховати панель</string>
+    <string name="BusinessBotPanelHiddenTitle">Панель бота приховано в усіх чатах.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Ви можете знову ввімкнути її в налаштуваннях клієнта.</string>
 </resources>

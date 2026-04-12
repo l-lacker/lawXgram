@@ -99,4 +99,9 @@
     <string name="WsProvider">Forsørger</string>
     <string name="DatacenterStatusShort">Datasenter</string>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">Skjul bot-banneret</string>
+    <string name="HideBusinessBotPanelAbout">Banneret for den aktive boten i bedriftsmodus blir skjult i alle chatter.</string>
+    <string name="HideBusinessBotPanelAction">Skjul panel</string>
+    <string name="BusinessBotPanelHiddenTitle">Botpanelet er skjult i alle chatter.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Du kan slå det på igjen i klientinnstillingene.</string>
 </resources>

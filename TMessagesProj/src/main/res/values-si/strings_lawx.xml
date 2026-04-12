@@ -59,4 +59,9 @@
     <string name="DisableAppBarShadow">මාතෘකා තීරු සෙවනැල්ල අක්‍රීය කරන්න</string>
     <string name="IdTypeHidden">හංගන්න</string>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">බොට් බැනරය සඟවන්න</string>
+    <string name="HideBusinessBotPanelAbout">සක්‍රිය බොට් සඳහා වන ව්‍යාපාරික මාදිලි බැනරය සියලුම චැට්වල සඟවනු ඇත.</string>
+    <string name="HideBusinessBotPanelAction">පැනලය සඟවන්න</string>
+    <string name="BusinessBotPanelHiddenTitle">බොට් පැනලය සියලුම චැට්වල සඟවා ඇත.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">ඔබට එය නැවත ක්ලයන්ට් සැකසුම් තුළ සක්‍රිය කළ හැක.</string>
 </resources>

@@ -313,4 +313,9 @@
     <string name="HideChannelBottomButtons">Ukryj dolne przyciski kanału</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Ustawienia ułatwień dostępu</string>
+    <string name="HideBusinessBotPanel">Ukryj baner bota</string>
+    <string name="HideBusinessBotPanelAbout">Baner trybu biznesowego aktywnego bota będzie ukryty we wszystkich czatach.</string>
+    <string name="HideBusinessBotPanelAction">Ukryj panel</string>
+    <string name="BusinessBotPanelHiddenTitle">Panel bota jest ukryty we wszystkich czatach.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Możesz włączyć go ponownie w ustawieniach klienta.</string>
 </resources>

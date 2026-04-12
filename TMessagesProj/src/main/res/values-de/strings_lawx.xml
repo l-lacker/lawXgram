@@ -313,4 +313,9 @@
     <string name="HideChannelBottomButtons">Schaltflächen am unteren Rand des Kanals ausblenden</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Zugangseinstellungen</string>
+    <string name="HideBusinessBotPanel">Bot-Banner ausblenden</string>
+    <string name="HideBusinessBotPanelAbout">Das Business-Banner zum aktiven Bot wird in allen Chats ausgeblendet.</string>
+    <string name="HideBusinessBotPanelAction">Panel ausblenden</string>
+    <string name="BusinessBotPanelHiddenTitle">Das Bot-Panel ist in allen Chats ausgeblendet.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Du kannst es in den Client-Einstellungen wieder aktivieren.</string>
 </resources>

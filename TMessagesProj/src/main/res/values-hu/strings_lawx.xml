@@ -309,4 +309,9 @@
     <string name="CloudflareCredentialsDialog">Konfigurálja a Cloudflare fiók azonosítóját és API tokenjét.\n**Hogyan szerezhető be?**</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Kisegítő lehetőségek beállításai</string>
+    <string name="HideBusinessBotPanel">A bot szalaghirdetésének elrejtése</string>
+    <string name="HideBusinessBotPanelAbout">Az aktív bot üzleti módú bannerje minden csevegésben rejtve lesz.</string>
+    <string name="HideBusinessBotPanelAction">Panel elrejtése</string>
+    <string name="BusinessBotPanelHiddenTitle">A botpanel minden csevegésben rejtve van.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">A kliens beállításaiban újra bekapcsolhatod.</string>
 </resources>

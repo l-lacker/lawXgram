@@ -257,4 +257,9 @@
     <string name="ExportAsJson">JSON के रूप में कॉपी करें</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">एक्सेसिबिलिटी सेटिंग</string>
+    <string name="HideBusinessBotPanel">बॉट बैनर छिपाएँ</string>
+    <string name="HideBusinessBotPanelAbout">सक्रिय बॉट का बिज़नेस मोड बैनर सभी चैट में छिपा दिया जाएगा।</string>
+    <string name="HideBusinessBotPanelAction">पैनल छिपाएँ</string>
+    <string name="BusinessBotPanelHiddenTitle">बॉट पैनल सभी चैट में छिपा हुआ है।</string>
+    <string name="BusinessBotPanelHiddenSubtitle">आप इसे क्लाइंट सेटिंग्स में फिर से चालू कर सकते हैं।</string>
 </resources>

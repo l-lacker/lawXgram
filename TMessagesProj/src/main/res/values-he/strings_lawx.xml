@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">הסתרת באנר הבוט</string>
+    <string name="HideBusinessBotPanelAbout">באנר מצב העסק של הבוט הפעיל יוסתר בכל הצ׳אטים.</string>
+    <string name="HideBusinessBotPanelAction">הסתרת הפאנל</string>
+    <string name="BusinessBotPanelHiddenTitle">פאנל הבוט מוסתר בכל הצ׳אטים.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">אפשר להפעיל אותו שוב בהגדרות הלקוח.</string>
 </resources>

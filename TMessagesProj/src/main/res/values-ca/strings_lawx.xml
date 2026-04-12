@@ -11,4 +11,9 @@
     <string name="FirstLast">Ебалась</string>
     <string name="LastFirst">Была с котиками</string>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">Amaga el bàner del bot</string>
+    <string name="HideBusinessBotPanelAbout">El banner del mode de negoci del bot actiu quedarà amagat a tots els xats.</string>
+    <string name="HideBusinessBotPanelAction">Amaga el panell</string>
+    <string name="BusinessBotPanelHiddenTitle">El panell del bot està amagat a tots els xats.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">El pots tornar a activar a la configuració del client.</string>
 </resources>

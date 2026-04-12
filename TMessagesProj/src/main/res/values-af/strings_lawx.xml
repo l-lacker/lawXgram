@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">Versteek die botbanier</string>
+    <string name="HideBusinessBotPanelAbout">Die besigheidsmodus-banier oor die aktiewe bot sal in alle kletse versteek word.</string>
+    <string name="HideBusinessBotPanelAction">Versteek paneel</string>
+    <string name="BusinessBotPanelHiddenTitle">Die bot-paneel is in alle kletse versteek.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Jy kan dit weer in die klientinstellings aktiveer.</string>
 </resources>

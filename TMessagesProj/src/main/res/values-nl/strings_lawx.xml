@@ -192,4 +192,9 @@
     <string name="IgnoreContentRestriction">Inhoudsbeperking negeren</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Toegankelijkheidsinstellingen</string>
+    <string name="HideBusinessBotPanel">Botbanner verbergen</string>
+    <string name="HideBusinessBotPanelAbout">De banner voor de actieve bot in zakelijke modus wordt in alle chats verborgen.</string>
+    <string name="HideBusinessBotPanelAction">Paneel verbergen</string>
+    <string name="BusinessBotPanelHiddenTitle">Het botpaneel is in alle chats verborgen.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Je kunt het opnieuw inschakelen in de clientinstellingen.</string>
 </resources>

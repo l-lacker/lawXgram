@@ -289,4 +289,9 @@
     <string name="IgnoreContentRestriction">Ignorer la restriction de contenu</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Paramètres d\'accessibilité</string>
+    <string name="HideBusinessBotPanel">Masquer la bannière du bot</string>
+    <string name="HideBusinessBotPanelAbout">La bannière du mode entreprise pour le bot actif sera masquée dans toutes les discussions.</string>
+    <string name="HideBusinessBotPanelAction">Masquer le panneau</string>
+    <string name="BusinessBotPanelHiddenTitle">Le panneau du bot est masqué dans toutes les discussions.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Vous pouvez le réactiver dans les paramètres du client.</string>
 </resources>

@@ -207,4 +207,9 @@
     <string name="AccNumberOfItems">Vis antal elementer</string>
     <string name="AccIndexOfItem">Vis aktuel position</string>
     <string name="AccShowValueChanges">Annoncere værdiændringer under manuelle ændringer</string>
+    <string name="HideBusinessBotPanel">Skjul bot-banneret</string>
+    <string name="HideBusinessBotPanelAbout">Banneret i virksomhedstilstand for den aktive bot skjules i alle chats.</string>
+    <string name="HideBusinessBotPanelAction">Skjul panel</string>
+    <string name="BusinessBotPanelHiddenTitle">Botpanelet er skjult i alle chats.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Du kan slå det til igen i klientindstillingerne.</string>
 </resources>

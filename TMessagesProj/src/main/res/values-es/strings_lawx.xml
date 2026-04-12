@@ -316,4 +316,9 @@
     <string name="AccNumberOfItems">Mostrar número de elementos</string>
     <string name="AccIndexOfItem">Mostrar posición actual</string>
     <string name="AccShowValueChanges">Anunciar cambios de valor durante los cambios manuales</string>
+    <string name="HideBusinessBotPanel">Ocultar el banner del bot</string>
+    <string name="HideBusinessBotPanelAbout">El banner del modo de negocio del bot activo se ocultará en todos los chats.</string>
+    <string name="HideBusinessBotPanelAction">Ocultar panel</string>
+    <string name="BusinessBotPanelHiddenTitle">El panel del bot está oculto en todos los chats.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Puedes volver a activarlo en los ajustes del cliente.</string>
 </resources>

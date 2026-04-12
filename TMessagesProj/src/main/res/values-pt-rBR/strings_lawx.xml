@@ -319,4 +319,9 @@
     <string name="HideBottomNavigationBar">Ocultar barra de navegação inferior</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Opções de acessibilidade</string>
+    <string name="HideBusinessBotPanel">Ocultar o banner do bot</string>
+    <string name="HideBusinessBotPanelAbout">O banner do modo comercial do bot ativo ficará oculto em todos os chats.</string>
+    <string name="HideBusinessBotPanelAction">Ocultar painel</string>
+    <string name="BusinessBotPanelHiddenTitle">O painel do bot está oculto em todos os chats.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Você pode ativá-lo novamente nas configurações do cliente.</string>
 </resources>

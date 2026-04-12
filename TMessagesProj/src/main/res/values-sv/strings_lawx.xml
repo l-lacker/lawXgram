@@ -196,4 +196,9 @@
     <string name="TranslatorShowOriginal">Med originaltext</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Tillgänglighetsinställningar</string>
+    <string name="HideBusinessBotPanel">Dölj botbannern</string>
+    <string name="HideBusinessBotPanelAbout">Bannern i företagsläge för den aktiva boten döljs i alla chattar.</string>
+    <string name="HideBusinessBotPanelAction">Dölj panel</string>
+    <string name="BusinessBotPanelHiddenTitle">Botpanelen är dold i alla chattar.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Du kan aktivera den igen i klientinställningarna.</string>
 </resources>

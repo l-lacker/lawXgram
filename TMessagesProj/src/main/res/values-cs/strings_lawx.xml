@@ -173,4 +173,9 @@
     <string name="EditEnableMarkdown">Povolit značkování</string>
     <string name="EditDisableMarkdown">Zakázat značkování</string>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">Skrýt banner bota</string>
+    <string name="HideBusinessBotPanelAbout">Banner obchodního režimu aktivního bota bude skrytý ve všech chatech.</string>
+    <string name="HideBusinessBotPanelAction">Skrýt panel</string>
+    <string name="BusinessBotPanelHiddenTitle">Panel bota je skrytý ve všech chatech.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Znovu ho můžete zapnout v nastavení klienta.</string>
 </resources>

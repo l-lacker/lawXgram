@@ -313,4 +313,9 @@
     <string name="AutoInlineBotDesc">پرس‌وجوی خودکار ربات درون‌خطی بر اساس متن پیام.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">تنظیمات دسترسی پذیری</string>
+    <string name="HideBusinessBotPanel">پنهان کردن نوار ربات</string>
+    <string name="HideBusinessBotPanelAbout">نوار حالت تجاری مربوط به ربات فعال در همهٔ چت‌ها پنهان خواهد شد.</string>
+    <string name="HideBusinessBotPanelAction">پنهان کردن پنل</string>
+    <string name="BusinessBotPanelHiddenTitle">پنل ربات در همهٔ چت‌ها پنهان است.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">می‌توانید دوباره آن را در تنظیمات کلاینت فعال کنید.</string>
 </resources>

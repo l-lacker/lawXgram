@@ -23,6 +23,7 @@ import ru.llacker.lawxgram.helpers.PopupHelper;
 
 public class LawxAppearanceSettingsActivity extends BaseLawxSettingsActivity implements NotificationCenter.NotificationCenterDelegate {
 
+    private final int hideBusinessBotPanelRow = rowId++;
     private final int emojiSetsRow = rowId++;
     private final int predictiveBackAnimationRow = rowId++;
     private final int appBarShadowRow = rowId++;
@@ -62,6 +63,7 @@ public class LawxAppearanceSettingsActivity extends BaseLawxSettingsActivity imp
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
         items.add(UItem.asHeader(LocaleController.getString(R.string.ChangeChannelNameColor2)));
+        items.add(UItem.asCheck(hideBusinessBotPanelRow, LocaleController.getString(R.string.HideBusinessBotPanel), LocaleController.getString(R.string.HideBusinessBotPanelAbout)).slug("hideBusinessBotPanel").setChecked(LawxConfig.hideBusinessBotPanel));
         items.add(EmojiSetCellFactory.of(emojiSetsRow, LocaleController.getString(R.string.EmojiSets)).slug("emojiSets"));
         items.add(UItem.asCheck(predictiveBackAnimationRow, LocaleController.getString(R.string.PredictiveBackAnimation)).slug("predictiveBackAnimation").setChecked(LawxConfig.predictiveBackAnimation));
         items.add(UItem.asCheck(appBarShadowRow, LocaleController.getString(R.string.DisableAppBarShadow)).slug("appBarShadow").setChecked(LawxConfig.disableAppBarShadow));
@@ -101,7 +103,12 @@ public class LawxAppearanceSettingsActivity extends BaseLawxSettingsActivity imp
     @Override
     protected void onItemClick(UItem item, View view, int position, float x, float y) {
         var id = item.id;
-        if (id == tabletModeRow) {
+        if (id == hideBusinessBotPanelRow) {
+            LawxConfig.toggleHideBusinessBotPanel();
+            if (view instanceof TextCheckCell) {
+                ((TextCheckCell) view).setChecked(LawxConfig.hideBusinessBotPanel);
+            }
+        } else if (id == tabletModeRow) {
             ArrayList<String> arrayList = new ArrayList<>();
             ArrayList<Integer> types = new ArrayList<>();
             arrayList.add(LocaleController.getString(R.string.TabletModeAuto));

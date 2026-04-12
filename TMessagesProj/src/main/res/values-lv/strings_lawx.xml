@@ -256,4 +256,9 @@
     <string name="ExportAsJson">Kopēt kā JSON</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Pieejamības iestatījumi</string>
+    <string name="HideBusinessBotPanel">Paslēpt bota baneri</string>
+    <string name="HideBusinessBotPanelAbout">Aktīvā bota biznesa režīma baneris tiks paslēpts visos čatos.</string>
+    <string name="HideBusinessBotPanelAction">Paslēpt paneli</string>
+    <string name="BusinessBotPanelHiddenTitle">Bota panelis ir paslēpts visos čatos.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">To var atkal ieslēgt klienta iestatījumos.</string>
 </resources>

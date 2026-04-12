@@ -315,4 +315,9 @@
     <string name="ForceFontWeightFallback">Buộc kiểu chữ sử dụng độ đậm mặc định</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Cài đặt trợ năng</string>
+    <string name="HideBusinessBotPanel">Ẩn biểu ngữ bot</string>
+    <string name="HideBusinessBotPanelAbout">Biểu ngữ chế độ doanh nghiệp của bot đang hoạt động sẽ bị ẩn trong mọi cuộc trò chuyện.</string>
+    <string name="HideBusinessBotPanelAction">Ẩn bảng</string>
+    <string name="BusinessBotPanelHiddenTitle">Bảng bot đã bị ẩn trong mọi cuộc trò chuyện.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Bạn có thể bật lại trong cài đặt ứng dụng khách.</string>
 </resources>

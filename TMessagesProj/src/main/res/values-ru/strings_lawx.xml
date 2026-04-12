@@ -320,4 +320,9 @@
     <string name="HideBottomNavigationBar">Скрыть нижнюю панель навигации</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Настройки доступности</string>
+    <string name="HideBusinessBotPanel">Скрыть плашку бота</string>
+    <string name="HideBusinessBotPanelAbout">Во всех чатах плашка бизнес-режима о работающем боте будет скрыта</string>
+    <string name="HideBusinessBotPanelAction">Скрыть панель</string>
+    <string name="BusinessBotPanelHiddenTitle">Панель бота скрыта для всех чатов.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Вы можете её заново активировать в настройках клиента</string>
 </resources>

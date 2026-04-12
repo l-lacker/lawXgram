@@ -310,4 +310,9 @@
     <string name="HideChannelBottomButtons">Kanallarda aşağı butonları gizle</string>
     <string name="TranslationKeepFormatting">Çeviri sırasında orijinal metin biçimini koru</string>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">Bot afişini gizle</string>
+    <string name="HideBusinessBotPanelAbout">Etkin botla ilgili işletme modu bannerı tüm sohbetlerde gizlenecek.</string>
+    <string name="HideBusinessBotPanelAction">Paneli gizle</string>
+    <string name="BusinessBotPanelHiddenTitle">Bot paneli tüm sohbetlerde gizli.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Bunu istemci ayarlarından yeniden etkinleştirebilirsiniz.</string>
 </resources>

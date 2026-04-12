@@ -18,4 +18,9 @@
     <string name="DisableResidentNotification">Poista asukasilmoitus käytöstä</string>
     <string name="IdTypeHidden">Piilota</string>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">Piilota botin banneri</string>
+    <string name="HideBusinessBotPanelAbout">Aktiivista bottia koskeva yritystilan banneri piilotetaan kaikissa keskusteluissa.</string>
+    <string name="HideBusinessBotPanelAction">Piilota paneeli</string>
+    <string name="BusinessBotPanelHiddenTitle">Bottipaneeli on piilotettu kaikissa keskusteluissa.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Voit ottaa sen uudelleen käyttöön asiakasasetuksissa.</string>
 </resources>

@@ -316,4 +316,9 @@
     <string name="HideBottomNavigationBar">Απόκρυψη κάτω μπάρας πλοήγησης</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Ρυθμίσεις προσβασιμότητας</string>
+    <string name="HideBusinessBotPanel">Απόκρυψη του banner του bot</string>
+    <string name="HideBusinessBotPanelAbout">Το banner επιχειρηματικής λειτουργίας για το ενεργό bot θα κρυφτεί σε όλες τις συνομιλίες.</string>
+    <string name="HideBusinessBotPanelAction">Απόκρυψη πάνελ</string>
+    <string name="BusinessBotPanelHiddenTitle">Το πάνελ του bot είναι κρυφό σε όλες τις συνομιλίες.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Μπορείτε να το ενεργοποιήσετε ξανά στις ρυθμίσεις πελάτη.</string>
 </resources>

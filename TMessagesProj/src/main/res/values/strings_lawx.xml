@@ -74,6 +74,11 @@
     <string name="OfficialChannelUsername">lawxgram</string>
     <string name="RestartAppToTakeEffect">Restart the app to take effect.</string>
     <string name="DisableAppBarShadow">Disable title bar shadow</string>
+    <string name="HideBusinessBotPanel">Hide bot banner</string>
+    <string name="HideBusinessBotPanelAbout">The business-mode banner about the active bot will be hidden in all chats.</string>
+    <string name="HideBusinessBotPanelAction">Hide panel</string>
+    <string name="BusinessBotPanelHiddenTitle">The bot panel is hidden for all chats.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">You can enable it again in client settings.</string>
     <string name="MediaPreview">Media preview in dialog list</string>
     <string name="ProviderYandex">Yandex Translate</string>
     <string name="IdType">Chat ID in profile</string>

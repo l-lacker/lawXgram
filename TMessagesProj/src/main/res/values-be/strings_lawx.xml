@@ -317,4 +317,9 @@
     <string name="HideChannelBottomButtons">Схаваць ніжнія кнопкі ў канале</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Адмысловыя магчымасці</string>
+    <string name="HideBusinessBotPanel">Схаваць плашку бота</string>
+    <string name="HideBusinessBotPanelAbout">Банер бізнес-рэжыму пра актыўнага бота будзе схаваны ва ўсіх чатах.</string>
+    <string name="HideBusinessBotPanelAction">Схаваць панэль</string>
+    <string name="BusinessBotPanelHiddenTitle">Панэль бота схавана ва ўсіх чатах.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Вы можаце зноў уключыць яе ў наладах кліента.</string>
 </resources>

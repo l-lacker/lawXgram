@@ -318,4 +318,9 @@
     <string name="HideBottomNavigationBar">إخفاء شريط التنقل السفلي</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">إعدادات إمكانية الوصول</string>
+    <string name="HideBusinessBotPanel">إخفاء شريط البوت</string>
+    <string name="HideBusinessBotPanelAbout">سيتم إخفاء شريط وضع الأعمال الخاص بالبوت النشط في جميع الدردشات.</string>
+    <string name="HideBusinessBotPanelAction">إخفاء اللوحة</string>
+    <string name="BusinessBotPanelHiddenTitle">لوحة البوت مخفية في جميع الدردشات.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">يمكنك تفعيله مرة أخرى من إعدادات العميل.</string>
 </resources>

@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">Kaŝi la rubandon de la bota</string>
+    <string name="HideBusinessBotPanelAbout">La komerca reĝima rubando de la aktiva bot estos kaŝita en ĉiuj babilejoj.</string>
+    <string name="HideBusinessBotPanelAction">Kaŝi panelon</string>
+    <string name="BusinessBotPanelHiddenTitle">La bot-panelo estas kaŝita en ĉiuj babilejoj.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Vi povas reŝalti ĝin en la klientaj agordoj.</string>
 </resources>

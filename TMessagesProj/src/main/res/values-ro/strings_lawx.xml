@@ -315,4 +315,9 @@
     <string name="ForceFontWeightFallback">Forțați opțiunile de rezervă pentru grosimea fontului</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Setări de accesibilitate</string>
+    <string name="HideBusinessBotPanel">Ascunde bannerul botului</string>
+    <string name="HideBusinessBotPanelAbout">Bannerul modului business pentru botul activ va fi ascuns în toate chat-urile.</string>
+    <string name="HideBusinessBotPanelAction">Ascunde panoul</string>
+    <string name="BusinessBotPanelHiddenTitle">Panoul botului este ascuns în toate chat-urile.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Îl poți activa din nou din setările clientului.</string>
 </resources>

@@ -314,4 +314,9 @@
     <string name="ForceFontWeightFallback">บังคับใช้ความหนาฟอนต์แบบสำรอง</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">การตั้งค่าการเข้าถึง</string>
+    <string name="HideBusinessBotPanel">ซ่อนแบนเนอร์บอท</string>
+    <string name="HideBusinessBotPanelAbout">แบนเนอร์โหมดธุรกิจของบอทที่ใช้งานอยู่จะถูกซ่อนในทุกแชท</string>
+    <string name="HideBusinessBotPanelAction">ซ่อนแผง</string>
+    <string name="BusinessBotPanelHiddenTitle">แผงบอทถูกซ่อนในทุกแชท</string>
+    <string name="BusinessBotPanelHiddenSubtitle">คุณสามารถเปิดใช้งานอีกครั้งได้ในการตั้งค่าไคลเอนต์</string>
 </resources>

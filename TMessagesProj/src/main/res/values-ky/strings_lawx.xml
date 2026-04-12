@@ -5,4 +5,9 @@
     <string name="lawXgramBeta" translatable="false">локсграм бета</string>
     <string name="LawxSettings">Настройки локсграм</string>
     <!-- Accessibility -->
+    <string name="HideBusinessBotPanel">Боттун баннерин жашыруу</string>
+    <string name="HideBusinessBotPanelAbout">Активдүү бот тууралуу бизнес режиминдеги баннер бардык чаттарда жашырылат.</string>
+    <string name="HideBusinessBotPanelAction">Панелди жашыруу</string>
+    <string name="BusinessBotPanelHiddenTitle">Бот панели бардык чаттарда жашырылган.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Аны клиент жөндөөлөрүнөн кайра күйгүзө аласыз.</string>
 </resources>

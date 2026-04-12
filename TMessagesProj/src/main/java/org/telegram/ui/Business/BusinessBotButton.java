@@ -26,10 +26,13 @@ import org.telegram.ui.ChatActivity;
 import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.Components.BackupImageView;
+import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.ClickableAnimatedTextView;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
+
+import ru.llacker.lawxgram.LawxConfig;
 
 public class BusinessBotButton extends FrameLayout {
 
@@ -146,6 +149,14 @@ public class BusinessBotButton extends FrameLayout {
                     Browser.openUrl(getContext(), manageUrl);
                 });
             }
+            itemOptions.add(R.drawable.msg_archive_hide, LocaleController.getString(R.string.HideBusinessBotPanelAction), () -> {
+                LawxConfig.setHideBusinessBotPanel(true);
+                BulletinFactory.of(chatActivity).createSimpleBulletin(
+                    R.raw.chats_infotip,
+                    LocaleController.getString(R.string.BusinessBotPanelHiddenTitle),
+                    LocaleController.getString(R.string.BusinessBotPanelHiddenSubtitle)
+                ).show();
+            });
             itemOptions.translate(dp(10), dp(7));
             itemOptions.setDimAlpha(0);
             itemOptions.show();

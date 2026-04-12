@@ -10,6 +10,7 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.NotificationCenter;
 import org.telegram.ui.ActionBar.Theme;
 
 import java.util.ArrayList;
@@ -144,6 +145,7 @@ public class LawxConfig {
     public static boolean keepFormatting = true;
     public static boolean predictiveBackAnimation = false;
     public static boolean hideBottomNavigationBar = false;
+    public static boolean hideBusinessBotPanel = false;
     public static boolean bottomFilterTabs = false;
     public static boolean strokeOnViews = true;
 
@@ -252,6 +254,7 @@ public class LawxConfig {
             keepFormatting = preferences.getBoolean("keepFormatting", true);
             predictiveBackAnimation = preferences.getBoolean("predictiveBackAnimation", false);
             hideBottomNavigationBar = preferences.getBoolean("hideBottomNavigationBar", false);
+            hideBusinessBotPanel = preferences.getBoolean("hideBusinessBotPanel", false);
             bottomFilterTabs = preferences.getBoolean("bottomFilterTabs", false);
             strokeOnViews = preferences.getBoolean("strokeOnViews", true);
 
@@ -443,6 +446,22 @@ public class LawxConfig {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("hideBottomNavigationBar", hideBottomNavigationBar);
         editor.apply();
+    }
+
+    public static void toggleHideBusinessBotPanel() {
+        setHideBusinessBotPanel(!hideBusinessBotPanel);
+    }
+
+    public static void setHideBusinessBotPanel(boolean hide) {
+        if (hideBusinessBotPanel == hide) {
+            return;
+        }
+        hideBusinessBotPanel = hide;
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("hideBusinessBotPanel", hideBusinessBotPanel);
+        editor.apply();
+        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.businessBotPanelVisibilityChanged);
     }
 
     public static void toggleKeepFormatting() {

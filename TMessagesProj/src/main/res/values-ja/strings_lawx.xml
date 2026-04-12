@@ -320,4 +320,9 @@
     <string name="HideBottomNavigationBar">下部のナビゲーションバーを非表示</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">ユーザー補助の設定</string>
+    <string name="HideBusinessBotPanel">ボットのバナーを非表示</string>
+    <string name="HideBusinessBotPanelAbout">有効なボットに関するビジネスモードのバナーは、すべてのチャットで非表示になります。</string>
+    <string name="HideBusinessBotPanelAction">パネルを非表示</string>
+    <string name="BusinessBotPanelHiddenTitle">ボットパネルはすべてのチャットで非表示になっています。</string>
+    <string name="BusinessBotPanelHiddenSubtitle">クライアント設定から再度有効にできます。</string>
 </resources>

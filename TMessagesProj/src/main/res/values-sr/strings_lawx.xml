@@ -319,4 +319,9 @@
     <string name="HideBottomNavigationBar">Сакриј доњу траку за навигацију</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Подешавања приступачности</string>
+    <string name="HideBusinessBotPanel">Сакриј плашку бота</string>
+    <string name="HideBusinessBotPanelAbout">Банер пословног режима за активног бота биће сакривен у свим ћаскањима.</string>
+    <string name="HideBusinessBotPanelAction">Сакриј панел</string>
+    <string name="BusinessBotPanelHiddenTitle">Панел бота је сакривен у свим ћаскањима.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Можете поново да га укључите у подешавањима клијента.</string>
 </resources>

@@ -323,4 +323,9 @@
     <string name="StrokeOnViews">眩光效果</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">无障碍设置</string>
+    <string name="HideBusinessBotPanel">隐藏机器人横幅</string>
+    <string name="HideBusinessBotPanelAbout">当前活跃机器人的商务模式横幅会在所有聊天里隐藏。</string>
+    <string name="HideBusinessBotPanelAction">隐藏面板</string>
+    <string name="BusinessBotPanelHiddenTitle">机器人面板已在所有聊天里隐藏。</string>
+    <string name="BusinessBotPanelHiddenSubtitle">您可以在客户端设置里重新启用它。</string>
 </resources>

@@ -315,4 +315,9 @@
     <string name="ForceFontWeightFallback">強制使用字重替代</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">無障礙設定</string>
+    <string name="HideBusinessBotPanel">隱藏機器人橫幅</string>
+    <string name="HideBusinessBotPanelAbout">關於目前啟用機器人的商務模式橫幅會在所有聊天中隱藏。</string>
+    <string name="HideBusinessBotPanelAction">隱藏面板</string>
+    <string name="BusinessBotPanelHiddenTitle">機器人面板已在所有聊天中隱藏。</string>
+    <string name="BusinessBotPanelHiddenSubtitle">您可以在用戶端設定中重新啟用它。</string>
 </resources>

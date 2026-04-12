@@ -310,4 +310,9 @@
     <string name="PreferOriginalQualityDesc">Visualizza i video nella qualità originale.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Impostazioni di accessibilità</string>
+    <string name="HideBusinessBotPanel">Nascondi il banner del bot</string>
+    <string name="HideBusinessBotPanelAbout">Il banner della modalità business per il bot attivo sarà nascosto in tutte le chat.</string>
+    <string name="HideBusinessBotPanelAction">Nascondi pannello</string>
+    <string name="BusinessBotPanelHiddenTitle">Il pannello del bot è nascosto in tutte le chat.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Puoi riattivarlo nelle impostazioni del client.</string>
 </resources>

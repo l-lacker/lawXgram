@@ -285,4 +285,9 @@
     <string name="IgnoreContentRestriction">Kontol</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Setelan Aksesibilitas</string>
+    <string name="HideBusinessBotPanel">Sembunyikan banner bot</string>
+    <string name="HideBusinessBotPanelAbout">Banner mode bisnis untuk bot aktif akan disembunyikan di semua chat.</string>
+    <string name="HideBusinessBotPanelAction">Sembunyikan panel</string>
+    <string name="BusinessBotPanelHiddenTitle">Panel bot disembunyikan di semua chat.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Anda dapat mengaktifkannya lagi di pengaturan klien.</string>
 </resources>

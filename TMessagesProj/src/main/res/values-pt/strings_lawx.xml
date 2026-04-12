@@ -313,4 +313,9 @@
     <string name="AutoInlineBotDesc">Consultar automaticamente o bot inline baseado na mensagem de texto.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Configurações de acessibilidade</string>
+    <string name="HideBusinessBotPanel">Ocultar o banner do bot</string>
+    <string name="HideBusinessBotPanelAbout">O banner do modo empresarial do bot ativo ficará oculto em todas as conversas.</string>
+    <string name="HideBusinessBotPanelAction">Ocultar painel</string>
+    <string name="BusinessBotPanelHiddenTitle">O painel do bot está oculto em todas as conversas.</string>
+    <string name="BusinessBotPanelHiddenSubtitle">Pode voltar a ativá-lo nas definições do cliente.</string>
 </resources>

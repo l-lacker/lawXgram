@@ -2937,6 +2937,7 @@ public class ChatActivity extends BaseFragment implements
         getNotificationCenter().addObserver(this, NotificationCenter.loadingMessagesFailed);
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.emojiLoaded);
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.invalidateMotionBackground);
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.businessBotPanelVisibilityChanged);
         getNotificationCenter().addObserver(this, NotificationCenter.didUpdateConnectionState);
         getNotificationCenter().addObserver(this, NotificationCenter.updateInterfaces);
         getNotificationCenter().addObserver(this, NotificationCenter.updateDefaultSendAsPeer);
@@ -3470,6 +3471,7 @@ public class ChatActivity extends BaseFragment implements
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.didSetNewWallpapper);
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.didApplyNewTheme);
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.goingToPreviewTheme);
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.businessBotPanelVisibilityChanged);
         getNotificationCenter().removeObserver(this, NotificationCenter.channelRightsUpdated);
         getNotificationCenter().removeObserver(this, NotificationCenter.updateMentionsCount);
         getNotificationCenter().removeObserver(this, NotificationCenter.audioRecordTooShort);
@@ -23614,6 +23616,8 @@ public class ChatActivity extends BaseFragment implements
                     chatAdapter.updateRowsSafe();
                 }
             }
+        } else if (id == NotificationCenter.businessBotPanelVisibilityChanged) {
+            updateTopPanel(!paused);
         } else if (id == NotificationCenter.newDraftReceived) {
             long did = (Long) args[0];
             if (did == dialog_id) {
@@ -28599,7 +28603,7 @@ public class ChatActivity extends BaseFragment implements
                 getMessagesController().getTranslateController().isDialogTranslatable(getDialogId()) && !getMessagesController().getTranslateController().isTranslateDialogHidden(getDialogId()) :
                 !getMessagesController().premiumFeaturesBlocked() && preferences.getInt("dialog_show_translate_count" + did, 5) <= 0
         ) || DEBUG_TOP_PANELS;
-        boolean showBizBot = currentEncryptedChat == null && getUserConfig().isPremium() && preferences.getLong("dialog_botid" + did, 0) != 0 || DEBUG_TOP_PANELS;
+        boolean showBizBot = (!LawxConfig.hideBusinessBotPanel && currentEncryptedChat == null && getUserConfig().isPremium() && preferences.getLong("dialog_botid" + did, 0) != 0) || DEBUG_TOP_PANELS;
         boolean showBotAd = currentUser != null && currentUser.bot && messages.size() >= 2 && botSponsoredMessage != null;
         if (showRestartTopic) {
             shownRestartTopic = true;
