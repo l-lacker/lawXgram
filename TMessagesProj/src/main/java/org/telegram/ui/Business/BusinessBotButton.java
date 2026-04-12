@@ -131,37 +131,43 @@ public class BusinessBotButton extends FrameLayout {
         menuView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chat_topPanelClose, resourcesProvider), PorterDuff.Mode.MULTIPLY));
         menuView.setOnClickListener(e -> {
             ItemOptions itemOptions = ItemOptions.makeOptions(chatActivity.getLayoutContainer(), resourcesProvider, menuView);
-            itemOptions.add(R.drawable.msg_cancel, LocaleController.getString(R.string.BizBotRemove), true, () -> {
-                TL_account.disablePeerConnectedBot req = new TL_account.disablePeerConnectedBot();
-                req.peer = MessagesController.getInstance(currentAccount).getInputPeer(dialogId);
-                ConnectionsManager.getInstance(currentAccount).sendRequest(req, null);
-
-                MessagesController.getNotificationsSettings(currentAccount).edit()
-                    .remove("dialog_botid" + dialogId).remove("dialog_boturl" + dialogId).remove("dialog_botflags" + dialogId)
-                    .apply();
-                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.peerSettingsDidLoad, dialogId);
-
-                BusinessChatbotController.getInstance(currentAccount).invalidate(false);
-
-            }).makeMultiline(false);
+            itemOptions.add(R.drawable.msg_cancel, LocaleController.getString(R.string.BizBotRemove), true, this::removeBusinessBot)
+                .makeMultiline(false);
             if (manageUrl != null) {
                 itemOptions.add(R.drawable.msg_settings, LocaleController.getString(R.string.BizBotManage), () -> {
                     Browser.openUrl(getContext(), manageUrl);
                 });
             }
-            itemOptions.add(R.drawable.msg_archive_hide, LocaleController.getString(R.string.HideBusinessBotPanelAction), () -> {
-                LawxConfig.setHideBusinessBotPanel(true);
-                BulletinFactory.of(chatActivity).createSimpleBulletin(
-                    R.raw.chats_infotip,
-                    LocaleController.getString(R.string.BusinessBotPanelHiddenTitle),
-                    LocaleController.getString(R.string.BusinessBotPanelHiddenSubtitle)
-                ).show();
-            });
+            itemOptions.add(R.drawable.msg_archive_hide, LocaleController.getString(R.string.HideBusinessBotPanelAction), () -> hideBusinessBotPanel(chatActivity));
             itemOptions.translate(dp(10), dp(7));
             itemOptions.setDimAlpha(0);
             itemOptions.show();
         });
         addView(menuView, LayoutHelper.createFrame(32, 32, Gravity.RIGHT | Gravity.CENTER_VERTICAL, 8, 0, 6, 0));
+    }
+
+    private void removeBusinessBot() {
+        TL_account.disablePeerConnectedBot req = new TL_account.disablePeerConnectedBot();
+        req.peer = MessagesController.getInstance(currentAccount).getInputPeer(dialogId);
+        ConnectionsManager.getInstance(currentAccount).sendRequest(req, null);
+
+        MessagesController.getNotificationsSettings(currentAccount).edit()
+            .remove("dialog_botid" + dialogId)
+            .remove("dialog_boturl" + dialogId)
+            .remove("dialog_botflags" + dialogId)
+            .apply();
+        NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.peerSettingsDidLoad, dialogId);
+
+        BusinessChatbotController.getInstance(currentAccount).invalidate(false);
+    }
+
+    private void hideBusinessBotPanel(ChatActivity chatActivity) {
+        LawxConfig.setHideBusinessBotPanel(true);
+        BulletinFactory.of(chatActivity).createSimpleBulletin(
+            R.raw.chats_infotip,
+            LocaleController.getString(R.string.BusinessBotPanelHiddenTitle),
+            LocaleController.getString(R.string.BusinessBotPanelHiddenSubtitle)
+        ).show();
     }
 
     private float leftMargin;

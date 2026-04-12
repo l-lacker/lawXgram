@@ -28603,7 +28603,10 @@ public class ChatActivity extends BaseFragment implements
                 getMessagesController().getTranslateController().isDialogTranslatable(getDialogId()) && !getMessagesController().getTranslateController().isTranslateDialogHidden(getDialogId()) :
                 !getMessagesController().premiumFeaturesBlocked() && preferences.getInt("dialog_show_translate_count" + did, 5) <= 0
         ) || DEBUG_TOP_PANELS;
-        boolean showBizBot = (!LawxConfig.hideBusinessBotPanel && currentEncryptedChat == null && getUserConfig().isPremium() && preferences.getLong("dialog_botid" + did, 0) != 0) || DEBUG_TOP_PANELS;
+        long connectedBotId = preferences.getLong("dialog_botid" + did, 0);
+        String connectedBotManageUrl = preferences.getString("dialog_boturl" + did, null);
+        int connectedBotFlags = preferences.getInt("dialog_botflags" + did, 0);
+        boolean showBizBot = (!LawxConfig.hideBusinessBotPanel && currentEncryptedChat == null && getUserConfig().isPremium() && connectedBotId != 0) || DEBUG_TOP_PANELS;
         boolean showBotAd = currentUser != null && currentUser.bot && messages.size() >= 2 && botSponsoredMessage != null;
         if (showRestartTopic) {
             shownRestartTopic = true;
@@ -28623,9 +28626,9 @@ public class ChatActivity extends BaseFragment implements
             if (bizBotButton != null) {
                 bizBotButton.set(
                     did,
-                    preferences.getLong("dialog_botid" + did, 0),
-                    preferences.getString("dialog_boturl" + did, null),
-                    preferences.getInt("dialog_botflags" + did, 0)
+                    connectedBotId,
+                    connectedBotManageUrl,
+                    connectedBotFlags
                 );
             }
         }
