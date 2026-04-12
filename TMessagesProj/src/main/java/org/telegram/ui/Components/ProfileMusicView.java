@@ -191,7 +191,7 @@ public class ProfileMusicView extends View {
         this.author = new Text(author, 11, AndroidUtilities.bold());
         this.title = new Text(title, 11);
         setContentDescription(
-                LocaleController.getString(R.string.AttachMusic) +
+                getString(R.string.AccDescrProfileMusic) +
                         ", " +
                         LocaleController.formatString(R.string.AccDescrMusicInfo, author, title)
         );

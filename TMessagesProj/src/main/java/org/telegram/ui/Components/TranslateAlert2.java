@@ -1415,21 +1415,78 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
         return builder;
     }
 
+    public static String lowerFirst(String text) {
+        if (text == null || text.length() <= 0) {
+            return null;
+        }
+        return text.substring(0, 1).toLowerCase() + text.substring(1);
+    }
+
+    public static CharSequence lowerFirst(CharSequence text) {
+        if (text == null || text.length() <= 0) {
+            return null;
+        }
+        SpannableStringBuilder builder = text instanceof SpannableStringBuilder ? (SpannableStringBuilder) text : SpannableStringBuilder.valueOf(text);
+        String string = builder.toString();
+        builder.replace(0, 1, string.substring(0, 1).toLowerCase());
+        return builder;
+    }
+
     public static String languageName(String locale) {
-        return languageName(locale, null);
+        return languageName(locale, null, null);
     }
 
     public static String languageName(String locale, boolean[] accusative) {
+        return languageName(locale, accusative, null);
+    }
+
+    public static String languageName(String locale, boolean[] accusative, boolean[] genitive) {
         if (locale == null || locale.equals(TranslateController.UNKNOWN_LANGUAGE) || locale.equals("auto")) {
             return null;
         }
-        String toLang;
         if (locale.equals("app")) {
-            toLang = LocaleController.getInstance().getCurrentLocaleInfo().name;
-        } else {
-            toLang = Locale.forLanguageTag(locale).getDisplayName();
+            return LocaleController.getInstance().getCurrentLocaleInfo().name;
         }
-        return toLang;
+
+        String simplifiedLocale = locale.split("_")[0];
+        if ("nb".equals(simplifiedLocale)) {
+            simplifiedLocale = "no";
+        }
+
+        if (accusative != null) {
+            String localed = LocaleController.getString("TranslateLanguage" + simplifiedLocale.toUpperCase());
+            if (accusative[0] = (localed != null && !localed.startsWith("LOC_ERR"))) {
+                return localed;
+            }
+        }
+        if (genitive != null) {
+            String localed = LocaleController.getString("TranslateLanguageGenitive" + simplifiedLocale.toUpperCase());
+            if (genitive[0] = (localed != null && !localed.startsWith("LOC_ERR"))) {
+                return localed;
+            }
+        }
+
+        String systemLangName = systemLanguageName(locale);
+        if (systemLangName == null) {
+            systemLangName = systemLanguageName(simplifiedLocale);
+        }
+        if (systemLangName != null) {
+            return systemLangName;
+        }
+
+        if ("no".equals(locale)) {
+            locale = "nb";
+        }
+        final LocaleController.LocaleInfo currentLanguageInfo = LocaleController.getInstance().getCurrentLocaleInfo();
+        final LocaleController.LocaleInfo thisLanguageInfo = LocaleController.getInstance().getBuiltinLanguageByPlural(locale);
+        if (thisLanguageInfo == null) {
+            return Locale.forLanguageTag(locale).getDisplayName();
+        }
+        boolean isCurrentLanguageEnglish = currentLanguageInfo != null && "en".equals(currentLanguageInfo.pluralLangCode);
+        if (isCurrentLanguageEnglish) {
+            return thisLanguageInfo.nameEnglish;
+        }
+        return thisLanguageInfo.name;
     }
 
     public static String languageNameCapital(String locale) {

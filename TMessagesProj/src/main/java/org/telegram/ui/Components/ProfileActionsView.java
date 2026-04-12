@@ -47,6 +47,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.ChatMessageCell;
 import org.telegram.ui.ProfileActivity;
 
 import java.util.ArrayList;
@@ -146,6 +147,7 @@ public class ProfileActionsView extends View {
 
         touchHelper = new ProfileActionsTouchHelper(this);
         ViewCompat.setAccessibilityDelegate(this, touchHelper);
+        setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
     }
 
     public void drawingBlur(boolean drawing) {
