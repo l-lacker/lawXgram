@@ -22,7 +22,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 	JNIEnv *env = 0;
     srand(time(NULL));
 
-#ifdef NDEBUG
+#ifdef COLORADO_ENFORCE_SIGNATURE
     if (!check_signature()) {
         return JNI_ERR;
     }

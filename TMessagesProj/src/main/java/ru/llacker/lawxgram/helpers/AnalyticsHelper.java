@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.telegram.messenger.ApplicationLoader;
@@ -46,9 +47,15 @@ public class AnalyticsHelper {
         if (userId == null || userId.length() < 32) {
             preferences.edit().putString("userId", userId = generateUserID()).apply();
         }
-        firebaseAnalytics = FirebaseAnalytics.getInstance(application);
-        firebaseAnalytics.setAnalyticsCollectionEnabled(true);
-        firebaseAnalytics.setUserId(userId);
+        try {
+            if (FirebaseApp.initializeApp(application) != null) {
+                firebaseAnalytics = FirebaseAnalytics.getInstance(application);
+                firebaseAnalytics.setAnalyticsCollectionEnabled(true);
+                firebaseAnalytics.setUserId(userId);
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
         var sentryDsn = LawxEnvironment.getSentryDsn();
         if (!sentryDsn.isEmpty()) {
             SentryAndroid.init(application, options -> {
@@ -84,7 +91,7 @@ public class AnalyticsHelper {
         breadcrumb.setData("state", lifecycle);
         breadcrumb.setData("screen", getFragmentName(fragment));
         Sentry.addBreadcrumb(breadcrumb);
-        if ("created".equals(lifecycle)) {
+        if (firebaseAnalytics != null && "created".equals(lifecycle)) {
             firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, null);
         }
     }
@@ -100,7 +107,9 @@ public class AnalyticsHelper {
         for (String key : map.keySet()) {
             bundle.putString(key, map.get(key));
         }
-        firebaseAnalytics.logEvent(event, bundle);
+        if (firebaseAnalytics != null) {
+            firebaseAnalytics.logEvent(event, bundle);
+        }
     }
 
     public static boolean isSettingsAvailable() {
@@ -110,7 +119,9 @@ public class AnalyticsHelper {
     public static void setAnalyticsDisabled() {
         AnalyticsHelper.analyticsDisabled = true;
         if (BuildConfig.DEBUG) return;
-        FirebaseAnalytics.getInstance(ApplicationLoader.applicationContext).setAnalyticsCollectionEnabled(false);
+        if (firebaseAnalytics != null) {
+            firebaseAnalytics.setAnalyticsCollectionEnabled(false);
+        }
         preferences.edit().putBoolean("analyticsDisabled", true).apply();
     }
 

@@ -16,3 +16,9 @@ TMessagesProj_AppHuawei/afat/
 TMessagesProj_App/debug/
 google-services.json
 sentry.properties
+.codemagic.local.env
+CODEMAGIC.local.md
+codemagic.yaml
+.project
+.classpath
+.settings/
