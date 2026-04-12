@@ -178,4 +178,5 @@
     <string name="HideBusinessBotPanelAction">Skrýt panel</string>
     <string name="BusinessBotPanelHiddenTitle">Panel bota je skrytý ve všech chatech.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Znovu ho můžete zapnout v nastavení klienta.</string>
+    <string name="RestartNow">Restartovat nyní</string>
 </resources>

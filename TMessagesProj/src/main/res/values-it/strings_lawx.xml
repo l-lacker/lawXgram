@@ -315,4 +315,5 @@
     <string name="HideBusinessBotPanelAction">Nascondi pannello</string>
     <string name="BusinessBotPanelHiddenTitle">Il pannello del bot è nascosto in tutte le chat.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Puoi riattivarlo nelle impostazioni del client.</string>
+    <string name="RestartNow">Riavvia ora</string>
 </resources>

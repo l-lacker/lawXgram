@@ -261,4 +261,5 @@
     <string name="HideBusinessBotPanelAction">Paslēpt paneli</string>
     <string name="BusinessBotPanelHiddenTitle">Bota panelis ir paslēpts visos čatos.</string>
     <string name="BusinessBotPanelHiddenSubtitle">To var atkal ieslēgt klienta iestatījumos.</string>
+    <string name="RestartNow">Restartēt tagad</string>
 </resources>

@@ -6,4 +6,5 @@
     <string name="HideBusinessBotPanelAction">הסתרת הפאנל</string>
     <string name="BusinessBotPanelHiddenTitle">פאנל הבוט מוסתר בכל הצ׳אטים.</string>
     <string name="BusinessBotPanelHiddenSubtitle">אפשר להפעיל אותו שוב בהגדרות הלקוח.</string>
+    <string name="RestartNow">הפעל מחדש עכשיו</string>
 </resources>

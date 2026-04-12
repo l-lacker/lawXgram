@@ -1,5 +1,7 @@
 package ru.llacker.lawxgram.helpers;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.net.Uri;
 import android.text.TextUtils;
 
@@ -104,5 +106,21 @@ public class SettingsHelper {
     public static void copyReportId() {
         AndroidUtilities.addToClipboard(AnalyticsHelper.userId);
         BulletinFactory.global().createSimpleBulletin(R.raw.copy, LocaleController.getString(R.string.TextCopied), LocaleController.getString(R.string.CopyReportIdDescription)).show();
+    }
+
+    public static void restartApplication(Activity activity) {
+        if (activity == null) {
+            return;
+        }
+        Intent launchIntent = activity.getPackageManager().getLaunchIntentForPackage(activity.getPackageName());
+        if (launchIntent == null) {
+            return;
+        }
+        Intent restartIntent = launchIntent.getComponent() != null
+            ? Intent.makeRestartActivityTask(launchIntent.getComponent())
+            : new Intent(launchIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        activity.finishAffinity();
+        activity.startActivity(restartIntent);
+        System.exit(0);
     }
 }

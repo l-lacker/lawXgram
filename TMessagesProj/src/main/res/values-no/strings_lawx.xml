@@ -104,4 +104,5 @@
     <string name="HideBusinessBotPanelAction">Skjul panel</string>
     <string name="BusinessBotPanelHiddenTitle">Botpanelet er skjult i alle chatter.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Du kan slå det på igjen i klientinnstillingene.</string>
+    <string name="RestartNow">Start på nytt nå</string>
 </resources>

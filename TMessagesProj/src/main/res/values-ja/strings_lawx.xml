@@ -325,4 +325,5 @@
     <string name="HideBusinessBotPanelAction">パネルを非表示</string>
     <string name="BusinessBotPanelHiddenTitle">ボットパネルはすべてのチャットで非表示になっています。</string>
     <string name="BusinessBotPanelHiddenSubtitle">クライアント設定から再度有効にできます。</string>
+    <string name="RestartNow">今すぐ再起動</string>
 </resources>

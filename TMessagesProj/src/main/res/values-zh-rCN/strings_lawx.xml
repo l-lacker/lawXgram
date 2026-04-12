@@ -328,4 +328,5 @@
     <string name="HideBusinessBotPanelAction">隐藏面板</string>
     <string name="BusinessBotPanelHiddenTitle">机器人面板已在所有聊天中隐藏。</string>
     <string name="BusinessBotPanelHiddenSubtitle">您可以在客户端设置中重新启用它。</string>
+    <string name="RestartNow">立即重启</string>
 </resources>

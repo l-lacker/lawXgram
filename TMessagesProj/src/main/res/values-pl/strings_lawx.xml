@@ -318,4 +318,5 @@
     <string name="HideBusinessBotPanelAction">Ukryj panel</string>
     <string name="BusinessBotPanelHiddenTitle">Panel bota jest ukryty we wszystkich czatach.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Możesz włączyć go ponownie w ustawieniach klienta.</string>
+    <string name="RestartNow">Uruchom ponownie</string>
 </resources>

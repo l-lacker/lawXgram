@@ -321,4 +321,5 @@
     <string name="HideBusinessBotPanelAction">Ocultar panel</string>
     <string name="BusinessBotPanelHiddenTitle">El panel del bot está oculto en todos los chats.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Puedes volver a activarlo en los ajustes del cliente.</string>
+    <string name="RestartNow">Reiniciar ahora</string>
 </resources>

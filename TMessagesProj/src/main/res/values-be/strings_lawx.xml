@@ -322,4 +322,5 @@
     <string name="HideBusinessBotPanelAction">Схаваць панэль</string>
     <string name="BusinessBotPanelHiddenTitle">Панэль бота схавана ва ўсіх чатах.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Вы можаце зноў уключыць яе ў наладах кліента.</string>
+    <string name="RestartNow">Перазапусціць</string>
 </resources>

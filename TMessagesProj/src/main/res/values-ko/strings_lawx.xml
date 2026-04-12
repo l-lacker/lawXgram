@@ -293,4 +293,5 @@
     <string name="HideBusinessBotPanelAction">패널 숨기기</string>
     <string name="BusinessBotPanelHiddenTitle">봇 패널이 모든 채팅에서 숨겨져 있습니다.</string>
     <string name="BusinessBotPanelHiddenSubtitle">클라이언트 설정에서 다시 켤 수 있습니다.</string>
+    <string name="RestartNow">지금 다시 시작</string>
 </resources>

@@ -288,4 +288,5 @@
     <string name="HideBusinessBotPanelAction">Panelni yashirish</string>
     <string name="BusinessBotPanelHiddenTitle">Bot paneli barcha chatlarda yashirilgan.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Uni klient sozlamalarida yana yoqishingiz mumkin.</string>
+    <string name="RestartNow">Hozir qayta ishga tushirish</string>
 </resources>

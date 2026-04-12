@@ -6,4 +6,5 @@
     <string name="HideBusinessBotPanelAction">Kaŝi panelon</string>
     <string name="BusinessBotPanelHiddenTitle">La bot-panelo estas kaŝita en ĉiuj babilejoj.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Vi povas reŝalti ĝin en la klientaj agordoj.</string>
+    <string name="RestartNow">Rekomenci nun</string>
 </resources>

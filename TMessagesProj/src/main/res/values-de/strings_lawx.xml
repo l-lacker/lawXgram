@@ -318,4 +318,5 @@
     <string name="HideBusinessBotPanelAction">Panel ausblenden</string>
     <string name="BusinessBotPanelHiddenTitle">Das Bot-Panel ist in allen Chats ausgeblendet.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Du kannst es in den Client-Einstellungen wieder aktivieren.</string>
+    <string name="RestartNow">Jetzt neu starten</string>
 </resources>

@@ -720,106 +720,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
 
         //RestrictedLanguagesSelectActivity.checkRestrictedLanguages(false);
-        if (Build.VERSION.SDK_INT >= 34 && LawxConfig.predictiveBackAnimation) {
-            if (onBackAnimationCallback == null) {
-                onBackAnimationCallback =  new OnBackAnimationCallback() {
-                    private boolean started = false;
-                    private boolean invoked = false;
-
-                    @Override
-                    public void onBackInvoked() {
-                        invoked = true;
-
-                        if (AndroidUtilities.isTablet()) {
-                            onBackPressed();
-                            return;
-                        }
-                        if (!onBackPressed(true))
-                            return;
-                        if (actionBarLayout != null) {
-                            actionBarLayout.onBackInvoked();
-                        } else {
-                            onBackPressed();
-                        }
-                    }
-
-                    @Override
-                    public void onBackStarted(@NonNull BackEvent backEvent) {
-                        started = true;
-                        invoked = false;
-                        predictiveBackStarted = false;
-                    }
-
-                    private void onBackStartedInternal(BackEvent backEvent) {
-                        if (AndroidUtilities.isTablet()) return;
-                        if (!onBackPressed(false)) return;
-                        if (actionBarLayout != null) {
-                            actionBarLayout.onBackStarted(backEvent.getTouchX(), backEvent.getTouchY());
-                        }
-                    }
-
-                    private static final float LAZY_START = 0.015f;
-                    private boolean predictiveBackStarted;
-                    private boolean predictiveBackInvoked;
-
-                    @Override
-                    public void onBackProgressed(@NonNull BackEvent backEvent) {
-                        if (started && invoked) return;
-
-                        final float progress = backEvent.getProgress();
-                        if (!predictiveBackStarted && progress > LAZY_START) {
-                            predictiveBackStarted = true;
-                            onBackStartedInternal(backEvent);
-                        }
-
-                        final float fixedProgress = Math.max(0, progress - LAZY_START) / (1 - LAZY_START);
-
-                        if (AndroidUtilities.isTablet()) return;
-                        if (actionBarLayout != null) {
-                            actionBarLayout.onBackProgress(fixedProgress);
-                        }
-                    }
-
-                    @Override
-                    public void onBackCancelled() {
-                        started = false;
-                        invoked = false;
-
-                        if (AndroidUtilities.isTablet()) return;
-                        if (actionBarLayout != null) {
-                            actionBarLayout.onBackCancelled();
-                        }
-                    }
-                };
-            }
-            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
-                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
-                (OnBackAnimationCallback) onBackAnimationCallback
-            );
-        } else if (Build.VERSION.SDK_INT >= 33) {
-            if (onBackInvokedCallback == null) {
-                onBackInvokedCallback = new OnBackInvokedCallback() {
-                    @Override
-                    public void onBackInvoked() {
-                        if (AndroidUtilities.isTablet()) {
-                            onBackPressed();
-                            return;
-                        }
-                        if (!onBackPressed(true))
-                            return;
-                        if (actionBarLayout != null) {
-                            actionBarLayout.onBackInvoked();
-                        } else {
-                            onBackPressed();
-                        }
-                    }
-                };
-            }
-            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
-                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
-                (OnBackInvokedCallback) onBackInvokedCallback
-            );
-        }
+        syncPredictiveBackCallbackMode();
 
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         //    refreshRateController = new RefreshRateController(this);
@@ -842,6 +743,149 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     private Object onBackAnimationCallback;
     private Object onBackInvokedCallback;
+    private boolean onBackAnimationCallbackRegistered;
+    private boolean onBackInvokedCallbackRegistered;
+
+    public void syncPredictiveBackCallbackMode() {
+        if (Build.VERSION.SDK_INT < 33 || isFinishing() || isDestroyed()) {
+            return;
+        }
+        unregisterBackInvokedCallbacks();
+        OnBackInvokedDispatcher dispatcher = getOnBackInvokedDispatcher();
+        if (Build.VERSION.SDK_INT >= 34 && LawxConfig.predictiveBackAnimation) {
+            if (onBackAnimationCallback == null) {
+                onBackAnimationCallback = new OnBackAnimationCallback() {
+                    private boolean started = false;
+                    private boolean invoked = false;
+
+                    @Override
+                    public void onBackInvoked() {
+                        invoked = true;
+
+                        if (AndroidUtilities.isTablet()) {
+                            onBackPressed();
+                            return;
+                        }
+                        if (!onBackPressed(true)) {
+                            return;
+                        }
+                        if (actionBarLayout != null) {
+                            actionBarLayout.onBackInvoked();
+                        } else {
+                            onBackPressed();
+                        }
+                    }
+
+                    @Override
+                    public void onBackStarted(@NonNull BackEvent backEvent) {
+                        started = true;
+                        invoked = false;
+                        predictiveBackStarted = false;
+                    }
+
+                    private void onBackStartedInternal(BackEvent backEvent) {
+                        if (AndroidUtilities.isTablet()) {
+                            return;
+                        }
+                        if (!onBackPressed(false)) {
+                            return;
+                        }
+                        if (actionBarLayout != null) {
+                            actionBarLayout.onBackStarted(backEvent.getTouchX(), backEvent.getTouchY());
+                        }
+                    }
+
+                    private static final float LAZY_START = 0.015f;
+                    private boolean predictiveBackStarted;
+
+                    @Override
+                    public void onBackProgressed(@NonNull BackEvent backEvent) {
+                        if (started && invoked) {
+                            return;
+                        }
+
+                        final float progress = backEvent.getProgress();
+                        if (!predictiveBackStarted && progress > LAZY_START) {
+                            predictiveBackStarted = true;
+                            onBackStartedInternal(backEvent);
+                        }
+
+                        final float fixedProgress = Math.max(0, progress - LAZY_START) / (1 - LAZY_START);
+
+                        if (AndroidUtilities.isTablet()) {
+                            return;
+                        }
+                        if (actionBarLayout != null) {
+                            actionBarLayout.onBackProgress(fixedProgress);
+                        }
+                    }
+
+                    @Override
+                    public void onBackCancelled() {
+                        started = false;
+                        invoked = false;
+
+                        if (AndroidUtilities.isTablet()) {
+                            return;
+                        }
+                        if (actionBarLayout != null) {
+                            actionBarLayout.onBackCancelled();
+                        }
+                    }
+                };
+            }
+            dispatcher.registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                (OnBackAnimationCallback) onBackAnimationCallback
+            );
+            onBackAnimationCallbackRegistered = true;
+            return;
+        }
+        if (onBackInvokedCallback == null) {
+            onBackInvokedCallback = new OnBackInvokedCallback() {
+                @Override
+                public void onBackInvoked() {
+                    if (AndroidUtilities.isTablet()) {
+                        onBackPressed();
+                        return;
+                    }
+                    if (!onBackPressed(true)) {
+                        return;
+                    }
+                    if (actionBarLayout != null) {
+                        actionBarLayout.onBackInvoked();
+                    } else {
+                        onBackPressed();
+                    }
+                }
+            };
+        }
+        dispatcher.registerOnBackInvokedCallback(
+            OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+            (OnBackInvokedCallback) onBackInvokedCallback
+        );
+        onBackInvokedCallbackRegistered = true;
+    }
+
+    private void unregisterBackInvokedCallbacks() {
+        if (Build.VERSION.SDK_INT < 33) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 34 && onBackAnimationCallbackRegistered && onBackAnimationCallback instanceof OnBackAnimationCallback) {
+            try {
+                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((OnBackAnimationCallback) onBackAnimationCallback);
+            } catch (Exception ignore) {
+            }
+            onBackAnimationCallbackRegistered = false;
+        }
+        if (onBackInvokedCallbackRegistered && onBackInvokedCallback instanceof OnBackInvokedCallback) {
+            try {
+                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((OnBackInvokedCallback) onBackInvokedCallback);
+            } catch (Exception ignore) {
+            }
+            onBackInvokedCallbackRegistered = false;
+        }
+    }
 
     public static void showAttachMenuBot(LaunchActivity launchActivity, int currentAccount, TLRPC.TL_attachMenuBot attachMenuBot, String startApp, boolean sidemenu) {
         BaseFragment lastFragment = getLastFragment();
@@ -6739,15 +6783,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         } catch (Exception e) {
             FileLog.e(e);
         }
-        if (Build.VERSION.SDK_INT >= 34) {
-            if (onBackAnimationCallback instanceof OnBackAnimationCallback) {
-                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((OnBackAnimationCallback) onBackAnimationCallback);
-            }
-        } else if (Build.VERSION.SDK_INT >= 33) {
-            if (onBackAnimationCallback instanceof OnBackInvokedCallback) {
-                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((OnBackInvokedCallback) onBackInvokedCallback);
-            }
-        }
+        unregisterBackInvokedCallbacks();
         clearFragments();
         super.onDestroy();
         onFinish();

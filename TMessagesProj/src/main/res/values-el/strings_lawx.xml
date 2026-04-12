@@ -321,4 +321,5 @@
     <string name="HideBusinessBotPanelAction">Απόκρυψη πάνελ</string>
     <string name="BusinessBotPanelHiddenTitle">Το πάνελ του bot είναι κρυφό σε όλες τις συνομιλίες.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Μπορείτε να το ενεργοποιήσετε ξανά στις ρυθμίσεις πελάτη.</string>
+    <string name="RestartNow">Επανεκκίνηση τώρα</string>
 </resources>

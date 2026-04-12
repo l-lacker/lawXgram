@@ -294,4 +294,5 @@
     <string name="HideBusinessBotPanelAction">Masquer le panneau</string>
     <string name="BusinessBotPanelHiddenTitle">Le panneau du bot est masqué dans toutes les discussions.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Vous pouvez le réactiver dans les paramètres du client.</string>
+    <string name="RestartNow">Redémarrer maintenant</string>
 </resources>

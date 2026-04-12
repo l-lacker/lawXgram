@@ -1339,6 +1339,10 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         return localInstance;
     }
 
+    public static MediaController getInstanceIfCreated() {
+        return Instance;
+    }
+
     public MediaController() {
         recordQueue = new DispatchQueue("recordQueue");
         recordQueue.setPriority(Thread.MAX_PRIORITY);
@@ -1381,8 +1385,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                     gravitySensor = null;
                 }
                 proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-                PowerManager powerManager = (PowerManager) ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE);
-                proximityWakeLock = LawxConfig.disableProximityEvents ? null : powerManager.newWakeLock(0x00000020, "telegram:proximity_lock");
+                ensureProximityWakeLock();
             } catch (Exception e) {
                 FileLog.e(e);
             }
@@ -1470,6 +1473,46 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             contentResolver.registerContentObserver(MediaStore.Video.Media.INTERNAL_CONTENT_URI, true, new GalleryObserverInternal());
         } catch (Exception e) {
             FileLog.e(e);
+        }
+    }
+
+    private void ensureProximityWakeLock() {
+        if (LawxConfig.disableProximityEvents || proximityWakeLock != null) {
+            return;
+        }
+        PowerManager powerManager = (PowerManager) ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE);
+        if (powerManager != null) {
+            proximityWakeLock = powerManager.newWakeLock(0x00000020, "telegram:proximity_lock");
+        }
+    }
+
+    public void syncDisableProximityEvents() {
+        if (LawxConfig.disableProximityEvents) {
+            boolean wasUsingFrontSpeaker = useFrontSpeaker;
+            boolean stopRecording = raiseToEarRecord;
+            ChatActivity currentRaiseChat = raiseChat;
+            proximityTouched = false;
+            proximityHasDifferentValues = false;
+            lastProximityValue = -100;
+            if (currentRaiseChat != null) {
+                stopRaiseToEarSensors(currentRaiseChat, false, stopRecording);
+            } else if (stopRecording) {
+                raiseToSpeakUpdated(false);
+                raiseToEarRecord = false;
+                ignoreOnPause = false;
+            }
+            if (wasUsingFrontSpeaker) {
+                useFrontSpeaker = false;
+                startAudioAgain(true);
+            }
+            if (proximityWakeLock != null && proximityWakeLock.isHeld()) {
+                proximityWakeLock.release();
+            }
+            return;
+        }
+        ensureProximityWakeLock();
+        if (raiseChat != null && !sensorsStarted) {
+            startRaiseToEarSensors(raiseChat);
         }
     }
 
@@ -2133,7 +2176,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         final boolean proximityDetected = proximityTouched;
         final boolean accelerometerDetected = raisedToBack == minCount || accelerometerVertical || System.currentTimeMillis() - lastAccelerometerDetected < 60;
         final boolean alreadyPlaying = useFrontSpeaker || raiseToEarRecord;
-        final boolean wakelockAllowed = (
+        final boolean wakelockAllowed = !LawxConfig.disableProximityEvents && (
             accelerometerDetected ||
             alreadyPlaying
         ) && !forbidRaiseToListen() && !VoIPService.isAnyKindOfCallActive() && (allowRecording || allowListening) && !PhotoViewer.getInstance().isVisible();
@@ -2316,7 +2359,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
     }
 
     public void startRaiseToEarSensors(ChatActivity chatActivity) {
-        if (chatActivity == null || accelerometerSensor == null && (gravitySensor == null || linearAcceleration == null) || proximitySensor == null) {
+        if (LawxConfig.disableProximityEvents || chatActivity == null || accelerometerSensor == null && (gravitySensor == null || linearAcceleration == null) || proximitySensor == null) {
             return;
         }
         if (!SharedConfig.enabledRaiseTo(false) && (playingMessageObject == null || !playingMessageObject.isVoice() && !playingMessageObject.isRoundVideo())) {

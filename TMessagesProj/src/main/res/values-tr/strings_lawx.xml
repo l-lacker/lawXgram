@@ -315,4 +315,5 @@
     <string name="HideBusinessBotPanelAction">Paneli gizle</string>
     <string name="BusinessBotPanelHiddenTitle">Bot paneli tüm sohbetlerde gizli.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Bunu istemci ayarlarından yeniden etkinleştirebilirsiniz.</string>
+    <string name="RestartNow">Şimdi yeniden başlat</string>
 </resources>

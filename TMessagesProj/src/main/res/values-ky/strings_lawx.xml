@@ -10,4 +10,5 @@
     <string name="HideBusinessBotPanelAction">Панелди жашыруу</string>
     <string name="BusinessBotPanelHiddenTitle">Бот панели бардык чаттарда жашырылган.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Аны клиент жөндөөлөрүнөн кайра күйгүзө аласыз.</string>
+    <string name="RestartNow">Азыр кайра иштетүү</string>
 </resources>

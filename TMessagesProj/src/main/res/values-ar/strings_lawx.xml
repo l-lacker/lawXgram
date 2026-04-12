@@ -323,4 +323,5 @@
     <string name="HideBusinessBotPanelAction">إخفاء اللوحة</string>
     <string name="BusinessBotPanelHiddenTitle">لوحة البوت مخفية في جميع الدردشات.</string>
     <string name="BusinessBotPanelHiddenSubtitle">يمكنك تفعيله مرة أخرى من إعدادات العميل.</string>
+    <string name="RestartNow">أعد التشغيل الآن</string>
 </resources>

@@ -324,4 +324,5 @@
     <string name="HideBusinessBotPanelAction">Сакриј панел</string>
     <string name="BusinessBotPanelHiddenTitle">Панел бота је сакривен у свим ћаскањима.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Можете поново да га укључите у подешавањима клијента.</string>
+    <string name="RestartNow">Поново покрени</string>
 </resources>

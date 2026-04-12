@@ -314,4 +314,5 @@
     <string name="HideBusinessBotPanelAction">Panel elrejtése</string>
     <string name="BusinessBotPanelHiddenTitle">A botpanel minden csevegésben rejtve van.</string>
     <string name="BusinessBotPanelHiddenSubtitle">A kliens beállításaiban újra bekapcsolhatod.</string>
+    <string name="RestartNow">Újraindítás most</string>
 </resources>

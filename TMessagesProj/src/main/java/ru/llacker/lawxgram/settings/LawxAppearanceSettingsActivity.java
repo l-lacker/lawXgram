@@ -184,7 +184,9 @@ public class LawxAppearanceSettingsActivity extends BaseLawxSettingsActivity imp
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(LawxConfig.predictiveBackAnimation);
             }
-            showRestartBulletin();
+            if (getParentActivity() instanceof LaunchActivity launchActivity) {
+                launchActivity.syncPredictiveBackCallbackMode();
+            }
         } else if (id == hideBottomNavigationBarRow) {
             LawxConfig.toggleHideBottomNavigationBar();
             if (view instanceof TextCheckCell) {

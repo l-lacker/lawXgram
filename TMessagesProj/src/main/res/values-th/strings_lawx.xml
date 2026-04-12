@@ -319,4 +319,5 @@
     <string name="HideBusinessBotPanelAction">ซ่อนแผง</string>
     <string name="BusinessBotPanelHiddenTitle">แผงบอทถูกซ่อนในทุกแชท</string>
     <string name="BusinessBotPanelHiddenSubtitle">คุณสามารถเปิดใช้งานอีกครั้งได้ในการตั้งค่าไคลเอนต์</string>
+    <string name="RestartNow">เริ่มใหม่ทันที</string>
 </resources>

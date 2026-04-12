@@ -6,4 +6,5 @@
     <string name="HideBusinessBotPanelAction">Versteek paneel</string>
     <string name="BusinessBotPanelHiddenTitle">Die bot-paneel is in alle kletse versteek.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Jy kan dit weer in die klientinstellings aktiveer.</string>
+    <string name="RestartNow">Herbegin nou</string>
 </resources>

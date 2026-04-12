@@ -4899,18 +4899,7 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 			});
 		}
 
-		SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-		Sensor proximity = sm.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-		try {
-			if (!LawxConfig.disableProximityEvents && proximity != null) {
-				proximityWakelock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PROXIMITY_SCREEN_OFF_WAKE_LOCK, "telegram-voip-prx");
-				sm.registerListener(this, proximity, SensorManager.SENSOR_DELAY_NORMAL);
-			}
-		} catch (Exception x) {
-			if (BuildVars.LOGS_ENABLED) {
-				FileLog.e("Error initializing proximity sensor", x);
-			}
-		}
+		syncDisableProximityEvents();
 	}
 
 	private void fetchBluetoothDeviceName() {
@@ -4932,6 +4921,9 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		lastSensorEvent = event;
+		if (LawxConfig.disableProximityEvents) {
+			return;
+		}
 		if (unmutedByHold || remoteVideoState == Instance.VIDEO_STATE_ACTIVE || videoState[CAPTURE_DEVICE_CAMERA] == Instance.VIDEO_STATE_ACTIVE) {
 			return;
 		}
@@ -4960,13 +4952,47 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 			}
 			isProximityNear = newIsNear;
 			try {
-				if (isProximityNear) {
-					proximityWakelock.acquire();
-				} else {
-					proximityWakelock.release(1); // this is non-public API before L
+				if (proximityWakelock != null) {
+					if (isProximityNear) {
+						proximityWakelock.acquire();
+					} else {
+						proximityWakelock.release(1); // this is non-public API before L
+					}
 				}
 			} catch (Exception x) {
 				FileLog.e(x);
+			}
+		}
+	}
+
+	public void syncDisableProximityEvents() {
+		SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+		if (sm == null) {
+			return;
+		}
+		Sensor proximity = sm.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+		if (proximity != null) {
+			sm.unregisterListener(this, proximity);
+		}
+		if (LawxConfig.disableProximityEvents || proximity == null) {
+			checkIsNear(false);
+			NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.nearEarEvent, false);
+			return;
+		}
+		try {
+			if (proximityWakelock == null) {
+				PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+				if (powerManager != null) {
+					proximityWakelock = powerManager.newWakeLock(PROXIMITY_SCREEN_OFF_WAKE_LOCK, "telegram-voip-prx");
+				}
+			}
+			sm.registerListener(this, proximity, SensorManager.SENSOR_DELAY_NORMAL);
+			if (lastSensorEvent != null) {
+				onSensorChanged(lastSensorEvent);
+			}
+		} catch (Exception x) {
+			if (BuildVars.LOGS_ENABLED) {
+				FileLog.e("Error initializing proximity sensor", x);
 			}
 		}
 	}

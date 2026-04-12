@@ -64,4 +64,5 @@
     <string name="HideBusinessBotPanelAction">පැනලය සඟවන්න</string>
     <string name="BusinessBotPanelHiddenTitle">බොට් පැනලය සියලුම චැට්වල සඟවා ඇත.</string>
     <string name="BusinessBotPanelHiddenSubtitle">ඔබට එය නැවත ක්ලයන්ට් සැකසුම් තුළ සක්‍රිය කළ හැක.</string>
+    <string name="RestartNow">දැන් නැවත අරඹන්න</string>
 </resources>

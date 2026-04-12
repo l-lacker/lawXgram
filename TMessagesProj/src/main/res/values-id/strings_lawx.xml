@@ -290,4 +290,5 @@
     <string name="HideBusinessBotPanelAction">Sembunyikan panel</string>
     <string name="BusinessBotPanelHiddenTitle">Panel bot disembunyikan di semua chat.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Anda dapat mengaktifkannya lagi di pengaturan klien.</string>
+    <string name="RestartNow">Mulai ulang sekarang</string>
 </resources>

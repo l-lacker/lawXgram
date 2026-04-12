@@ -333,4 +333,5 @@
 
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Accessibility settings</string>
+    <string name="RestartNow">Restart now</string>
 </resources>

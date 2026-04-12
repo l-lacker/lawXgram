@@ -34,6 +34,7 @@ import org.telegram.ui.Cells.TextCheckbox2Cell;
 import org.telegram.ui.Cells.TextDetailSettingsCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.ChatActivity;
+import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.ItemOptions;
@@ -336,7 +337,14 @@ public abstract class BaseLawxSettingsActivity extends BaseFragment {
     }
 
     protected void showRestartBulletin() {
-        BulletinFactory.of(this).createErrorBulletin(LocaleController.formatString(R.string.RestartAppToTakeEffect)).show();
+        BulletinFactory.of(this).createSimpleBulletin(
+            R.raw.chats_infotip,
+            LocaleController.getString(R.string.RestartAppToTakeEffect),
+            LocaleController.getString(R.string.RestartNow),
+            Bulletin.DURATION_PROLONG,
+            false,
+            () -> AndroidUtilities.runOnUIThread(() -> SettingsHelper.restartApplication(getParentActivity()), 120)
+        ).show();
     }
 
     protected void updateRows() {

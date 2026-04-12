@@ -197,4 +197,5 @@
     <string name="HideBusinessBotPanelAction">Paneel verbergen</string>
     <string name="BusinessBotPanelHiddenTitle">Het botpaneel is in alle chats verborgen.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Je kunt het opnieuw inschakelen in de clientinstellingen.</string>
+    <string name="RestartNow">Nu opnieuw starten</string>
 </resources>

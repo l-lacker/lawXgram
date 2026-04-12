@@ -23,4 +23,5 @@
     <string name="HideBusinessBotPanelAction">Piilota paneeli</string>
     <string name="BusinessBotPanelHiddenTitle">Bottipaneeli on piilotettu kaikissa keskusteluissa.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Voit ottaa sen uudelleen käyttöön asiakasasetuksissa.</string>
+    <string name="RestartNow">Käynnistä uudelleen nyt</string>
 </resources>

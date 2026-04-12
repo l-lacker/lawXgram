@@ -17,8 +17,10 @@ import androidx.core.graphics.ColorUtils;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MediaController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
+import org.telegram.messenger.voip.VoIPService;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
@@ -240,7 +242,14 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(LawxConfig.disableProximityEvents);
             }
-            showRestartBulletin();
+            MediaController mediaController = MediaController.getInstanceIfCreated();
+            if (mediaController != null) {
+                mediaController.syncDisableProximityEvents();
+            }
+            VoIPService voIPService = VoIPService.getSharedInstance();
+            if (voIPService != null) {
+                voIPService.syncDisableProximityEvents();
+            }
         } else if (id == tryToOpenAllLinksInIVRow) {
             LawxConfig.toggleTryToOpenAllLinksInIV();
             if (view instanceof TextCheckCell) {
