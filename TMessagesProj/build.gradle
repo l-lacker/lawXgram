@@ -62,7 +62,7 @@ dependencies {
     implementation 'androidx.interpolator:interpolator:1.0.0'
     implementation 'androidx.biometric:biometric:1.1.0'
 
-    implementation 'com.google.android.gms:play-services-cast-framework:22.3.0'
+    implementation 'com.google.android.gms:play-services-cast-framework:22.3.1'
     implementation 'androidx.mediarouter:mediarouter:1.8.1'
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
 
@@ -163,11 +163,11 @@ android {
             buildConfigField("String", "LAWX_TWPIC_BOT_USERNAME", lawxTwpicBotUsername)
         }
     }
-    namespace 'org.telegram.messenger'
+    namespace = 'org.telegram.messenger'
 
     externalNativeBuild {
         cmake {
-            version '4.0.0+'
+            version = '4.0.0+'
         }
     }
 

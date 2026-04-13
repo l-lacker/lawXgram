@@ -5,10 +5,10 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class TlSchemaJson(
-    @Json(name = "constructors")
+    @param:Json(name = "constructors")
     val constructors: List<JsonTlConstructor>,
 
-    @Json(name = "methods")
+    @param:Json(name = "methods")
     val methods: List<JsonTlMethod>,
 ) {
     sealed class JsonTlObject {
@@ -21,46 +21,46 @@ data class TlSchemaJson(
 
     @JsonClass(generateAdapter = true)
     data class JsonTlMethod(
-        @Json(name = "id")
+        @param:Json(name = "id")
         override val magic: String,
 
-        @Json(name = "method")
+        @param:Json(name = "method")
         override val name: String,
 
-        @Json(name = "params")
+        @param:Json(name = "params")
         override val params: List<JsonTlConstructorParam>,
 
-        @Json(name = "type")
+        @param:Json(name = "type")
         override val type: String,
 
-        @Json(name = "layer")
+        @param:Json(name = "layer")
         override val layer: Int? = null
     ): JsonTlObject()
 
     @JsonClass(generateAdapter = true)
     data class JsonTlConstructor(
-        @Json(name = "id")
+        @param:Json(name = "id")
         override val magic: String,
 
-        @Json(name = "predicate")
+        @param:Json(name = "predicate")
         override val name: String,
 
-        @Json(name = "params")
+        @param:Json(name = "params")
         override val params: List<JsonTlConstructorParam>,
 
-        @Json(name = "type")
+        @param:Json(name = "type")
         override val type: String,
 
-        @Json(name = "layer")
+        @param:Json(name = "layer")
         override val layer: Int? = null
     ): JsonTlObject()
 
     @JsonClass(generateAdapter = true)
     data class JsonTlConstructorParam(
-        @Json(name = "name")
+        @param:Json(name = "name")
         val name: String,
 
-        @Json(name = "type")
+        @param:Json(name = "type")
         val type: String
     )
 }

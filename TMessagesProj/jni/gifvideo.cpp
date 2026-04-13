@@ -44,7 +44,7 @@ jmethodID jclass_AnimatedFileDrawableStream_isCanceled;
 jmethodID jclass_AnimatedFileDrawableStream_isFinishedLoadingFile;
 jmethodID jclass_AnimatedFileDrawableStream_getFinishedFilePath;
 
-typedef struct VideoInfo {
+struct VideoInfo {
 
     ~VideoInfo() {
         if (video_dec_ctx) {
@@ -148,18 +148,6 @@ void custom_log(void *ptr, int level, const char* fmt, va_list vl){
     LOGE("%s", line);
 }
 
-static enum AVPixelFormat get_format(AVCodecContext *ctx,
-                                        const enum AVPixelFormat *pix_fmts)
-{
-    const enum AVPixelFormat *p;
-
-    for (p = pix_fmts; *p != -1; p++) {
-        LOGE("available format %d", p);
-    }
-
-    return pix_fmts[0];
-}
-
 int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx, enum AVMediaType type) {
     int ret, stream_index;
     AVStream *st;
@@ -261,7 +249,7 @@ void requestFd(VideoInfo *info) {
     if (attached) {
         javaVm->DetachCurrentThread();
     }
-    info->fd = open(info->src, O_RDONLY, S_IRUSR);
+    info->fd = open(info->src, O_RDONLY);
 }
 
 int readCallback(void *opaque, uint8_t *buf, int buf_size) {
@@ -392,7 +380,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_telegram_ui_Components_AnimatedFileDr
         info->fmt_ctx->pb = avio;
 
         if ((ret = avformat_open_input(&info->fmt_ctx, nullptr, nullptr, nullptr)) < 0) {
-            LOGE("can't open source file at offset %s (offset=%lld), %s", info->src, fileOffset, av_err2str(ret));
+            LOGE("can't open source file at offset %s (offset=%lld), %s", info->src, (long long) fileOffset, av_err2str(ret));
             info->fmt_ctx = nullptr;
             if (avio) {
                 av_freep(&avio->buffer);
@@ -512,7 +500,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_org_telegram_ui_Components_AnimatedFileD
         DEBUG_REF("gifvideo.cpp new stream");
         info->stream = env->NewGlobalRef(stream);
         info->account = account;
-        info->fd = open(info->src, O_RDONLY, S_IRUSR);
+        info->fd = open(info->src, O_RDONLY);
 
         info->ioBuffer = (unsigned char *) av_malloc(64 * 1024);
         info->ioContext = avio_alloc_context(info->ioBuffer, 64 * 1024, 0, info, readCallback, nullptr, seekCallback);
@@ -618,7 +606,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_org_telegram_ui_Components_AnimatedFileD
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_telegram_ui_Components_AnimatedFileDrawable_destroyDecoder(JNIEnv *env, jclass clazz, jlong ptr) {
-    if (ptr == NULL) {
+    if (ptr == 0) {
         return;
     }
     VideoInfo *info = (VideoInfo *) (intptr_t) ptr;
@@ -643,7 +631,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_telegram_ui_Components_AnimatedFileDr
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_telegram_ui_Components_AnimatedFileDrawable_stopDecoder(JNIEnv *env, jclass clazz, jlong ptr) {
-    if (ptr == NULL) {
+    if (ptr == 0) {
         return;
     }
     VideoInfo *info = (VideoInfo *) (intptr_t) ptr;
@@ -651,7 +639,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_telegram_ui_Components_AnimatedFileDr
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_telegram_ui_Components_AnimatedFileDrawable_prepareToSeek(JNIEnv *env, jclass clazz, jlong ptr) {
-    if (ptr == NULL) {
+    if (ptr == 0) {
         return;
     }
     VideoInfo *info = (VideoInfo *) (intptr_t) ptr;
@@ -665,7 +653,7 @@ void push_time(JNIEnv *env, VideoInfo* info, jintArray data) {
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_telegram_ui_Components_AnimatedFileDrawable_seekToMs(JNIEnv *env, jclass clazz, jlong ptr, jlong ms, jintArray data, jboolean precise) {
-    if (ptr == NULL) {
+    if (ptr == 0) {
         return;
     }
     VideoInfo *info = (VideoInfo *) (intptr_t) ptr;
@@ -808,7 +796,7 @@ static inline void writeFrameToBitmap(JNIEnv *env, VideoInfo *info, jintArray da
 }
 
 extern "C" JNIEXPORT int JNICALL Java_org_telegram_ui_Components_AnimatedFileDrawable_getFrameAtTime(JNIEnv *env, jclass clazz, jlong ptr, jlong ms, jobject bitmap, jintArray data, jint stride) {
-    if (ptr == NULL || bitmap == nullptr || data == nullptr) {
+    if (ptr == 0 || bitmap == nullptr || data == nullptr) {
         return 0;
     }
     VideoInfo *info = (VideoInfo *) (intptr_t) ptr;
@@ -908,7 +896,7 @@ extern "C" JNIEXPORT int JNICALL Java_org_telegram_ui_Components_AnimatedFileDra
 }
 
 extern "C" JNIEXPORT jint JNICALL Java_org_telegram_ui_Components_AnimatedFileDrawable_getVideoFrame(JNIEnv *env, jclass clazz, jlong ptr, jobject bitmap, jintArray data, jint stride, jboolean preview, jfloat start_time, jfloat end_time, jboolean loop) {
-    if (ptr == NULL) {
+    if (ptr == 0) {
         return 0;
     }
     //int64_t time = ConnectionsManager::getInstance(0).getCurrentTimeMonotonicMillis();
