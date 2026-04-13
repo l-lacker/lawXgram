@@ -4,5 +4,9 @@
     android:installLocation="auto">
 
     <application android:name="org.telegram.messenger.ApplicationLoaderImpl" tools:replace="name">
+        <provider
+            android:name="io.sentry.android.core.SentryInitProvider"
+            android:authorities="${applicationId}.SentryInitProvider"
+            tools:node="remove" />
     </application>
 </manifest>
