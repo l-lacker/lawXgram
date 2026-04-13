@@ -9,10 +9,32 @@ def hasGoogleServicesConfig = file('src/debug/google-services.json').exists() ||
         file('src/release/google-services.json').exists() ||
         file('google-services.json').exists()
 
+Properties localProperties = new Properties()
+if (project.rootProject.file('local.properties').exists()) {
+    localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+}
+
+Properties sentryProperties = new Properties()
+[file('sentry.properties'), project.rootProject.file('sentry.properties')].each { sentryPropertiesFile ->
+    if (sentryPropertiesFile.exists()) {
+        sentryProperties.load(sentryPropertiesFile.newDataInputStream())
+    }
+}
+
+def hasText = { value -> value != null && !value.trim().isEmpty() }
+def sentryOrg = providers.environmentVariable('SENTRY_ORG').orNull ?: sentryProperties.getProperty('defaults.org')
+def sentryProject = providers.environmentVariable('SENTRY_PROJECT').orNull ?: sentryProperties.getProperty('defaults.project')
+def sentryAuthToken = providers.environmentVariable('SENTRY_AUTH_TOKEN').orNull ?: sentryProperties.getProperty('auth.token')
+def hasSentryUploadConfig = hasText(sentryOrg) && hasText(sentryProject) && hasText(sentryAuthToken)
+
 if (hasGoogleServicesConfig) {
     apply plugin: 'com.google.gms.google-services'
 } else {
     logger.lifecycle('google-services.json not found, skipping Google Services plugin for local builds')
+}
+
+if (!hasSentryUploadConfig) {
+    logger.lifecycle('Sentry upload config not found, skipping Sentry artifact uploads for local builds')
 }
 
 dependencies {
@@ -20,9 +42,12 @@ dependencies {
 }
 
 sentry {
-    uploadNativeSymbols = true
-    includeSourceContext = true
-    additionalSourceDirsForSourceContext = [ '../TMessagesProj/src/main/java' ]
+    includeProguardMapping = hasSentryUploadConfig
+    autoUploadProguardMapping = hasSentryUploadConfig
+    uploadNativeSymbols = hasSentryUploadConfig
+    autoUploadNativeSymbols = hasSentryUploadConfig
+    includeSourceContext = hasSentryUploadConfig
+    additionalSourceDirsForSourceContext = hasSentryUploadConfig ? [ '../TMessagesProj/src/main/java' ] : []
     autoInstallation {
         enabled = false
     }
@@ -36,11 +61,6 @@ android {
         resources {
             excludes += '**'
         }
-    }
-
-    Properties localProperties = new Properties()
-    if (project.rootProject.file('local.properties').exists()) {
-        localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
     }
 
     signingConfigs {
