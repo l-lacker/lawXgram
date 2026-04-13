@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="splash_screen_duration">520</integer>
+    <color name="lawx_splash_circle_background">#5A7594</color>
 </resources>

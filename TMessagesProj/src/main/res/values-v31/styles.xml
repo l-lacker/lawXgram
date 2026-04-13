@@ -28,7 +28,8 @@
         <item name="android:navigationBarColor">#000000</item>
         <item name="android:textViewStyle">@style/MyTextViewStyle</item>
         <item name="android:forceDarkAllowed">false</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/lawx_splash_circle_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/lawx_splash_animated_icon</item>
         <item name="android:windowSplashScreenAnimationDuration">@integer/splash_screen_duration</item>
         <item name="android:windowSplashScreenBackground">?android:windowBackground</item>
     </style>
