@@ -65,6 +65,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.WeakHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BotLocation {
 
@@ -411,34 +412,39 @@ public class BotLocation {
             return;
         }
 
-        try {
-            final LocationListener[] listener = new LocationListener[1];
-            final boolean[] done = {false};
-            final Runnable timeoutRunnable = () -> {
-                if (done[0]) {
-                    return;
+        final AtomicBoolean finished = new AtomicBoolean();
+        final LocationListener[] listener = new LocationListener[1];
+        final Runnable[] timeoutRunnable = new Runnable[1];
+        final Utilities.Callback<Location> finish = location -> {
+            if (!finished.compareAndSet(false, true)) {
+                return;
+            }
+            if (timeoutRunnable[0] != null) {
+                AndroidUtilities.cancelRunOnUIThread(timeoutRunnable[0]);
+                timeoutRunnable[0] = null;
+            }
+            if (listener[0] != null) {
+                try {
+                    lm.removeUpdates(listener[0]);
+                } catch (Exception ignore) {
                 }
-                done[0] = true;
-                lm.removeUpdates(listener[0]);
-                whenDone.run(locationObject(null));
-            };
+                listener[0] = null;
+            }
+            whenDone.run(locationObject(location));
+        };
+        try {
             listener[0] = new LocationListener() {
                 @Override
                 public void onLocationChanged(@NonNull Location location) {
-                    if (done[0]) {
-                        return;
-                    }
-                    done[0] = true;
-                    AndroidUtilities.cancelRunOnUIThread(timeoutRunnable);
-                    lm.removeUpdates(listener[0]);
-                    whenDone.run(locationObject(location));
+                    finish.run(location);
                 }
             };
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, listener[0]);
-            AndroidUtilities.runOnUIThread(timeoutRunnable, 10000);
+            timeoutRunnable[0] = () -> finish.run(null);
+            AndroidUtilities.runOnUIThread(timeoutRunnable[0], 15_000);
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, listener[0]);
         } catch (Exception e) {
             FileLog.e(e);
-            whenDone.run(locationObject(null));
+            finish.run(null);
         }
     }
 

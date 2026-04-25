@@ -30,7 +30,7 @@ import java.util.Set;
 
 public class LawxLocationSource implements LocationSource {
     private static final long LOCATION_INTERVAL_MS = 1000;
-    private static final long LOCATION_FASTEST_INTERVAL_MS = 500;
+    private static final long LOCATION_FASTEST_INTERVAL_MS = 1000;
 
     public final static Set<Integer> recent = Collections.synchronizedSet(Collections.newSetFromMap(new Cache<>()));
     private boolean checkPermission = true;
@@ -90,6 +90,7 @@ public class LawxLocationSource implements LocationSource {
         this.onLocationChangedListener = onLocationChangedListener;
         LocationRequest.Builder builder = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_INTERVAL_MS)
                 .setMinUpdateIntervalMillis(LOCATION_FASTEST_INTERVAL_MS);
+        LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(callback);
         LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(builder.build(), callback, Looper.getMainLooper());
     }
 

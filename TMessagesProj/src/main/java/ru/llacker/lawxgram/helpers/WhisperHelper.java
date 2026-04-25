@@ -246,13 +246,17 @@ public class WhisperHelper {
 
     public static void requestWorkersAi(String path, boolean video, BiConsumer<String, Exception> callback) {
         if (TextUtils.isEmpty(LawxConfig.cfAccountID) || TextUtils.isEmpty(LawxConfig.cfApiToken)) {
-            callback.accept(null, new Exception(LocaleController.getString(R.string.CloudflareCredentialsNotSet)));
+            runCallback(callback, null, new Exception(LocaleController.getString(R.string.CloudflareCredentialsNotSet)));
             return;
         }
         executorService.submit(() -> {
             File audioPath;
+            File audioFile = null;
             if (video) {
-                var audioFile = new File(path + ".m4a");
+                audioFile = new File(path + ".m4a");
+                if (audioFile.exists() && !audioFile.delete()) {
+                    FileLog.e("can't delete old extracted audio " + audioFile);
+                }
                 try {
                     extractAudio(path, audioFile.getAbsolutePath());
                 } catch (IOException e) {
@@ -266,8 +270,12 @@ public class WhisperHelper {
             try {
                 audio = Files.readAllBytes(audioPath.toPath());
             } catch (IOException e) {
-                callback.accept(null, e);
+                runCallback(callback, null, e);
                 return;
+            } finally {
+                if (audioFile != null && audioPath == audioFile && audioFile.exists() && !audioFile.delete()) {
+                    FileLog.e("can't delete extracted audio " + audioFile);
+                }
             }
             var payload = new WhisperRequest();
             payload.audio = Base64.encodeToString(audio, Base64.NO_WRAP);
@@ -278,18 +286,29 @@ public class WhisperHelper {
                     .header("Authorization", "Bearer " + LawxConfig.cfApiToken)
                     .post(RequestBody.create(gson.toJson(payload), MediaType.get("application/json")));
             try (var response = client.newCall(request.build()).execute()) {
-                var body = response.body().string();
+                var responseBody = response.body();
+                if (responseBody == null) {
+                    runCallback(callback, null, new Exception("EMPTY_RESPONSE"));
+                    return;
+                }
+                var body = responseBody.string();
                 var whisperResponse = gson.fromJson(body, WhisperResponse.class);
-                if (whisperResponse.success && whisperResponse.result != null) {
-                    callback.accept(whisperResponse.result.text, null);
+                if (whisperResponse != null && Boolean.TRUE.equals(whisperResponse.success) && whisperResponse.result != null) {
+                    runCallback(callback, whisperResponse.result.text, null);
                 } else {
-                    var errors = whisperResponse.errors;
-                    callback.accept(null, new Exception(errors.size() == 1 ? errors.get(0).message : errors.toString()));
+                    var errors = whisperResponse != null ? whisperResponse.errors : null;
+                    runCallback(callback, null, new Exception(errors != null && errors.size() == 1 ? errors.get(0).message : String.valueOf(errors)));
                 }
             } catch (Exception e) {
-                callback.accept(null, e);
+                runCallback(callback, null, e);
             }
         });
+    }
+
+    private static void runCallback(BiConsumer<String, Exception> callback, String text, Exception exception) {
+        if (callback != null) {
+            AndroidUtilities.runOnUIThread(() -> callback.accept(text, exception));
+        }
     }
 
     public static class WhisperRequest {

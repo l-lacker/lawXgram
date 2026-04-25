@@ -314,6 +314,9 @@ public class InviteContactsActivity extends BaseFragment implements Notification
 
     @Override
     public void onFragmentDestroy() {
+        if (adapter != null) {
+            adapter.destroy();
+        }
         super.onFragmentDestroy();
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.contactsImported);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.contactsDidLoad);
@@ -816,12 +819,37 @@ public class InviteContactsActivity extends BaseFragment implements Notification
         private ArrayList<CharSequence> searchResultNames = new ArrayList<>();
         private Timer searchTimer;
         private boolean searching;
+        private volatile boolean destroyed;
 
         public InviteAdapter(Context ctx) {
             context = ctx;
         }
 
+        public void destroy() {
+            if (destroyed) {
+                return;
+            }
+            destroyed = true;
+            searching = false;
+            cancelSearchTimer();
+        }
+
+        private void cancelSearchTimer() {
+            try {
+                Timer timer = searchTimer;
+                if (timer != null) {
+                    searchTimer = null;
+                    timer.cancel();
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        }
+
         public void setSearching(boolean value) {
+            if (destroyed) {
+                return;
+            }
             if (searching == value) {
                 return;
             }
@@ -898,72 +926,84 @@ public class InviteContactsActivity extends BaseFragment implements Notification
         }
 
         public void searchDialogs(final String query) {
-            try {
-                if (searchTimer != null) {
-                    searchTimer.cancel();
-                }
-            } catch (Exception e) {
-                FileLog.e(e);
+            cancelSearchTimer();
+            if (destroyed) {
+                return;
             }
             if (query == null) {
                 searchResult.clear();
                 searchResultNames.clear();
                 notifyDataSetChanged();
             } else {
-                searchTimer = new Timer();
-                searchTimer.schedule(new TimerTask() {
+                Timer timer = new Timer();
+                searchTimer = timer;
+                timer.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         try {
-                            searchTimer.cancel();
-                            searchTimer = null;
+                            timer.cancel();
+                            if (searchTimer == timer) {
+                                searchTimer = null;
+                            }
                         } catch (Exception e) {
                             FileLog.e(e);
                         }
 
-                        AndroidUtilities.runOnUIThread(() -> Utilities.searchQueue.postRunnable(() -> {
-                            String search1 = query.trim().toLowerCase();
-                            if (search1.isEmpty()) {
-                                updateSearchResults(new ArrayList<>(), new ArrayList<>());
+                        if (destroyed) {
+                            return;
+                        }
+
+                        AndroidUtilities.runOnUIThread(() -> {
+                            if (destroyed) {
                                 return;
                             }
-                            String search2 = LocaleController.getInstance().getTranslitString(search1);
-                            if (search1.equals(search2) || search2.isEmpty()) {
-                                search2 = null;
-                            }
-                            String[] search = new String[1 + (search2 != null ? 1 : 0)];
-                            search[0] = search1;
-                            if (search2 != null) {
-                                search[1] = search2;
-                            }
-
-                            ArrayList<ContactsController.Contact> resultArray = new ArrayList<>();
-                            ArrayList<CharSequence> resultArrayNames = new ArrayList<>();
-
-                            for (int a = 0; a < phoneBookContacts.size(); a++) {
-                                ContactsController.Contact contact = phoneBookContacts.get(a);
-
-                                String name = ContactsController.formatName(contact.first_name, contact.last_name).toLowerCase();
-                                String tName = LocaleController.getInstance().getTranslitString(name);
-                                if (name.equals(tName)) {
-                                    tName = null;
+                            Utilities.searchQueue.postRunnable(() -> {
+                                if (destroyed) {
+                                    return;
+                                }
+                                String search1 = query.trim().toLowerCase();
+                                if (search1.isEmpty()) {
+                                    updateSearchResults(new ArrayList<>(), new ArrayList<>());
+                                    return;
+                                }
+                                String search2 = LocaleController.getInstance().getTranslitString(search1);
+                                if (search1.equals(search2) || search2.isEmpty()) {
+                                    search2 = null;
+                                }
+                                String[] search = new String[1 + (search2 != null ? 1 : 0)];
+                                search[0] = search1;
+                                if (search2 != null) {
+                                    search[1] = search2;
                                 }
 
-                                int found = 0;
-                                for (String q : search) {
-                                    if (name.startsWith(q) || name.contains(" " + q) || tName != null && (tName.startsWith(q) || tName.contains(" " + q))) {
-                                        found = 1;
+                                ArrayList<ContactsController.Contact> resultArray = new ArrayList<>();
+                                ArrayList<CharSequence> resultArrayNames = new ArrayList<>();
+
+                                for (int a = 0; a < phoneBookContacts.size(); a++) {
+                                    ContactsController.Contact contact = phoneBookContacts.get(a);
+
+                                    String name = ContactsController.formatName(contact.first_name, contact.last_name).toLowerCase();
+                                    String tName = LocaleController.getInstance().getTranslitString(name);
+                                    if (name.equals(tName)) {
+                                        tName = null;
                                     }
 
-                                    if (found != 0) {
-                                        resultArrayNames.add(AndroidUtilities.generateSearchName(contact.first_name, contact.last_name, q));
-                                        resultArray.add(contact);
-                                        break;
+                                    int found = 0;
+                                    for (String q : search) {
+                                        if (name.startsWith(q) || name.contains(" " + q) || tName != null && (tName.startsWith(q) || tName.contains(" " + q))) {
+                                            found = 1;
+                                        }
+
+                                        if (found != 0) {
+                                            resultArrayNames.add(AndroidUtilities.generateSearchName(contact.first_name, contact.last_name, q));
+                                            resultArray.add(contact);
+                                            break;
+                                        }
                                     }
                                 }
-                            }
-                            updateSearchResults(resultArray, resultArrayNames);
-                        }));
+                                updateSearchResults(resultArray, resultArrayNames);
+                            });
+                        });
 
                     }
                 }, 200, 300);
@@ -972,7 +1012,7 @@ public class InviteContactsActivity extends BaseFragment implements Notification
 
         private void updateSearchResults(final ArrayList<ContactsController.Contact> users, final ArrayList<CharSequence> names) {
             AndroidUtilities.runOnUIThread(() -> {
-                if (!searching) {
+                if (destroyed || !searching) {
                     return;
                 }
                 searchResult = users;

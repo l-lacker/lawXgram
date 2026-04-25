@@ -12,6 +12,7 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -77,12 +78,11 @@ public final class ApkInstaller {
             session.commit(pending.getIntentSender());
         } catch (IOException e) {
             FileLog.e(e);
-            if (dialog != null) {
-                dialog.dismiss();
-                dialog = null;
-            }
-            AlertsCreator.createSimpleAlert(context, LocaleController.getString(R.string.ErrorOccurred) + "\n" + e.getLocalizedMessage()).show();
-            AndroidUtilities.openForView(apk, "install.apk", "application/vnd.android.package-archive", context, null, false);
+            dismissDialog();
+            AndroidUtilities.runOnUIThread(() -> {
+                AlertsCreator.createSimpleAlert(context, LocaleController.getString(R.string.ErrorOccurred) + "\n" + e.getLocalizedMessage()).show();
+                AndroidUtilities.openForView(apk, "install.apk", "application/vnd.android.package-archive", context, null, false);
+            });
         }
     }
 
@@ -149,18 +149,12 @@ public final class ApkInstaller {
         });
         dialog.show();
         Utilities.globalQueue.postRunnable(() -> {
-            var receiver = register(context, () -> {
-                if (dialog != null) {
-                    dialog.dismiss();
-                }
-            });
+            var receiver = register(context, ApkInstaller::dismissDialog);
             installapk(context, apk);
             Intent intent = receiver.waitIntent();
             if (intent != null) {
                 AndroidUtilities.runOnUIThread(() -> {
-                    if (dialog != null) {
-                        dialog.dismiss();
-                    }
+                    dismissDialog();
                     try {
                         context.startActivity(intent);
                     } catch (Exception e) {
@@ -168,11 +162,7 @@ public final class ApkInstaller {
                     }
                 });
             } else {
-                AndroidUtilities.runOnUIThread(() -> {
-                    if (dialog != null) {
-                        dialog.dismiss();
-                    }
-                });
+                dismissDialog();
             }
         });
     }
@@ -197,6 +187,16 @@ public final class ApkInstaller {
             hasBrokenPackageInstaller = packageName.startsWith("com.miui");
         }
         return hasBrokenPackageInstaller;
+    }
+
+    private static void dismissDialog() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+        } else {
+            AndroidUtilities.runOnUIThread(ApkInstaller::dismissDialog);
+        }
     }
 
     private static InstallReceiver register(Context context, Runnable onSuccess) {
