@@ -121,6 +121,7 @@ import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -642,6 +643,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             this.width = width;
             this.height = height;
             this.size = size;
+            ImageLoader.putMediaThumbSize(path, width, height);
             if (isVideo) {
                 this.duration = orientationOrDuration;
             } else {
@@ -661,6 +663,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             this.duration = duration;
             this.orientation = orientation;
             this.isVideo = isVideo;
+            ImageLoader.putMediaThumbSize(path, width, height);
         }
 
         public PhotoEntry setOrientation(Pair<Integer, Integer> rotationAndInvert) {
@@ -5874,7 +5877,10 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                             MotionPhotoDescription motionPhoto = null;
                             if (xmpColumn >= 0) {
                                 try {
-                                    motionPhoto = XmpMotionPhotoDescriptionParser.parse(new String(cursor.getBlob(xmpColumn)));
+                                    byte[] xmp = cursor.getBlob(xmpColumn);
+                                    if (xmp != null && xmp.length != 0) {
+                                        motionPhoto = XmpMotionPhotoDescriptionParser.parse(new String(xmp, StandardCharsets.UTF_8));
+                                    }
                                 } catch (Exception e) {
                                     FileLog.e(e);
                                 }
@@ -5893,8 +5899,8 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                                 }
                                 if (photo != null && video != null && video.length > 0) {
                                     try {
-                                        final File wholeFile = new File(path);
-                                        final long videoStart = wholeFile.length() - video.length;
+                                        final long wholeFileSize = size > 0 ? size : new File(path).length();
+                                        final long videoStart = wholeFileSize - video.length;
 
                                         photoEntry.isVideo = true;
                                         photoEntry.isLivePhoto = true;

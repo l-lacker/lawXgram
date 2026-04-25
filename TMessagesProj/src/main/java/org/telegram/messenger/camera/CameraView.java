@@ -798,9 +798,12 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
         if (cameraThread != null) {
-            cameraThread.shutdown(0);
-            cameraThread.postRunnable(() -> this.cameraThread = null);
+            CameraGLThread thread = cameraThread;
             cameraThread = null;
+            thread.releaseSurfaceTextureOnFinish();
+            thread.shutdown(0);
+        } else if (surfaceTexture != null) {
+            surfaceTexture.release();
         }
         if (cameraSession[0] != null) {
             cameraSession[0].destroy(true, null, null);
@@ -1212,12 +1215,15 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
         private final static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
         private final static int EGL_OPENGL_ES2_BIT = 4;
         private SurfaceTexture surfaceTexture;
+        private volatile boolean releaseSurfaceTextureOnFinish;
         private EGL10 egl10;
         private EGLDisplay eglDisplay;
         private EGLContext eglContext;
         private EGLSurface eglSurface;
         private EGLConfig eglConfig;
         private boolean initied;
+        private volatile boolean shutdownRequested;
+        private volatile int shutdownSend;
 
         private SurfaceTexture blurSurfaceTexture;
         private EGLContext eglBlurContext;
@@ -1290,6 +1296,10 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
             initDual = dual;
             initDualReverse = !isFrontface;
             initDualMatrix = dualMatrix;
+        }
+
+        public void releaseSurfaceTextureOnFinish() {
+            releaseSurfaceTextureOnFinish = true;
         }
 
         private boolean initGL() {
@@ -1603,6 +1613,10 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
                 egl10.eglTerminate(eglDisplay);
                 eglDisplay = null;
             }
+            if (releaseSurfaceTextureOnFinish && surfaceTexture != null) {
+                surfaceTexture.release();
+                surfaceTexture = null;
+            }
         }
 
         public void finishBlur() {
@@ -1895,6 +1909,16 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
         @Override
         public void run() {
             initied = initGL();
+            if (shutdownRequested) {
+                if (recording && videoEncoder != null) {
+                    videoEncoder.stopRecording(shutdownSend);
+                    videoEncoder = null;
+                    recording = false;
+                }
+                finishBlur();
+                finish();
+                return;
+            }
             if (blurSurfaceTexture != null) {
                 blurInited = initBlurGL();
             }
@@ -2179,6 +2203,8 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
 
 
         public void shutdown(int send) {
+            shutdownRequested = true;
+            shutdownSend = send;
             Handler handler = getHandler();
             if (handler != null) {
                 sendMessage(handler.obtainMessage(DO_SHUTDOWN_MESSAGE, send, 0), 0);
@@ -2904,18 +2930,26 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
                 }
             }
             CountDownLatch countDownLatch = new CountDownLatch(1);
-            fileWriteQueue.postRunnable(() -> {
+            DispatchQueue queue = fileWriteQueue;
+            if (queue != null) {
+                queue.postRunnable(() -> {
+                    try {
+                        mediaMuxer.finishMovie();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    countDownLatch.countDown();
+                });
                 try {
-                    mediaMuxer.finishMovie();
-                } catch (Exception e) {
+                    countDownLatch.await();
+                } catch (InterruptedException e) {
                     e.printStackTrace();
+                } finally {
+                    queue.recycle();
+                    if (fileWriteQueue == queue) {
+                        fileWriteQueue = null;
+                    }
                 }
-                countDownLatch.countDown();
-            });
-            try {
-                countDownLatch.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
 
             if (writingToDifferentFile) {

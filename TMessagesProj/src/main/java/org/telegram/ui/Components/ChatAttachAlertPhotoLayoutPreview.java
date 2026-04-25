@@ -211,6 +211,13 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
     private ViewPropertyAnimator headerAnimator;
     private ChatAttachAlertPhotoLayout photoLayout;
     private boolean shown = false;
+    private final Runnable updateBackButtonRunnable = () -> {
+        if (shown && parentAlert.getPhotoLayout() != null) {
+            parentAlert.getPhotoLayout().previewItem.setIcon(R.drawable.ic_ab_back);
+            parentAlert.getPhotoLayout().previewItem.setText(LocaleController.getString(R.string.Back));
+            parentAlert.getPhotoLayout().previewItem.setRightIcon(0);
+        }
+    };
 
     @Override
     public void onShow(ChatAttachAlert.AttachAlertLayout previousLayout) {
@@ -229,15 +236,8 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
             };
             listView.post(setScrollY);
 
-            postDelayed(() -> {
-                if (shown) {
-                    if (parentAlert.getPhotoLayout() != null) {
-                        parentAlert.getPhotoLayout().previewItem.setIcon(R.drawable.ic_ab_back);
-                        parentAlert.getPhotoLayout().previewItem.setText(LocaleController.getString(R.string.Back));
-                        parentAlert.getPhotoLayout().previewItem.setRightIcon(0);
-                    }
-                }
-            }, 250);
+            removeCallbacks(updateBackButtonRunnable);
+            postDelayed(updateBackButtonRunnable, 250);
 
             groupsView.toPhotoLayout(photoLayout, false);
         } else {
@@ -255,6 +255,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
     @Override
     public void onHide() {
         shown = false;
+        removeCallbacks(updateBackButtonRunnable);
         if (headerAnimator != null) {
             headerAnimator.cancel();
         }
@@ -280,6 +281,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
     @Override
     public void onHidden() {
         draggingCell = null;
+        groupsView.stopScrollingCallbacks();
         if (undoView != null) {
             undoView.hide(false, 0);
         }
@@ -290,6 +292,18 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                 }
             }
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        shown = false;
+        removeCallbacks(updateBackButtonRunnable);
+        if (headerAnimator != null) {
+            headerAnimator.cancel();
+            headerAnimator = null;
+        }
+        groupsView.destroy();
+        photoLayout = null;
     }
 
     @Override
@@ -1352,6 +1366,27 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                 postDelayed(this, 15);
             }
         };
+
+        public void stopScrollingCallbacks() {
+            removeCallbacks(scroller);
+            scrollerStarted = false;
+        }
+
+        public void destroy() {
+            stopScrollingCallbacks();
+            if (draggingAnimator != null) {
+                draggingAnimator.cancel();
+                draggingAnimator = null;
+            }
+            draggingCell = null;
+            tapGroupCell = null;
+            tapMediaCell = null;
+            images.clear();
+            for (int i = 0; i < groupCells.size(); ++i) {
+                groupCells.get(i).detach();
+            }
+            groupCells.clear();
+        }
         /*
         *
         *
@@ -1922,6 +1957,8 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                 for (int i = 0; i < media.size(); ++i) {
                     media.get(i).detach();
                 }
+                media.clear();
+                group = null;
             }
 
             private class MediaCell {
@@ -1981,6 +2018,29 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                         spoilerEffect.detach(PreviewGroupsView.this);
                         spoilerEffect = null;
                     }
+                    if (image != null) {
+                        image.setDelegate(null);
+                        image.clearImage();
+                        image = null;
+                    }
+                    if (blurredImage != null) {
+                        blurredImage.clearImage();
+                        blurredImage = null;
+                    }
+                    if (spoilerCrossfadeBitmap != null && !spoilerCrossfadeBitmap.isRecycled()) {
+                        spoilerCrossfadeBitmap.recycle();
+                    }
+                    spoilerCrossfadeBitmap = null;
+                    if (indexBitmap != null && !indexBitmap.isRecycled()) {
+                        indexBitmap.recycle();
+                    }
+                    indexBitmap = null;
+                    indexBitmapText = null;
+                    if (videoDurationBitmap != null && !videoDurationBitmap.isRecycled()) {
+                        videoDurationBitmap.recycle();
+                    }
+                    videoDurationBitmap = null;
+                    videoDurationBitmapText = null;
                 }
 
                 private void setImage(MediaController.PhotoEntry photoEntry) {

@@ -519,11 +519,10 @@ public class CameraController implements MediaRecorder.OnInfoListener {
         CameraSession session = (CameraSession) sessionObject;
         threadPool.execute(() -> {
             Camera camera = session.cameraInfo.camera;
+            if (camera == null) {
+                return;
+            }
             try {
-                if (camera == null) {
-                    camera = session.cameraInfo.camera = Camera.open(session.cameraInfo.cameraId);
-                    camera.setErrorCallback(getErrorListener(session));
-                }
                 camera.stopPreview();
             } catch (Exception e) {
                 session.cameraInfo.camera = null;

@@ -423,6 +423,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         if (spoilerEffect2 != null) {
             spoilerEffect2.detach(this);
         }
+        recycleCrossfadeSnapshot();
     }
 
     @Override
@@ -638,8 +639,43 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         this.delegate = delegate;
     }
 
+    private void recycleCrossfadeSnapshot() {
+        if (imageViewCrossfadeSnapshot != null) {
+            imageViewCrossfadeSnapshot.recycle();
+            imageViewCrossfadeSnapshot = null;
+            crossfadeDuration = null;
+            imageViewCrossfadeProgress = 1f;
+        }
+    }
+
+    public void recycle() {
+        if (animatorSet != null) {
+            animatorSet.cancel();
+            animatorSet = null;
+        }
+        if (animator != null) {
+            animator.cancel();
+            animator = null;
+        }
+        recycleCrossfadeSnapshot();
+        if (spoilerEffect2 != null) {
+            spoilerEffect2.detach(this);
+            spoilerEffect2 = null;
+        }
+        if (imageView != null) {
+            imageView.setHasBlur(false);
+            imageView.clearImage();
+        }
+        delegate = null;
+        photoEntry = null;
+        searchEntry = null;
+        checkFrame.setOnClickListener(null);
+    }
+
     public void callDelegate() {
-        delegate.onCheckClick(this);
+        if (delegate != null) {
+            delegate.onCheckClick(this);
+        }
     }
 
     public void showImage() {

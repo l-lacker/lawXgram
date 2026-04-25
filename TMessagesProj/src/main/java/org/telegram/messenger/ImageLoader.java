@@ -82,6 +82,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -111,6 +112,35 @@ public class ImageLoader {
     public static final int CACHE_TYPE_ENCRYPTED = 2;
 
     private static final boolean DEBUG_MODE = false;
+    private static final int MEDIA_THUMB_SIZE_CACHE_MAX = 4096;
+    private static final LinkedHashMap<String, int[]> mediaThumbSizes = new LinkedHashMap<String, int[]>(128, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, int[]> eldest) {
+            return size() > MEDIA_THUMB_SIZE_CACHE_MAX;
+        }
+    };
+
+    public static void putMediaThumbSize(String path, int width, int height) {
+        if (TextUtils.isEmpty(path) || width <= 0 || height <= 0) {
+            return;
+        }
+        synchronized (mediaThumbSizes) {
+            mediaThumbSizes.put(path, new int[] { width, height });
+        }
+    }
+
+    private static int[] getMediaThumbSize(String path) {
+        if (TextUtils.isEmpty(path)) {
+            return null;
+        }
+        synchronized (mediaThumbSizes) {
+            int[] size = mediaThumbSizes.get(path);
+            if (size == null) {
+                return null;
+            }
+            return new int[] { size[0], size[1] };
+        }
+    }
 
     private HashMap<String, Integer> bitmapUseCounts = new HashMap<>();
     private LruCache<BitmapDrawable> smallImagesMemCache;
@@ -1301,13 +1331,21 @@ public class ImageLoader {
                             }
                         }
                     } else if (mediaThumbPath != null) {
-                        opts.inJustDecodeBounds = true;
+                        int[] mediaSize = getMediaThumbSize(mediaThumbPath);
+                        int photoW2;
+                        int photoH2;
                         opts.inPreferredConfig = force8888 ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
-                        FileInputStream is = new FileInputStream(cacheFileFinal);
-                        image = BitmapFactory.decodeStream(is, null, opts);
-                        is.close();
-                        int photoW2 = opts.outWidth;
-                        int photoH2 = opts.outHeight;
+                        if (mediaSize != null) {
+                            photoW2 = mediaSize[0];
+                            photoH2 = mediaSize[1];
+                        } else {
+                            opts.inJustDecodeBounds = true;
+                            FileInputStream is = new FileInputStream(cacheFileFinal);
+                            image = BitmapFactory.decodeStream(is, null, opts);
+                            is.close();
+                            photoW2 = opts.outWidth;
+                            photoH2 = opts.outHeight;
+                        }
                         opts.inJustDecodeBounds = false;
                         int screenSize = Math.max(66, Math.min(AndroidUtilities.getRealScreenSize().x, AndroidUtilities.getRealScreenSize().y));
                         float scaleFactor = (Math.min(photoH2, photoW2) / (float) screenSize) * 6f;
