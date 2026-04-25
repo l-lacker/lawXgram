@@ -52,6 +52,7 @@ public class SaveToDownloadReceiver extends BroadcastReceiver {
     }
 
     public static void showNotification(Context context, int notificationId, int count, Runnable callback) {
+        context = ApplicationLoader.applicationContext;
         NotificationsController.checkOtherNotificationsChannel();
         var intent = new Intent(context, SaveToDownloadReceiver.class)
                 .setAction(ACTION_CANCEL_DOWNLOAD)

@@ -22,15 +22,20 @@ import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
 
 import java.io.Serial;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Set;
 
 public class LawxLocationSource implements LocationSource {
+    private static final long LOCATION_INTERVAL_MS = 1000;
+    private static final long LOCATION_FASTEST_INTERVAL_MS = 500;
+
     public final static Set<Integer> recent = Collections.synchronizedSet(Collections.newSetFromMap(new Cache<>()));
     private boolean checkPermission = true;
     private final Context context;
+    private final WeakReference<Activity> activityRef;
     private OnLocationChangedListener onLocationChangedListener;
     private final LocationCallback callback = new LocationCallback() {
         @Override
@@ -48,7 +53,9 @@ public class LawxLocationSource implements LocationSource {
     };
 
     public LawxLocationSource(Context context) {
-        this.context = context;
+        Context applicationContext = context.getApplicationContext();
+        this.context = applicationContext != null ? applicationContext : context;
+        activityRef = context instanceof Activity ? new WeakReference<>((Activity) context) : null;
     }
 
     public static void transform(Location location) {
@@ -71,7 +78,8 @@ public class LawxLocationSource implements LocationSource {
     @Override
     public void activate(@NonNull OnLocationChangedListener onLocationChangedListener) {
         if (checkPermission && Build.VERSION.SDK_INT >= 23) {
-            if (context instanceof Activity activity) {
+            Activity activity = activityRef != null ? activityRef.get() : null;
+            if (activity != null) {
                 checkPermission = false;
                 if (activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     activity.requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 2);
@@ -79,14 +87,16 @@ public class LawxLocationSource implements LocationSource {
                 }
             }
         }
-        LocationRequest.Builder builder = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0);
-        LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(builder.build(), callback, Looper.getMainLooper());
         this.onLocationChangedListener = onLocationChangedListener;
+        LocationRequest.Builder builder = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_INTERVAL_MS)
+                .setMinUpdateIntervalMillis(LOCATION_FASTEST_INTERVAL_MS);
+        LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(builder.build(), callback, Looper.getMainLooper());
     }
 
     @Override
     public void deactivate() {
         LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(callback);
+        onLocationChangedListener = null;
     }
 
     static class Cache<K, V> extends LinkedHashMap<K, V> {

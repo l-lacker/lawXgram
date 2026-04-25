@@ -522,11 +522,22 @@ public class Weather {
                     try {
                         final Utilities.Callback<Location>[] callback = new Utilities.Callback[] { whenGot };
                         final LocationListener[] listenerArr = new LocationListener[] { null };
+                        final Runnable timeoutRunnable = () -> {
+                            if (listenerArr[0] != null) {
+                                lm.removeUpdates(listenerArr[0]);
+                                listenerArr[0] = null;
+                            }
+                            if (callback[0] != null) {
+                                callback[0].run(null);
+                                callback[0] = null;
+                            }
+                        };
                         final LocationListener listener = location -> {
                             if (listenerArr[0] != null) {
                                 lm.removeUpdates(listenerArr[0]);
                                 listenerArr[0] = null;
                             }
+                            AndroidUtilities.cancelRunOnUIThread(timeoutRunnable);
                             if (callback[0] != null) {
                                 callback[0].run(location);
                                 callback[0] = null;
@@ -534,6 +545,7 @@ public class Weather {
                         };
                         listenerArr[0] = listener;
                         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, listener);
+                        AndroidUtilities.runOnUIThread(timeoutRunnable, 10000);
                     } catch (Exception e) {
                         FileLog.e(e);
                         whenGot.run(null);

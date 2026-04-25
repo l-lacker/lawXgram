@@ -440,6 +440,14 @@ public class ExternalActionActivity extends Activity implements INavigationLayou
             AndroidUtilities.cancelRunOnUIThread(lockRunnable);
             lockRunnable = null;
         }
+        if (actionBarLayout != null) {
+            actionBarLayout.removeAllFragments();
+        }
+        if (layersActionBarLayout != null) {
+            layersActionBarLayout.removeAllFragments();
+        }
+        mainFragmentsStack.clear();
+        layerFragmentsStack.clear();
         finished = true;
     }
 

@@ -21,10 +21,14 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @SuppressLint("MissingPermission")
 public class GoogleLocationProvider implements ILocationServiceProvider {
     private FusedLocationProviderClient locationProviderClient;
     private SettingsClient settingsClient;
+    private final Map<ILocationListener, LocationCallback> locationCallbacks = new HashMap<>();
 
     @Override
     public void init(Context context) {
@@ -49,22 +53,31 @@ public class GoogleLocationProvider implements ILocationServiceProvider {
 
     @Override
     public void requestLocationUpdates(ILocationRequest request, ILocationListener locationListener) {
-        locationProviderClient.requestLocationUpdates(((GoogleLocationRequest) request).request, new LocationCallback() {
+        LocationCallback locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 locationListener.onLocationChanged(locationResult.getLastLocation());
             }
-        }, Looper.getMainLooper());
+        };
+        LocationCallback oldCallback;
+        synchronized (locationCallbacks) {
+            oldCallback = locationCallbacks.put(locationListener, locationCallback);
+        }
+        if (oldCallback != null) {
+            locationProviderClient.removeLocationUpdates(oldCallback);
+        }
+        locationProviderClient.requestLocationUpdates(((GoogleLocationRequest) request).request, locationCallback, Looper.getMainLooper());
     }
 
     @Override
     public void removeLocationUpdates(ILocationListener locationListener) {
-        locationProviderClient.removeLocationUpdates(new LocationCallback() {
-            @Override
-            public void onLocationResult(@NonNull LocationResult locationResult) {
-                locationListener.onLocationChanged(locationResult.getLastLocation());
-            }
-        });
+        LocationCallback locationCallback;
+        synchronized (locationCallbacks) {
+            locationCallback = locationCallbacks.remove(locationListener);
+        }
+        if (locationCallback != null) {
+            locationProviderClient.removeLocationUpdates(locationCallback);
+        }
     }
 
     @Override

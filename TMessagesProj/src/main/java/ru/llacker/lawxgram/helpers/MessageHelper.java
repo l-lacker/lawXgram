@@ -390,20 +390,39 @@ public class MessageHelper extends BaseController {
 
     public static void readQrFromMessage(View parent, MessageObject selectedObject, MessageObject.GroupedMessages selectedObjectGroup, ViewGroup viewGroup, Utilities.Callback<ArrayList<String>> callback, AtomicBoolean waitForQr, AtomicReference<Runnable> onQrDetectionDone) {
         waitForQr.set(true);
+        ArrayList<Bitmap> bitmaps = new ArrayList<>();
+        ArrayList<MessageObject> messageObjects = new ArrayList<>();
+        if (selectedObjectGroup != null) {
+            messageObjects.addAll(selectedObjectGroup.messages);
+        } else {
+            messageObjects.add(selectedObject);
+        }
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            View child = viewGroup.getChildAt(i);
+            if (child instanceof ChatMessageCell cell) {
+                if (messageObjects.contains(cell.getMessageObject())) {
+                    Bitmap bitmap = cell.getPhotoImage().getBitmap();
+                    if (bitmap != null && !bitmap.isRecycled()) {
+                        try {
+                            Bitmap.Config config = bitmap.getConfig() != null ? bitmap.getConfig() : Bitmap.Config.ARGB_8888;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && config == Bitmap.Config.HARDWARE) {
+                                config = Bitmap.Config.ARGB_8888;
+                            }
+                            bitmaps.add(bitmap.copy(config, false));
+                        } catch (Throwable e) {
+                            FileLog.e(e);
+                        }
+                    }
+                }
+            }
+        }
         Utilities.globalQueue.postRunnable(() -> {
             ArrayList<String> qrResults = new ArrayList<>();
-            ArrayList<MessageObject> messageObjects = new ArrayList<>();
-            if (selectedObjectGroup != null) {
-                messageObjects.addAll(selectedObjectGroup.messages);
-            } else {
-                messageObjects.add(selectedObject);
-            }
-            for (int i = 0; i < viewGroup.getChildCount(); i++) {
-                View child = viewGroup.getChildAt(i);
-                if (child instanceof ChatMessageCell cell) {
-                    if (messageObjects.contains(cell.getMessageObject())) {
-                        qrResults.addAll(QrHelper.readQr(cell.getPhotoImage().getBitmap()));
-                    }
+            for (Bitmap bitmap : bitmaps) {
+                try {
+                    qrResults.addAll(QrHelper.readQr(bitmap));
+                } finally {
+                    AndroidUtilities.recycleBitmap(bitmap);
                 }
             }
             AndroidUtilities.runOnUIThread(() -> {

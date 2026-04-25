@@ -46,6 +46,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -141,18 +142,37 @@ public final class ApkInstaller {
         dialog = builder.create();
         dialog.setCanceledOnTouchOutside(false);
         dialog.setCancelable(false);
+        dialog.setOnDismissListener(d -> {
+            if (ApkInstaller.dialog == d) {
+                ApkInstaller.dialog = null;
+            }
+        });
         dialog.show();
         Utilities.globalQueue.postRunnable(() -> {
             var receiver = register(context, () -> {
                 if (dialog != null) {
                     dialog.dismiss();
-                    dialog = null;
                 }
             });
             installapk(context, apk);
             Intent intent = receiver.waitIntent();
             if (intent != null) {
-                context.startActivity(intent);
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (dialog != null) {
+                        dialog.dismiss();
+                    }
+                    try {
+                        context.startActivity(intent);
+                    } catch (Exception e) {
+                        FileLog.e(e);
+                    }
+                });
+            } else {
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (dialog != null) {
+                        dialog.dismiss();
+                    }
+                });
             }
         });
     }
@@ -180,20 +200,23 @@ public final class ApkInstaller {
     }
 
     private static InstallReceiver register(Context context, Runnable onSuccess) {
-        var receiver = new InstallReceiver(context, ApplicationLoader.getApplicationId(), onSuccess);
-        ContextCompat.registerReceiver(context, receiver, new IntentFilter(ApkInstaller.class.getName()), ContextCompat.RECEIVER_NOT_EXPORTED);
+        var receiver = new InstallReceiver(ApplicationLoader.applicationContext, context, ApplicationLoader.getApplicationId(), onSuccess);
+        ContextCompat.registerReceiver(ApplicationLoader.applicationContext, receiver, new IntentFilter(ApkInstaller.class.getName()), ContextCompat.RECEIVER_NOT_EXPORTED);
         return receiver;
     }
 
     private static class InstallReceiver extends BroadcastReceiver {
         private final Context context;
+        private final WeakReference<Context> uiContext;
         private final String packageName;
         private final Runnable onSuccess;
         private final CountDownLatch latch = new CountDownLatch(1);
         private Intent intent = null;
+        private boolean unregistered;
 
-        private InstallReceiver(Context context, String packageName, Runnable onSuccess) {
+        private InstallReceiver(Context context, Context uiContext, String packageName, Runnable onSuccess) {
             this.context = context;
+            this.uiContext = new WeakReference<>(uiContext);
             this.packageName = packageName;
             this.onSuccess = onSuccess;
         }
@@ -206,7 +229,8 @@ public final class ApkInstaller {
                 String pkg = data.getSchemeSpecificPart();
                 if (pkg.equals(packageName)) {
                     onSuccess.run();
-                    context.unregisterReceiver(this);
+                    unregister();
+                    latch.countDown();
                 }
                 return;
             }
@@ -214,6 +238,7 @@ public final class ApkInstaller {
             switch (status) {
                 case PackageInstaller.STATUS_PENDING_USER_ACTION:
                     intent = i.getParcelableExtra(Intent.EXTRA_INTENT);
+                    unregister();
                     break;
                 case PackageInstaller.STATUS_FAILURE:
                 case PackageInstaller.STATUS_FAILURE_BLOCKED:
@@ -231,12 +256,14 @@ public final class ApkInstaller {
                     }
                     if (context instanceof LaunchActivity) {
                         ((LaunchActivity) context).showBulletin(factory -> factory.createErrorBulletin(LocaleController.formatString(R.string.UpdateFailedToInstall, status)));
+                    } else if (uiContext.get() instanceof LaunchActivity launchActivity) {
+                        launchActivity.showBulletin(factory -> factory.createErrorBulletin(LocaleController.formatString(R.string.UpdateFailedToInstall, status)));
                     }
                 case PackageInstaller.STATUS_FAILURE_ABORTED:
                 case PackageInstaller.STATUS_SUCCESS:
                 default:
                     if (onSuccess != null) onSuccess.run();
-                    context.unregisterReceiver(this);
+                    unregister();
             }
             latch.countDown();
         }
@@ -245,10 +272,24 @@ public final class ApkInstaller {
         public Intent waitIntent() {
             try {
                 //noinspection ResultOfMethodCallIgnored
-                latch.await(5, TimeUnit.SECONDS);
+                if (!latch.await(5, TimeUnit.SECONDS)) {
+                    unregister();
+                }
             } catch (Exception ignored) {
             }
             return intent;
+        }
+
+        private void unregister() {
+            if (unregistered) {
+                return;
+            }
+            try {
+                context.unregisterReceiver(this);
+            } catch (IllegalArgumentException e) {
+                FileLog.e(e);
+            }
+            unregistered = true;
         }
     }
 

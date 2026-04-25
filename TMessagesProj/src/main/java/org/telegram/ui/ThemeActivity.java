@@ -124,6 +124,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ThemeActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
+    private static final long LOCATION_UPDATE_TIMEOUT = 15000;
+
     public final static int THEME_TYPE_BASIC = 0;
     public final static int THEME_TYPE_NIGHT = 1;
     public final static int THEME_TYPE_OTHER = 2;
@@ -240,6 +242,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
     private int rowCount;
 
     private boolean updatingLocation;
+    private final Runnable locationUpdateCancelRunnable = this::stopLocationUpdate;
 
     private int previousUpdatedType;
     private boolean previousByLocation;
@@ -1806,10 +1809,12 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
         } catch (Exception e) {
             FileLog.e(e);
         }
+        AndroidUtilities.runOnUIThread(locationUpdateCancelRunnable, LOCATION_UPDATE_TIMEOUT);
     }
 
     private void stopLocationUpdate() {
         updatingLocation = false;
+        AndroidUtilities.cancelRunOnUIThread(locationUpdateCancelRunnable);
         LocationManager locationManager = (LocationManager) ApplicationLoader.applicationContext.getSystemService(Context.LOCATION_SERVICE);
         locationManager.removeUpdates(gpsLocationListener);
         locationManager.removeUpdates(networkLocationListener);

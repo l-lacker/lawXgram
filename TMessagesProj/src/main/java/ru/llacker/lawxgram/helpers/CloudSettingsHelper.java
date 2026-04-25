@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.TypedValue;
@@ -52,7 +53,7 @@ public class CloudSettingsHelper {
 
     private final SharedPreferences preferences = PreferencesMigrationHelper.getSharedPreferences(ApplicationLoader.applicationContext, PREFS_NAME, LEGACY_PREFS_NAME);
     private final long[] cloudSyncedDate = new long[UserConfig.MAX_ACCOUNT_COUNT];
-    private final Handler handler = new Handler();
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable cloudSyncRunnable = () -> CloudSettingsHelper.getInstance().syncToCloud((success, error) -> {
         if (!success) {
             var global = BulletinFactory.global();

@@ -4156,6 +4156,7 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 		if (proximityWakelock != null && proximityWakelock.isHeld()) {
 			proximityWakelock.release();
 		}
+		releaseCpuWakelock();
 		if (updateNotificationRunnable != null) {
 			Utilities.globalQueue.cancelRunnable(updateNotificationRunnable);
 			updateNotificationRunnable = null;
@@ -4212,7 +4213,6 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 				captureDevice[a] = 0;
 			}
 		}
-		cpuWakelock.release();
 		AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
 		if (!playingSound) {
 			VoipAudioManager vam = VoipAudioManager.get();
@@ -4624,6 +4624,20 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 		}
 	}
 
+	private void releaseCpuWakelock() {
+		if (cpuWakelock == null) {
+			return;
+		}
+		try {
+			if (cpuWakelock.isHeld()) {
+				cpuWakelock.release();
+			}
+		} catch (Exception e) {
+			FileLog.e(e);
+		}
+		cpuWakelock = null;
+	}
+
 	private void initializeAccountRelatedThings() {
 		updateServerConfig();
 		NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.appDidLogout);
@@ -4647,6 +4661,7 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 			}
 
 			cpuWakelock = ((PowerManager) getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "telegram-voip");
+			cpuWakelock.setReferenceCounted(false);
 			cpuWakelock.acquire();
 
 			btAdapter = am.isBluetoothScoAvailableOffCall() ? BluetoothAdapter.getDefaultAdapter() : null;

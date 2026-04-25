@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class FeedWidgetService extends RemoteViewsService {
     @Override
@@ -56,7 +57,13 @@ class FeedRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory, N
     }
 
     public void onDestroy() {
+        AndroidUtilities.runOnUIThread(this::removeMessagesDidLoadObserver);
+    }
 
+    private void removeMessagesDidLoadObserver() {
+        if (accountInstance != null) {
+            accountInstance.getNotificationCenter().removeObserver(this, NotificationCenter.messagesDidLoad);
+        }
     }
 
     public int getCount() {
@@ -138,7 +145,10 @@ class FeedRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory, N
             messages.clear();
             return;
         }
+        countDownLatch = new CountDownLatch(1);
+        CountDownLatch latch = countDownLatch;
         AndroidUtilities.runOnUIThread(() -> {
+            removeMessagesDidLoadObserver();
             accountInstance.getNotificationCenter().addObserver(FeedRemoteViewsFactory.this, NotificationCenter.messagesDidLoad);
             if (classGuid == 0) {
                 classGuid = ConnectionsManager.generateClassGuid();
@@ -146,7 +156,9 @@ class FeedRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory, N
             accountInstance.getMessagesController().loadMessages(dialogId, 0, false, 20, 0, 0, true, 0, classGuid, 0, 0, 0, 0, 0, 1, false);
         });
         try {
-            countDownLatch.await();
+            if (!latch.await(10, TimeUnit.SECONDS)) {
+                AndroidUtilities.runOnUIThread(this::removeMessagesDidLoadObserver);
+            }
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -158,6 +170,7 @@ class FeedRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory, N
         if (id == NotificationCenter.messagesDidLoad) {
             int guid = (Integer) args[10];
             if (guid == classGuid) {
+                removeMessagesDidLoadObserver();
                 messages.clear();
                 ArrayList<MessageObject> messArr = (ArrayList<MessageObject>) args[2];
                 messages.addAll(messArr);

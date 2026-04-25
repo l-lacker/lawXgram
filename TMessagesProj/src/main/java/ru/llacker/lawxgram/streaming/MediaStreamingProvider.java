@@ -43,7 +43,15 @@ public class MediaStreamingProvider extends ContentProvider {
 
     @Override
     public void shutdown() {
-        callbackThread.quit();
+        if (callbackHandler != null) {
+            callbackHandler.removeCallbacksAndMessages(null);
+            callbackHandler = null;
+        }
+        if (callbackThread != null) {
+            callbackThread.quitSafely();
+            callbackThread = null;
+        }
+        super.shutdown();
     }
 
     @Nullable
@@ -141,9 +149,10 @@ public class MediaStreamingProvider extends ContentProvider {
             dataSpecBuilder = new DataSpec.Builder().setUri(tgUri);
             try {
                 size = dataSource.open(dataSpecBuilder.build());
-                dataSource.close();
             } catch (IOException e) {
                 FileLog.e(e);
+            } finally {
+                closeDataSource();
             }
         }
 
@@ -155,12 +164,13 @@ public class MediaStreamingProvider extends ContentProvider {
 
                 dataSource.open(dataSpecBuilder.build());
                 var bytesRead = dataSource.read(data, 0, size);
-                dataSource.close();
 
                 return bytesRead;
             } catch (IOException e) {
                 FileLog.e(e);
                 throw new ErrnoException("onRead", OsConstants.EBADF);
+            } finally {
+                closeDataSource();
             }
         }
 
@@ -181,7 +191,15 @@ public class MediaStreamingProvider extends ContentProvider {
 
         @Override
         public void onRelease() {
+            closeDataSource();
+        }
 
+        private void closeDataSource() {
+            try {
+                dataSource.close();
+            } catch (IOException e) {
+                FileLog.e(e);
+            }
         }
     }
 }

@@ -48,6 +48,7 @@ import ru.llacker.lawxgram.helpers.WhisperHelper;
 public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implements NotificationCenter.NotificationCenterDelegate {
 
     private ActionBarMenuItem resetItem;
+    private ValueAnimator resetAnimator;
 
     private final int stickerSizeRow = rowId++;
     private final int hideTimeOnStickerRow = rowId++;
@@ -105,15 +106,18 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
             var item = listView.findItemByItemId(stickerSizeRow);
             var stickerCell = (StickerSizeCell) listView.findViewByItemId(stickerSizeRow);
             if (stickerCell != null) {
-                ValueAnimator animator = ValueAnimator.ofFloat(LawxConfig.stickerSize, 14.0f);
-                animator.setDuration(150);
-                animator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-                animator.addUpdateListener(valueAnimator -> {
+                if (resetAnimator != null) {
+                    resetAnimator.cancel();
+                }
+                resetAnimator = ValueAnimator.ofFloat(LawxConfig.stickerSize, 14.0f);
+                resetAnimator.setDuration(150);
+                resetAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+                resetAnimator.addUpdateListener(valueAnimator -> {
                     var floatValue = (float) valueAnimator.getAnimatedValue();
                     LawxConfig.setStickerSize(floatValue);
                     stickerCell.setValue(floatValue);
                 });
-                animator.start();
+                resetAnimator.start();
             } else {
                 LawxConfig.setStickerSize(14.0f);
             }
@@ -122,6 +126,16 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
         AndroidUtilities.updateViewVisibilityAnimated(resetItem, Float.compare(LawxConfig.stickerSize, 14.0f) != 0, 1f, false);
 
         return fragmentView;
+    }
+
+    @Override
+    public void onFragmentDestroy() {
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
+        if (resetAnimator != null) {
+            resetAnimator.cancel();
+            resetAnimator = null;
+        }
+        super.onFragmentDestroy();
     }
 
     public String getDoubleTapActionText(int action) {

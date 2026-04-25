@@ -37,8 +37,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
@@ -49,9 +49,20 @@ import okhttp3.RequestBody;
 import ru.llacker.lawxgram.LawxConfig;
 
 public class WhisperHelper {
+    private static final int MAX_TRANSCRIBE_WORKERS = Math.max(1, Math.min(2, Runtime.getRuntime().availableProcessors()));
     private static OkHttpClient okHttpClient;
     private static final Gson gson = new Gson();
-    private static final ExecutorService executorService = Executors.newCachedThreadPool();
+    private static final ThreadPoolExecutor executorService = new ThreadPoolExecutor(
+            MAX_TRANSCRIBE_WORKERS,
+            MAX_TRANSCRIBE_WORKERS,
+            30L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>()
+    );
+
+    static {
+        executorService.allowCoreThreadTimeOut(true);
+    }
 
     public static boolean useWorkersAi(int account) {
         return LawxConfig.transcribeProvider == LawxConfig.TRANSCRIBE_WORKERSAI || (!UserConfig.getInstance(account).isPremium() && LawxConfig.transcribeProvider == LawxConfig.TRANSCRIBE_AUTO);
@@ -169,51 +180,68 @@ public class WhisperHelper {
 
     private static void extractAudio(String inputFilePath, String outputFilePath) throws IOException {
         var extractor = new MediaExtractor();
-        extractor.setDataSource(inputFilePath);
+        MediaMuxer muxer = null;
+        boolean muxerStarted = false;
+        try {
+            extractor.setDataSource(inputFilePath);
 
-        MediaFormat audioFormat = null;
-        int audioTrackIndex = -1;
-        for (int i = 0; i < extractor.getTrackCount(); i++) {
-            var format = extractor.getTrackFormat(i);
-            var mime = format.getString(MediaFormat.KEY_MIME);
-            if (mime != null && mime.startsWith("audio/")) {
-                audioFormat = format;
-                audioTrackIndex = i;
-                break;
-            }
-        }
-
-        if (audioFormat == null) {
-            throw new IOException("No audio track found in " + inputFilePath);
-        }
-
-        var muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        var trackIndex = muxer.addTrack(audioFormat);
-        muxer.start();
-
-        extractor.selectTrack(audioTrackIndex);
-
-        var bufferInfo = new MediaCodec.BufferInfo();
-        var buffer = ByteBuffer.allocate(65536);
-
-        while (true) {
-            var sampleSize = extractor.readSampleData(buffer, 0);
-            if (sampleSize < 0) {
-                break;
+            MediaFormat audioFormat = null;
+            int audioTrackIndex = -1;
+            for (int i = 0; i < extractor.getTrackCount(); i++) {
+                var format = extractor.getTrackFormat(i);
+                var mime = format.getString(MediaFormat.KEY_MIME);
+                if (mime != null && mime.startsWith("audio/")) {
+                    audioFormat = format;
+                    audioTrackIndex = i;
+                    break;
+                }
             }
 
-            bufferInfo.offset = 0;
-            bufferInfo.size = sampleSize;
-            bufferInfo.presentationTimeUs = extractor.getSampleTime();
-            bufferInfo.flags = 0;
+            if (audioFormat == null) {
+                throw new IOException("No audio track found in " + inputFilePath);
+            }
 
-            muxer.writeSampleData(trackIndex, buffer, bufferInfo);
-            extractor.advance();
+            muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            var trackIndex = muxer.addTrack(audioFormat);
+            muxer.start();
+            muxerStarted = true;
+
+            extractor.selectTrack(audioTrackIndex);
+
+            var bufferInfo = new MediaCodec.BufferInfo();
+            var buffer = ByteBuffer.allocate(65536);
+
+            while (true) {
+                var sampleSize = extractor.readSampleData(buffer, 0);
+                if (sampleSize < 0) {
+                    break;
+                }
+
+                bufferInfo.offset = 0;
+                bufferInfo.size = sampleSize;
+                bufferInfo.presentationTimeUs = extractor.getSampleTime();
+                bufferInfo.flags = 0;
+
+                muxer.writeSampleData(trackIndex, buffer, bufferInfo);
+                extractor.advance();
+            }
+        } finally {
+            if (muxer != null) {
+                try {
+                    if (muxerStarted) {
+                        muxer.stop();
+                    }
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+                try {
+                    muxer.release();
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+            }
+            extractor.release();
         }
-
-        muxer.stop();
-        muxer.release();
-        extractor.release();
     }
 
     public static void requestWorkersAi(String path, boolean video, BiConsumer<String, Exception> callback) {

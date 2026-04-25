@@ -8,14 +8,26 @@ import org.telegram.ui.Components.AnimatedFileDrawable;
 import org.telegram.ui.Components.RLottieDrawable;
 
 import java.io.File;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import app.nekogram.gifski.Gifski;
 
 public class StickerHelper {
-    private static final Executor rendererExecutor = Executors.newCachedThreadPool();
+    private static final int MAX_RENDER_WORKERS = Math.max(1, Math.min(2, Runtime.getRuntime().availableProcessors()));
+    private static final ThreadPoolExecutor rendererExecutor = new ThreadPoolExecutor(
+            MAX_RENDER_WORKERS,
+            MAX_RENDER_WORKERS,
+            30L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>()
+    );
+
+    static {
+        rendererExecutor.allowCoreThreadTimeOut(true);
+    }
 
     public static void convertStickerFormat(String path, boolean animated, Consumer<String> callback) {
         var resultPath = path + ".gif";
@@ -37,6 +49,9 @@ public class StickerHelper {
     }
 
     private static boolean renderToGif(String path, BitmapsCache.Cacheable source, int width, int height) {
+        Bitmap bitmap = null;
+        Gifski gifski = null;
+        boolean gifskiFinished = false;
         try {
             var fps = source.getFps();
             FileLog.d("start gif rendering for path = " + path + ", width = " + width + ", height = " + height + ", fps = " + fps);
@@ -46,21 +61,31 @@ public class StickerHelper {
             settings.setWidth(width);
             settings.setQuality(90);
             settings.setRepeat((short) 0);
-            var gifski = new Gifski(settings);
+            gifski = new Gifski(settings);
             gifski.setFileOutput(path);
             var framePosition = 0;
-            var bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             while (source.getNextFrame(bitmap) == 1) {
                 var pts = (double) framePosition / fps;
                 gifski.addFrameBitmap(framePosition, bitmap, pts);
                 framePosition++;
             }
-            bitmap.recycle();
             gifski.finish();
+            gifskiFinished = true;
             return true;
         } catch (Exception e) {
             FileLog.e(e);
         } finally {
+            if (bitmap != null && !bitmap.isRecycled()) {
+                bitmap.recycle();
+            }
+            if (gifski != null && !gifskiFinished) {
+                try {
+                    gifski.finish();
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+            }
             source.releaseForGenerateCache();
         }
         return false;

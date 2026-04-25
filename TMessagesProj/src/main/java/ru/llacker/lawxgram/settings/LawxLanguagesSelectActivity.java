@@ -138,7 +138,7 @@ public class LawxLanguagesSelectActivity extends BaseLawxSettingsActivity {
             }
 
             AndroidUtilities.runOnUIThread(() -> {
-                if (!text.equals(lastSearchString)) {
+                if (isFinished || listView == null || !text.equals(lastSearchString)) {
                     return;
                 }
                 searchWas = true;
@@ -147,6 +147,15 @@ public class LawxLanguagesSelectActivity extends BaseLawxSettingsActivity {
                 listView.adapter.update(true);
             });
         }, 300);
+    }
+
+    @Override
+    public void onFragmentDestroy() {
+        if (searchRunnable != null) {
+            Utilities.searchQueue.cancelRunnable(searchRunnable);
+            searchRunnable = null;
+        }
+        super.onFragmentDestroy();
     }
 
     private String getCurrentTargetLanguage() {

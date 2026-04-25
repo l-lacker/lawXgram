@@ -257,6 +257,15 @@ public class LawxSettingsActivity extends BaseLawxSettingsActivity implements Fa
     }
 
     @Override
+    public void onFragmentDestroy() {
+        if (searchRunnable != null) {
+            Utilities.searchQueue.cancelRunnable(searchRunnable);
+            searchRunnable = null;
+        }
+        super.onFragmentDestroy();
+    }
+
+    @Override
     public void onFactorChanged(int id, float factor, float fraction, FactorAnimator callee) {
         if (id == ANIMATOR_ID_SEARCH_PAGE_VISIBLE) {
             FragmentFloatingButton.setAnimatedVisibility(syncItem, 1f - factor);
@@ -368,7 +377,7 @@ public class LawxSettingsActivity extends BaseLawxSettingsActivity implements Fa
             }
 
             AndroidUtilities.runOnUIThread(() -> {
-                if (!text.equals(lastSearchString)) {
+                if (isFinished || listView == null || !text.equals(lastSearchString)) {
                     return;
                 }
                 searchWas = true;

@@ -161,12 +161,13 @@ public class LawxExperimentalSettingsActivity extends BaseLawxSettingsActivity {
             });
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
             AlertDialog dialog = builder.create();
+            final CountDownTimer[] deleteAccountTimer = new CountDownTimer[1];
             dialog.setOnShowListener(dialog1 -> {
                 var button = (TextView) dialog.getButton(AlertDialog.BUTTON_POSITIVE);
                 button.setTextColor(getThemedColor(Theme.key_text_RedBold));
                 button.setEnabled(false);
                 var buttonText = button.getText();
-                new CountDownTimer(60000, 100) {
+                deleteAccountTimer[0] = new CountDownTimer(60000, 100) {
                     @Override
                     public void onTick(long millisUntilFinished) {
                         button.setText(String.format(Locale.getDefault(), "%s (%d)", buttonText, millisUntilFinished / 1000 + 1));
@@ -178,6 +179,12 @@ public class LawxExperimentalSettingsActivity extends BaseLawxSettingsActivity {
                         button.setEnabled(true);
                     }
                 }.start();
+            });
+            dialog.setOnDismissListener(dialog1 -> {
+                if (deleteAccountTimer[0] != null) {
+                    deleteAccountTimer[0].cancel();
+                    deleteAccountTimer[0] = null;
+                }
             });
             showDialog(dialog);
         } else if (id == mapDriftingFixRow) {

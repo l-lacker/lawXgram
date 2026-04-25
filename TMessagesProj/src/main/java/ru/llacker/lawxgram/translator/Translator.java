@@ -36,7 +36,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import app.nekogram.translator.Http429Exception;
@@ -59,11 +62,24 @@ public class Translator {
 
     public static final String TRANSLATION_SEPARATOR = "\n--------\n";
 
-    private static final ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+    private static final int MAX_TRANSLATION_WORKERS = Math.max(2, Math.min(4, Runtime.getRuntime().availableProcessors()));
+    private static final ListeningExecutorService executorService = MoreExecutors.listeningDecorator(createExecutorService());
     private static final LruCache<Pair<String, String>, TranslationResult> cache = new LruCache<>(200);
 
     public static ListeningExecutorService getExecutorService() {
         return executorService;
+    }
+
+    private static ExecutorService createExecutorService() {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                MAX_TRANSLATION_WORKERS,
+                MAX_TRANSLATION_WORKERS,
+                30L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>()
+        );
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
     }
 
     public static void showTranslateDialog(Context context, String query, boolean noforwards, BaseFragment fragment, Utilities.CallbackReturn<URLSpan, Boolean> onLinkPress, String sourceLanguage, View anchorView, Theme.ResourcesProvider resourcesProvider) {
