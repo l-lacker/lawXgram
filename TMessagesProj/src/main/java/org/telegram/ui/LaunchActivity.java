@@ -35,6 +35,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Path;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -381,6 +382,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     }
 
     private FrameMetricsOverlayView frameMetricsOverlayView;
+    private View lawxSplashView;
     // private RefreshRateController refreshRateController;
 
     @Override
@@ -638,6 +640,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         checkLayout();
         checkSystemBarColors();
         handleIntent(getIntent(), false, savedInstanceState != null, false, null, true, true);
+        showLawxSplash();
+        hideLawxSplash();
         try {
             String os1 = Build.DISPLAY;
             String os2 = Build.USER;
@@ -1096,6 +1100,98 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             }
         }
         FloatingDebugController.setActive(this, SharedConfig.isFloatingDebugActive, false);
+    }
+
+    private void showLawxSplash() {
+        final boolean dark = isLawxSplashDark();
+        saveLawxSplashDark(dark);
+
+        FrameLayout splashView = new FrameLayout(this);
+        splashView.setBackgroundColor(dark ? Color.BLACK : 0xfff6f6f6);
+
+        ImageView imageView = new ImageView(this) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                int width = View.MeasureSpec.getSize(widthMeasureSpec);
+                Drawable drawable = getDrawable();
+                int height = drawable == null || drawable.getIntrinsicWidth() <= 0
+                        ? View.MeasureSpec.getSize(heightMeasureSpec)
+                        : Math.round(width * drawable.getIntrinsicHeight() / (float) drawable.getIntrinsicWidth());
+                setMeasuredDimension(width, height);
+            }
+        };
+        imageView.setImageResource(dark ? R.drawable.lawx_splash_dark : R.drawable.lawx_splash_white);
+        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+        imageView.setTranslationX(AndroidUtilities.displaySize.x);
+        splashView.addView(imageView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM));
+        frameLayout.addView(splashView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        lawxSplashView = splashView;
+
+        splashView.post(() -> {
+            if (splashView.getParent() == null) {
+                return;
+            }
+            imageView.setTranslationX(splashView.getWidth());
+            imageView.animate()
+                    .translationX(0f)
+                    .setDuration(600)
+                    .setInterpolator(AndroidUtilities.decelerateInterpolator)
+                    .start();
+        });
+    }
+
+    private void hideLawxSplash() {
+        final View splashView = lawxSplashView;
+        lawxSplashView = null;
+        if (splashView == null) {
+            return;
+        }
+        splashView.bringToFront();
+        frameLayout.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                frameLayout.getViewTreeObserver().removeOnPreDrawListener(this);
+                splashView.animate()
+                        .alpha(0f)
+                        .setDuration(220)
+                        .setInterpolator(AndroidUtilities.decelerateInterpolator)
+                        .setListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                ViewGroup parent = (ViewGroup) splashView.getParent();
+                                if (parent != null) {
+                                    parent.removeView(splashView);
+                                }
+                            }
+                        })
+                        .start();
+                return true;
+            }
+        });
+    }
+
+    private boolean isLawxSplashDark() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            int nightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
+                return true;
+            } else if (nightMode == Configuration.UI_MODE_NIGHT_NO) {
+                return false;
+            }
+        }
+        try {
+            return Theme.isCurrentThemeDark();
+        } catch (Throwable ignore) {
+            return MessagesController.getGlobalMainSettings().getBoolean("lawx_splash_dark", false);
+        }
+    }
+
+    private void saveLawxSplashDark(boolean dark) {
+        try {
+            MessagesController.getGlobalMainSettings().edit().putBoolean("lawx_splash_dark", dark).apply();
+        } catch (Throwable ignore) {
+
+        }
     }
 
     private BaseFragment getClientNotActivatedFragment() {
@@ -7204,6 +7300,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 }
             }
             drawerLayoutContainer.setBehindKeyboardColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+            saveLawxSplashDark(Theme.isCurrentThemeDark());
             boolean checkNavigationBarColor = true;
             if (args.length > 1) {
                 checkNavigationBarColor = (boolean) args[1];
@@ -7318,6 +7415,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             Theme.ThemeInfo theme = (Theme.ThemeInfo) args[0];
             boolean nightTheme = (Boolean) args[1];
             int accentId = (Integer) args[3];
+            saveLawxSplashDark(theme != null && theme.isDark());
             Runnable calcInBackgroundEnd = args.length > 7 ? (Runnable) args[7] : null;
             if (actionBarLayout == null) {
                 return;
