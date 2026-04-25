@@ -35,7 +35,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Path;
-import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -453,7 +452,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         frameLayout.setClipToPadding(false);
         frameLayout.setClipChildren(false);
         setContentView(frameLayout);
-        final View lawxSplashView = showLawxSplash();
         rootAnimatedInsetsListener = new WindowAnimatedInsetsProvider(frameLayout);
         pipActivityController.addPipListener(new IPipActivityListener() {
             @Override
@@ -640,7 +638,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         checkLayout();
         checkSystemBarColors();
         handleIntent(getIntent(), false, savedInstanceState != null, false, null, true, true);
-        hideLawxSplash(lawxSplashView);
         try {
             String os1 = Build.DISPLAY;
             String os2 = Build.USER;
@@ -1099,71 +1096,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             }
         }
         FloatingDebugController.setActive(this, SharedConfig.isFloatingDebugActive, false);
-    }
-
-    private View showLawxSplash() {
-        final boolean dark = isLawxSplashDark();
-        FrameLayout splashView = new FrameLayout(this);
-        splashView.setBackgroundColor(dark ? Color.BLACK : 0xfff6f6f6);
-
-        ImageView imageView = new ImageView(this) {
-            @Override
-            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-                int width = View.MeasureSpec.getSize(widthMeasureSpec);
-                Drawable drawable = getDrawable();
-                int height = drawable == null || drawable.getIntrinsicWidth() <= 0
-                        ? View.MeasureSpec.getSize(heightMeasureSpec)
-                        : Math.round(width * drawable.getIntrinsicHeight() / (float) drawable.getIntrinsicWidth());
-                setMeasuredDimension(width, height);
-            }
-        };
-        imageView.setImageResource(dark ? R.drawable.lawx_splash_dark : R.drawable.lawx_splash_white);
-        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-        imageView.setTranslationX(AndroidUtilities.displaySize.x);
-        splashView.addView(imageView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM));
-        addContentView(splashView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
-
-        splashView.post(() -> {
-            if (splashView.getParent() == null) {
-                return;
-            }
-            imageView.setTranslationX(splashView.getWidth());
-            imageView.animate()
-                    .translationX(0f)
-                    .setDuration(600)
-                    .setInterpolator(AndroidUtilities.decelerateInterpolator)
-                    .start();
-        });
-        return splashView;
-    }
-
-    private void hideLawxSplash(View splashView) {
-        if (splashView == null) {
-            return;
-        }
-        splashView.bringToFront();
-        splashView.post(() -> splashView.animate()
-                .alpha(0f)
-                .setDuration(220)
-                .setInterpolator(AndroidUtilities.decelerateInterpolator)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        ViewGroup parent = (ViewGroup) splashView.getParent();
-                        if (parent != null) {
-                            parent.removeView(splashView);
-                        }
-                    }
-                })
-                .start());
-    }
-
-    private boolean isLawxSplashDark() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            int nightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-            return nightMode == Configuration.UI_MODE_NIGHT_YES;
-        }
-        return Theme.isCurrentThemeDark();
     }
 
     private BaseFragment getClientNotActivatedFragment() {

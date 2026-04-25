@@ -15,8 +15,7 @@
 ## Commands
 - Default verification: `./gradlew --no-daemon :TMessagesProj_App:assembleDebug`
 - Faster local debug: `./gradlew :TMessagesProj_App:assembleDebug --configuration-cache --configuration-cache-problems=warn`
-- Faster local release: `./gradlew :TMessagesProj_App:assembleRelease --configuration-cache`
-- Release only when the task needs release behavior: `./gradlew :TMessagesProj_App:assembleRelease --no-configuration-cache`
+- Release only when the task needs release behavior: `./scripts/assemble-release.cmd`
 - Use `TMessagesProj_AppTests` only for explicit instrumentation or test-app work, and only after re-enabling the module in `settings.gradle`.
 
 ## Code Style
