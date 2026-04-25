@@ -22,3 +22,4 @@ codemagic.yaml
 .project
 .classpath
 .settings/
+/.gradle-home
