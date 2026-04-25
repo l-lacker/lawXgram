@@ -28,9 +28,13 @@ import java.util.Locale;
 import java.util.Set;
 
 public class LawxLocationSource implements LocationSource {
+    private static final long LOCATION_UPDATE_INTERVAL_MS = 1000;
+    private static final long MIN_LOCATION_UPDATE_INTERVAL_MS = 1000;
+
     public final static Set<Integer> recent = Collections.synchronizedSet(Collections.newSetFromMap(new Cache<>()));
     private boolean checkPermission = true;
     private final Context context;
+    private final Context applicationContext;
     private OnLocationChangedListener onLocationChangedListener;
     private final LocationCallback callback = new LocationCallback() {
         @Override
@@ -49,6 +53,8 @@ public class LawxLocationSource implements LocationSource {
 
     public LawxLocationSource(Context context) {
         this.context = context;
+        Context appContext = context.getApplicationContext();
+        this.applicationContext = appContext != null ? appContext : context;
     }
 
     public static void transform(Location location) {
@@ -79,14 +85,17 @@ public class LawxLocationSource implements LocationSource {
                 }
             }
         }
-        LocationRequest.Builder builder = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0);
-        LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(builder.build(), callback, Looper.getMainLooper());
         this.onLocationChangedListener = onLocationChangedListener;
+        LocationRequest.Builder builder = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERVAL_MS);
+        builder.setMinUpdateIntervalMillis(MIN_LOCATION_UPDATE_INTERVAL_MS);
+        LocationServices.getFusedLocationProviderClient(applicationContext).removeLocationUpdates(callback);
+        LocationServices.getFusedLocationProviderClient(applicationContext).requestLocationUpdates(builder.build(), callback, Looper.getMainLooper());
     }
 
     @Override
     public void deactivate() {
-        LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(callback);
+        onLocationChangedListener = null;
+        LocationServices.getFusedLocationProviderClient(applicationContext).removeLocationUpdates(callback);
     }
 
     static class Cache<K, V> extends LinkedHashMap<K, V> {

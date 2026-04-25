@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 import app.nekogram.gifski.Gifski;
 
 public class StickerHelper {
-    private static final Executor rendererExecutor = Executors.newCachedThreadPool();
+    private static final Executor rendererExecutor = Executors.newFixedThreadPool(2);
 
     public static void convertStickerFormat(String path, boolean animated, Consumer<String> callback) {
         var resultPath = path + ".gif";
@@ -24,11 +24,15 @@ public class StickerHelper {
                 new RLottieDrawable(new File(path), 512, 512, cacheOptions, false, null, 0) :
                 new AnimatedFileDrawable(new File(path), true, 0, 0, null, null, null, 0, 0, false, 0, 0, cacheOptions);
         rendererExecutor.execute(() -> {
-            var success = renderToGif(resultPath, drawable, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-            if (animated) {
-                ((RLottieDrawable) drawable).recycle(false);
-            } else {
-                ((AnimatedFileDrawable) drawable).recycle();
+            boolean success;
+            try {
+                success = renderToGif(resultPath, drawable, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+            } finally {
+                if (animated) {
+                    ((RLottieDrawable) drawable).recycle(false);
+                } else {
+                    ((AnimatedFileDrawable) drawable).recycle();
+                }
             }
             if (success) {
                 callback.accept(resultPath);
@@ -37,6 +41,7 @@ public class StickerHelper {
     }
 
     private static boolean renderToGif(String path, BitmapsCache.Cacheable source, int width, int height) {
+        Bitmap bitmap = null;
         try {
             var fps = source.getFps();
             FileLog.d("start gif rendering for path = " + path + ", width = " + width + ", height = " + height + ", fps = " + fps);
@@ -49,18 +54,20 @@ public class StickerHelper {
             var gifski = new Gifski(settings);
             gifski.setFileOutput(path);
             var framePosition = 0;
-            var bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             while (source.getNextFrame(bitmap) == 1) {
                 var pts = (double) framePosition / fps;
                 gifski.addFrameBitmap(framePosition, bitmap, pts);
                 framePosition++;
             }
-            bitmap.recycle();
             gifski.finish();
             return true;
         } catch (Exception e) {
             FileLog.e(e);
         } finally {
+            if (bitmap != null) {
+                bitmap.recycle();
+            }
             source.releaseForGenerateCache();
         }
         return false;

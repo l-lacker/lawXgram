@@ -722,6 +722,7 @@ public class ChatCustomReactionsEditActivity extends BaseFragment implements Not
         if (selectedType == SELECT_TYPE_NONE && reactionsCount != currentReactionsCount) {
             getMessagesController().setCustomChatReactions(chatId, selectedType, grabReactions(false), reactionsCount, null, null, null);
         }
+        getNotificationCenter().removeObserver(this, NotificationCenter.reactionsDidLoad);
         getNotificationCenter().removeObserver(this, NotificationCenter.dialogDeleted);
     }
 
