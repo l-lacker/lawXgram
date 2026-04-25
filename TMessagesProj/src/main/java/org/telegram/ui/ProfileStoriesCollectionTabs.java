@@ -158,7 +158,7 @@ public class ProfileStoriesCollectionTabs extends BlurredFrameLayout implements 
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         NotificationCenter.getInstance(collections.currentAccount)
-            .removeObserver(this, NotificationCenter.storyAlbumsCollectionsUpdate);
+            .addObserver(this, NotificationCenter.storyAlbumsCollectionsUpdate);
     }
 
     @Override

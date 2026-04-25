@@ -82,15 +82,6 @@ public class LawxSettingsActivity extends BaseLawxSettingsActivity implements Fa
     private FrameLayout topView;
 
     @Override
-    public void onFragmentDestroy() {
-        super.onFragmentDestroy();
-        if (searchRunnable != null) {
-            Utilities.searchQueue.cancelRunnable(searchRunnable);
-            searchRunnable = null;
-        }
-    }
-
-    @Override
     public View createView(Context context) {
         topView = new FrameLayout(context);
 

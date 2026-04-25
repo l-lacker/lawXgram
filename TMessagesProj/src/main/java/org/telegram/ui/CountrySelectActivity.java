@@ -105,9 +105,6 @@ public class CountrySelectActivity extends BaseFragment {
 
     @Override
     public void onFragmentDestroy() {
-        if (searchListViewAdapter != null) {
-            searchListViewAdapter.destroy();
-        }
         super.onFragmentDestroy();
     }
 
@@ -427,7 +424,6 @@ public class CountrySelectActivity extends BaseFragment {
         private Timer searchTimer;
         private ArrayList<Country> searchResult;
         private List<Country> countryList = new ArrayList<>();
-        private volatile boolean destroyed;
 
         public CountrySearchAdapter(Context context, HashMap<String, ArrayList<Country>> countries) {
             mContext = context;
@@ -439,49 +435,26 @@ public class CountrySelectActivity extends BaseFragment {
             }
         }
 
-        public void destroy() {
-            if (destroyed) {
-                return;
-            }
-            destroyed = true;
-            cancelSearchTimer();
-        }
-
-        private void cancelSearchTimer() {
-            try {
-                Timer timer = searchTimer;
-                if (timer != null) {
-                    searchTimer = null;
-                    timer.cancel();
-                }
-            } catch (Exception e) {
-                FileLog.e(e);
-            }
-        }
-
         public void search(final String query) {
-            if (destroyed) {
-                return;
-            }
             if (query == null) {
                 searchResult = null;
             } else {
-                cancelSearchTimer();
-                Timer timer = new Timer();
-                searchTimer = timer;
-                timer.schedule(new TimerTask() {
+                try {
+                    if (searchTimer != null) {
+                        searchTimer.cancel();
+                    }
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+                searchTimer = new Timer();
+                searchTimer.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         try {
-                            timer.cancel();
-                            if (searchTimer == timer) {
-                                searchTimer = null;
-                            }
+                            searchTimer.cancel();
+                            searchTimer = null;
                         } catch (Exception e) {
                             FileLog.e(e);
-                        }
-                        if (destroyed) {
-                            return;
                         }
                         processSearch(query);
                     }
@@ -491,9 +464,6 @@ public class CountrySelectActivity extends BaseFragment {
 
         private void processSearch(final String query) {
             Utilities.searchQueue.postRunnable(() -> {
-                if (destroyed) {
-                    return;
-                }
                 final String q = query.trim().toLowerCase();
                 if (q.length() == 0) {
                     updateSearchResults(new ArrayList<>());
@@ -524,7 +494,7 @@ public class CountrySelectActivity extends BaseFragment {
 
         private void updateSearchResults(final ArrayList<Country> arrCounties) {
             AndroidUtilities.runOnUIThread(() -> {
-                if (destroyed || !searching) {
+                if (!searching) {
                     return;
                 }
                 searchResult = arrCounties;

@@ -65,7 +65,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.WeakHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BotLocation {
 
@@ -412,39 +411,19 @@ public class BotLocation {
             return;
         }
 
-        final AtomicBoolean finished = new AtomicBoolean();
-        final LocationListener[] listener = new LocationListener[1];
-        final Runnable[] timeoutRunnable = new Runnable[1];
-        final Utilities.Callback<Location> finish = location -> {
-            if (!finished.compareAndSet(false, true)) {
-                return;
-            }
-            if (timeoutRunnable[0] != null) {
-                AndroidUtilities.cancelRunOnUIThread(timeoutRunnable[0]);
-                timeoutRunnable[0] = null;
-            }
-            if (listener[0] != null) {
-                try {
-                    lm.removeUpdates(listener[0]);
-                } catch (Exception ignore) {
-                }
-                listener[0] = null;
-            }
-            whenDone.run(locationObject(location));
-        };
         try {
+            final LocationListener[] listener = new LocationListener[1];
             listener[0] = new LocationListener() {
                 @Override
                 public void onLocationChanged(@NonNull Location location) {
-                    finish.run(location);
+                    lm.removeUpdates(listener[0]);
+                    whenDone.run(locationObject(location));
                 }
             };
-            timeoutRunnable[0] = () -> finish.run(null);
-            AndroidUtilities.runOnUIThread(timeoutRunnable[0], 15_000);
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, listener[0]);
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, listener[0]);
         } catch (Exception e) {
             FileLog.e(e);
-            finish.run(null);
+            whenDone.run(locationObject(null));
         }
     }
 

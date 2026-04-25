@@ -51,7 +51,7 @@ import ru.llacker.lawxgram.LawxConfig;
 public class WhisperHelper {
     private static OkHttpClient okHttpClient;
     private static final Gson gson = new Gson();
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(2);
+    private static final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public static boolean useWorkersAi(int account) {
         return LawxConfig.transcribeProvider == LawxConfig.TRANSCRIBE_WORKERSAI || (!UserConfig.getInstance(account).isPremium() && LawxConfig.transcribeProvider == LawxConfig.TRANSCRIBE_AUTO);
@@ -168,83 +168,63 @@ public class WhisperHelper {
     }
 
     private static void extractAudio(String inputFilePath, String outputFilePath) throws IOException {
-        MediaExtractor extractor = null;
-        MediaMuxer muxer = null;
-        boolean muxerStarted = false;
-        try {
-            extractor = new MediaExtractor();
-            extractor.setDataSource(inputFilePath);
+        var extractor = new MediaExtractor();
+        extractor.setDataSource(inputFilePath);
 
-            MediaFormat audioFormat = null;
-            int audioTrackIndex = -1;
-            for (int i = 0; i < extractor.getTrackCount(); i++) {
-                var format = extractor.getTrackFormat(i);
-                var mime = format.getString(MediaFormat.KEY_MIME);
-                if (mime != null && mime.startsWith("audio/")) {
-                    audioFormat = format;
-                    audioTrackIndex = i;
-                    break;
-                }
-            }
-
-            if (audioFormat == null) {
-                throw new IOException("No audio track found in " + inputFilePath);
-            }
-
-            muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            var trackIndex = muxer.addTrack(audioFormat);
-            muxer.start();
-            muxerStarted = true;
-
-            extractor.selectTrack(audioTrackIndex);
-
-            var bufferInfo = new MediaCodec.BufferInfo();
-            var buffer = ByteBuffer.allocate(65536);
-
-            while (true) {
-                var sampleSize = extractor.readSampleData(buffer, 0);
-                if (sampleSize < 0) {
-                    break;
-                }
-
-                bufferInfo.offset = 0;
-                bufferInfo.size = sampleSize;
-                bufferInfo.presentationTimeUs = extractor.getSampleTime();
-                bufferInfo.flags = 0;
-
-                muxer.writeSampleData(trackIndex, buffer, bufferInfo);
-                extractor.advance();
-            }
-        } finally {
-            if (muxer != null) {
-                try {
-                    if (muxerStarted) {
-                        muxer.stop();
-                    }
-                } catch (Exception e) {
-                    FileLog.e(e);
-                }
-                muxer.release();
-            }
-            if (extractor != null) {
-                extractor.release();
+        MediaFormat audioFormat = null;
+        int audioTrackIndex = -1;
+        for (int i = 0; i < extractor.getTrackCount(); i++) {
+            var format = extractor.getTrackFormat(i);
+            var mime = format.getString(MediaFormat.KEY_MIME);
+            if (mime != null && mime.startsWith("audio/")) {
+                audioFormat = format;
+                audioTrackIndex = i;
+                break;
             }
         }
+
+        if (audioFormat == null) {
+            throw new IOException("No audio track found in " + inputFilePath);
+        }
+
+        var muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        var trackIndex = muxer.addTrack(audioFormat);
+        muxer.start();
+
+        extractor.selectTrack(audioTrackIndex);
+
+        var bufferInfo = new MediaCodec.BufferInfo();
+        var buffer = ByteBuffer.allocate(65536);
+
+        while (true) {
+            var sampleSize = extractor.readSampleData(buffer, 0);
+            if (sampleSize < 0) {
+                break;
+            }
+
+            bufferInfo.offset = 0;
+            bufferInfo.size = sampleSize;
+            bufferInfo.presentationTimeUs = extractor.getSampleTime();
+            bufferInfo.flags = 0;
+
+            muxer.writeSampleData(trackIndex, buffer, bufferInfo);
+            extractor.advance();
+        }
+
+        muxer.stop();
+        muxer.release();
+        extractor.release();
     }
 
     public static void requestWorkersAi(String path, boolean video, BiConsumer<String, Exception> callback) {
         if (TextUtils.isEmpty(LawxConfig.cfAccountID) || TextUtils.isEmpty(LawxConfig.cfApiToken)) {
-            runCallback(callback, null, new Exception(LocaleController.getString(R.string.CloudflareCredentialsNotSet)));
+            callback.accept(null, new Exception(LocaleController.getString(R.string.CloudflareCredentialsNotSet)));
             return;
         }
         executorService.submit(() -> {
             File audioPath;
-            File audioFile = null;
             if (video) {
-                audioFile = new File(path + ".m4a");
-                if (audioFile.exists() && !audioFile.delete()) {
-                    FileLog.e("can't delete old extracted audio " + audioFile);
-                }
+                var audioFile = new File(path + ".m4a");
                 try {
                     extractAudio(path, audioFile.getAbsolutePath());
                 } catch (IOException e) {
@@ -258,12 +238,8 @@ public class WhisperHelper {
             try {
                 audio = Files.readAllBytes(audioPath.toPath());
             } catch (IOException e) {
-                runCallback(callback, null, e);
+                callback.accept(null, e);
                 return;
-            } finally {
-                if (audioFile != null && audioPath == audioFile && audioFile.exists() && !audioFile.delete()) {
-                    FileLog.e("can't delete extracted audio " + audioFile);
-                }
             }
             var payload = new WhisperRequest();
             payload.audio = Base64.encodeToString(audio, Base64.NO_WRAP);
@@ -274,29 +250,18 @@ public class WhisperHelper {
                     .header("Authorization", "Bearer " + LawxConfig.cfApiToken)
                     .post(RequestBody.create(gson.toJson(payload), MediaType.get("application/json")));
             try (var response = client.newCall(request.build()).execute()) {
-                var responseBody = response.body();
-                if (responseBody == null) {
-                    runCallback(callback, null, new Exception("EMPTY_RESPONSE"));
-                    return;
-                }
-                var body = responseBody.string();
+                var body = response.body().string();
                 var whisperResponse = gson.fromJson(body, WhisperResponse.class);
-                if (whisperResponse != null && Boolean.TRUE.equals(whisperResponse.success) && whisperResponse.result != null) {
-                    runCallback(callback, whisperResponse.result.text, null);
+                if (whisperResponse.success && whisperResponse.result != null) {
+                    callback.accept(whisperResponse.result.text, null);
                 } else {
-                    var errors = whisperResponse != null ? whisperResponse.errors : null;
-                    runCallback(callback, null, new Exception(errors != null && errors.size() == 1 ? errors.get(0).message : String.valueOf(errors)));
+                    var errors = whisperResponse.errors;
+                    callback.accept(null, new Exception(errors.size() == 1 ? errors.get(0).message : errors.toString()));
                 }
             } catch (Exception e) {
-                runCallback(callback, null, e);
+                callback.accept(null, e);
             }
         });
-    }
-
-    private static void runCallback(BiConsumer<String, Exception> callback, String text, Exception exception) {
-        if (callback != null) {
-            AndroidUtilities.runOnUIThread(() -> callback.accept(text, exception));
-        }
     }
 
     public static class WhisperRequest {

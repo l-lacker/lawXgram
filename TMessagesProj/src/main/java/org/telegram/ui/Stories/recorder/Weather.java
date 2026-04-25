@@ -41,7 +41,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Weather {
 
@@ -520,34 +519,24 @@ public class Weather {
                         }
                     }
                 } else {
-                    final AtomicBoolean finished = new AtomicBoolean();
-                    final LocationListener[] listenerArr = new LocationListener[] { null };
-                    final Runnable[] timeoutRunnable = new Runnable[] { null };
-                    final Utilities.Callback<Location> finish = location -> {
-                        if (!finished.compareAndSet(false, true)) {
-                            return;
-                        }
-                        if (timeoutRunnable[0] != null) {
-                            AndroidUtilities.cancelRunOnUIThread(timeoutRunnable[0]);
-                            timeoutRunnable[0] = null;
-                        }
-                        if (listenerArr[0] != null) {
-                            try {
-                                lm.removeUpdates(listenerArr[0]);
-                            } catch (Exception ignore) {
-                            }
-                            listenerArr[0] = null;
-                        }
-                        whenGot.run(location);
-                    };
                     try {
-                        listenerArr[0] = finish::run;
-                        timeoutRunnable[0] = () -> finish.run(null);
-                        AndroidUtilities.runOnUIThread(timeoutRunnable[0], 15_000);
-                        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, listenerArr[0]);
+                        final Utilities.Callback<Location>[] callback = new Utilities.Callback[] { whenGot };
+                        final LocationListener[] listenerArr = new LocationListener[] { null };
+                        final LocationListener listener = location -> {
+                            if (listenerArr[0] != null) {
+                                lm.removeUpdates(listenerArr[0]);
+                                listenerArr[0] = null;
+                            }
+                            if (callback[0] != null) {
+                                callback[0].run(location);
+                                callback[0] = null;
+                            }
+                        };
+                        listenerArr[0] = listener;
+                        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, listener);
                     } catch (Exception e) {
                         FileLog.e(e);
-                        finish.run(null);
+                        whenGot.run(null);
                     }
                     return;
                 }

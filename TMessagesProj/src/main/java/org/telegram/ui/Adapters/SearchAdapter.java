@@ -73,7 +73,6 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
     private ArrayList<ContactEntry> allUnregistredContacts;
     private ArrayList<ContactsController.Contact> unregistredContacts = new ArrayList<>();
     private String lastQuery;
-    private volatile boolean destroyed;
     public boolean includeSearch;
     public boolean includeLoading;
 
@@ -92,9 +91,6 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
         searchAdapterHelper.setDelegate(new SearchAdapterHelper.SearchAdapterHelperDelegate() {
             @Override
             public void onDataSetChanged(int searchId) {
-                if (destroyed) {
-                    return;
-                }
                 notifyDataSetChanged();
                 if (searchId != 0) {
                     onSearchProgressChanged();
@@ -105,36 +101,7 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
             public LongSparseArray<TLRPC.User> getExcludeUsers() {
                 return ignoreUsers;
             }
-
-            @Override
-            public boolean canApplySearchResults(int searchId) {
-                return !destroyed;
-            }
         });
-    }
-
-    public void destroy() {
-        if (destroyed) {
-            return;
-        }
-        destroyed = true;
-        cancelSearchTimer();
-        searchInProgress = false;
-        if (allowUsernameSearch) {
-            searchAdapterHelper.queryServerSearch(null, true, allowChats, allowBots, allowSelf, false, channelId, allowPhoneNumbers, 0, 0);
-        }
-    }
-
-    private void cancelSearchTimer() {
-        try {
-            Timer timer = searchTimer;
-            if (timer != null) {
-                searchTimer = null;
-                timer.cancel();
-            }
-        } catch (Exception e) {
-            FileLog.e(e);
-        }
     }
 
     public void setUseUserCell(boolean value) {
@@ -142,9 +109,12 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
     }
 
     public void searchDialogs(final String query) {
-        cancelSearchTimer();
-        if (destroyed) {
-            return;
+        try {
+            if (searchTimer != null) {
+                searchTimer.cancel();
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
         }
         searchResult.clear();
         unregistredContacts.clear();
@@ -154,21 +124,15 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
         }
         notifyDataSetChanged();
         if (!TextUtils.isEmpty(query)) {
-            Timer timer = new Timer();
-            searchTimer = timer;
-            timer.schedule(new TimerTask() {
+            searchTimer = new Timer();
+            searchTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     try {
-                        timer.cancel();
-                        if (searchTimer == timer) {
-                            searchTimer = null;
-                        }
+                        searchTimer.cancel();
+                        searchTimer = null;
                     } catch (Exception e) {
                         FileLog.e(e);
-                    }
-                    if (destroyed) {
-                        return;
                     }
                     processSearch(query);
                 }
@@ -178,9 +142,6 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
 
     private void processSearch(final String query) {
         AndroidUtilities.runOnUIThread(() -> {
-            if (destroyed) {
-                return;
-            }
             lastQuery = query;
             if (allowUsernameSearch) {
                 searchAdapterHelper.queryServerSearch(query, true, allowChats, allowBots, allowSelf, false, channelId, allowPhoneNumbers, -1, 1);
@@ -192,9 +153,6 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
             int searchReqIdFinal = searchReqId;
             notifyDataSetChanged();
             Utilities.searchQueue.postRunnable(() -> {
-                if (destroyed) {
-                    return;
-                }
                 String search1 = query.trim().toLowerCase();
                 if (search1.length() == 0) {
                     updateSearchResults(searchReqIdFinal, new ArrayList<>(), new ArrayList<>(), unregistredContacts);
@@ -282,9 +240,6 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
 
     private void updateSearchResults(int searchReqIdFinal, final ArrayList<Object> users, final ArrayList<CharSequence> names, ArrayList<ContactsController.Contact> unregistredContacts) {
         AndroidUtilities.runOnUIThread(() -> {
-            if (destroyed) {
-                return;
-            }
             if (searchReqIdFinal == searchReqId) {
                 searchResult = users;
                 searchResultNames = names;
@@ -302,7 +257,7 @@ public class SearchAdapter extends RecyclerListView.SelectionAdapter {
     }
 
     public boolean searchInProgress() {
-        return !destroyed && (searchInProgress || searchAdapterHelper.isSearchInProgress());
+        return searchInProgress || searchAdapterHelper.isSearchInProgress();
     }
 
     @Override

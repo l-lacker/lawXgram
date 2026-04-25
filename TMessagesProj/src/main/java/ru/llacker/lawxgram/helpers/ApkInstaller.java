@@ -76,11 +76,12 @@ public final class ApkInstaller {
             session.commit(pending.getIntentSender());
         } catch (IOException e) {
             FileLog.e(e);
-            dismissDialog();
-            AndroidUtilities.runOnUIThread(() -> {
-                AlertsCreator.createSimpleAlert(context, LocaleController.getString(R.string.ErrorOccurred) + "\n" + e.getLocalizedMessage()).show();
-                AndroidUtilities.openForView(apk, "install.apk", "application/vnd.android.package-archive", context, null, false);
-            });
+            if (dialog != null) {
+                dialog.dismiss();
+                dialog = null;
+            }
+            AlertsCreator.createSimpleAlert(context, LocaleController.getString(R.string.ErrorOccurred) + "\n" + e.getLocalizedMessage()).show();
+            AndroidUtilities.openForView(apk, "install.apk", "application/vnd.android.package-archive", context, null, false);
         }
     }
 
@@ -137,18 +138,17 @@ public final class ApkInstaller {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setView(linearLayout);
-        AlertDialog installDialog = builder.create();
-        dialog = installDialog;
-        installDialog.setCanceledOnTouchOutside(false);
-        installDialog.setCancelable(false);
-        installDialog.setOnDismissListener(dialogInterface -> {
-            if (dialog == installDialog) {
-                dialog = null;
-            }
-        });
-        installDialog.show();
+        dialog = builder.create();
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setCancelable(false);
+        dialog.show();
         Utilities.globalQueue.postRunnable(() -> {
-            var receiver = register(ApkInstaller::dismissDialog);
+            var receiver = register(context, () -> {
+                if (dialog != null) {
+                    dialog.dismiss();
+                    dialog = null;
+                }
+            });
             installapk(context, apk);
             Intent intent = receiver.waitIntent();
             if (intent != null) {
@@ -179,16 +179,7 @@ public final class ApkInstaller {
         return hasBrokenPackageInstaller;
     }
 
-    private static void dismissDialog() {
-        AndroidUtilities.runOnUIThread(() -> {
-            if (dialog != null) {
-                dialog.dismiss();
-            }
-        });
-    }
-
-    private static InstallReceiver register(Runnable onSuccess) {
-        var context = ApplicationLoader.applicationContext;
+    private static InstallReceiver register(Context context, Runnable onSuccess) {
         var receiver = new InstallReceiver(context, ApplicationLoader.getApplicationId(), onSuccess);
         ContextCompat.registerReceiver(context, receiver, new IntentFilter(ApkInstaller.class.getName()), ContextCompat.RECEIVER_NOT_EXPORTED);
         return receiver;
@@ -199,7 +190,6 @@ public final class ApkInstaller {
         private final String packageName;
         private final Runnable onSuccess;
         private final CountDownLatch latch = new CountDownLatch(1);
-        private boolean unregistered;
         private Intent intent = null;
 
         private InstallReceiver(Context context, String packageName, Runnable onSuccess) {
@@ -216,7 +206,7 @@ public final class ApkInstaller {
                 String pkg = data.getSchemeSpecificPart();
                 if (pkg.equals(packageName)) {
                     onSuccess.run();
-                    unregister();
+                    context.unregisterReceiver(this);
                 }
                 return;
             }
@@ -239,42 +229,23 @@ public final class ApkInstaller {
                             installer.abandonSession(info.getSessionId());
                         }
                     }
-                    AndroidUtilities.runOnUIThread(() -> {
-                        if (LaunchActivity.instance != null) {
-                            LaunchActivity.instance.showBulletin(factory -> factory.createErrorBulletin(LocaleController.formatString(R.string.UpdateFailedToInstall, status)));
-                        }
-                    });
+                    if (context instanceof LaunchActivity) {
+                        ((LaunchActivity) context).showBulletin(factory -> factory.createErrorBulletin(LocaleController.formatString(R.string.UpdateFailedToInstall, status)));
+                    }
                 case PackageInstaller.STATUS_FAILURE_ABORTED:
                 case PackageInstaller.STATUS_SUCCESS:
                 default:
                     if (onSuccess != null) onSuccess.run();
-                    unregister();
+                    context.unregisterReceiver(this);
             }
             latch.countDown();
-        }
-
-        private void unregister() {
-            if (unregistered) {
-                return;
-            }
-            unregistered = true;
-            try {
-                context.unregisterReceiver(this);
-            } catch (IllegalArgumentException e) {
-                FileLog.e(e);
-            }
         }
 
         // @WorkerThread @Nullable
         public Intent waitIntent() {
             try {
                 //noinspection ResultOfMethodCallIgnored
-                if (!latch.await(5, TimeUnit.SECONDS) && intent == null) {
-                    unregister();
-                    if (onSuccess != null) {
-                        onSuccess.run();
-                    }
-                }
+                latch.await(5, TimeUnit.SECONDS);
             } catch (Exception ignored) {
             }
             return intent;

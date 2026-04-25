@@ -79,15 +79,6 @@ public class LawxLanguagesSelectActivity extends BaseLawxSettingsActivity {
     }
 
     @Override
-    public void onFragmentDestroy() {
-        super.onFragmentDestroy();
-        if (searchRunnable != null) {
-            Utilities.searchQueue.cancelRunnable(searchRunnable);
-            searchRunnable = null;
-        }
-    }
-
-    @Override
     public View createView(Context context) {
         var fragmentView = super.createView(context);
 
