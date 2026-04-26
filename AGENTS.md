@@ -13,9 +13,11 @@
 - `.github/workflows/android-debug.yml` is the current CI reference build.
 
 ## Commands
-- Default verification: `./gradlew --no-daemon :TMessagesProj_App:assembleDebug`
-- Faster local debug: `./gradlew :TMessagesProj_App:assembleDebug --configuration-cache --configuration-cache-problems=warn`
-- Release only when the task needs release behavior: `./scripts/assemble-release.cmd`
+- Default verification: `cmd /c scripts\assemble-debug.cmd`
+- Release only when the task needs release behavior: `cmd /c scripts\assemble-release.cmd`
+- The Windows wrappers own the canonical Gradle flags: configuration cache, `--console=plain`, and normal output directories.
+- Do not change Gradle properties, `buildDir`, output paths, console mode, or cache flags for routine builds; this creates separate configuration-cache entries and defeats reuse.
+- For non-interactive agent runs, set `LAWX_NO_PAUSE=1` before invoking a wrapper so the script does not wait at the final `pause`. This does not change Gradle properties.
 - Use `TMessagesProj_AppTests` only for explicit instrumentation or test-app work, and only after re-enabling the module in `settings.gradle`.
 
 ## Code Style
