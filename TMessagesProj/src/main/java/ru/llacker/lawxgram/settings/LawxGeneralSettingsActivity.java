@@ -40,6 +40,7 @@ public class LawxGeneralSettingsActivity extends BaseLawxSettingsActivity {
     private final int idTypeRow = rowId++;
 
     private final int disabledInstantCameraRow = rowId++;
+    private final int showGalleryCameraRow = rowId++;
     private final int askBeforeCallRow = rowId++;
     private final int openArchiveOnPullRow = rowId++;
 
@@ -144,6 +145,7 @@ public class LawxGeneralSettingsActivity extends BaseLawxSettingsActivity {
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.General)));
         items.add(UItem.asCheck(disabledInstantCameraRow, LocaleController.getString(R.string.DisableInstantCamera)).slug("disabledInstantCamera").setChecked(LawxConfig.disableInstantCamera));
+        items.add(UItem.asCheck(showGalleryCameraRow, LocaleController.getString(R.string.ShowGalleryCamera)).slug("showGalleryCamera").setChecked(LawxConfig.showGalleryCamera));
         items.add(UItem.asCheck(askBeforeCallRow, LocaleController.getString(R.string.AskBeforeCalling)).slug("askBeforeCall").setChecked(LawxConfig.askBeforeCall));
         items.add(UItem.asCheck(openArchiveOnPullRow, LocaleController.getString(R.string.OpenArchiveOnPull)).slug("openArchiveOnPull").setChecked(LawxConfig.openArchiveOnPull));
         items.add(UItem.asShadow(null));
@@ -166,6 +168,11 @@ public class LawxGeneralSettingsActivity extends BaseLawxSettingsActivity {
             LawxConfig.toggleDisabledInstantCamera();
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(LawxConfig.disableInstantCamera);
+            }
+        } else if (id == showGalleryCameraRow) {
+            LawxConfig.toggleShowGalleryCamera();
+            if (view instanceof TextCheckCell) {
+                ((TextCheckCell) view).setChecked(LawxConfig.showGalleryCamera);
             }
         } else if (id == nameOrderRow) {
             ArrayList<String> arrayList = new ArrayList<>();

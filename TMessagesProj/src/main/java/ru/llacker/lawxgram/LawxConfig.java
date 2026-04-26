@@ -120,6 +120,7 @@ public class LawxConfig {
     public static boolean mapDriftingFix = false;
     public static boolean voiceEnhancements = false;
     public static boolean disableInstantCamera = false;
+    public static boolean showGalleryCamera = true;
     public static boolean tryToOpenAllLinksInIV = false;
     public static boolean formatTimeWithSeconds = false;
     public static boolean accentAsNotificationColor = false;
@@ -210,6 +211,7 @@ public class LawxConfig {
             mapDriftingFix = preferences.getBoolean("mapDriftingFix", userMcc == 460);
             voiceEnhancements = preferences.getBoolean("voiceEnhancements", false);
             disableInstantCamera = preferences.getBoolean("disableInstantCamera", false);
+            showGalleryCamera = preferences.getBoolean("showGalleryCamera", true);
             tryToOpenAllLinksInIV = preferences.getBoolean("tryToOpenAllLinksInIV", false);
             formatTimeWithSeconds = preferences.getBoolean("formatTimeWithSeconds", false);
             accentAsNotificationColor = preferences.getBoolean("accentAsNotificationColor", false);
@@ -877,6 +879,14 @@ public class LawxConfig {
         SharedPreferences preferences = LawxConfig.getConfigPreferences();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("disableInstantCamera", disableInstantCamera);
+        editor.apply();
+    }
+
+    public static void toggleShowGalleryCamera() {
+        showGalleryCamera = !showGalleryCamera;
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("showGalleryCamera", showGalleryCamera);
         editor.apply();
     }
 
