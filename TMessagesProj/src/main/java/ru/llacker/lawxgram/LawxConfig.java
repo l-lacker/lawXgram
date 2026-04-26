@@ -14,6 +14,7 @@ import org.telegram.messenger.NotificationCenter;
 import org.telegram.ui.ActionBar.Theme;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -460,7 +461,11 @@ public class LawxConfig {
     }
 
     public static void setMainTabsOrder(int[] order) {
-        mainTabsOrder = normalizeMainTabsOrder(order);
+        int[] normalized = normalizeMainTabsOrder(order);
+        if (Arrays.equals(mainTabsOrder, normalized)) {
+            return;
+        }
+        mainTabsOrder = normalized;
         SharedPreferences preferences = LawxConfig.getConfigPreferences();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString("mainTabsOrder", encodeMainTabsOrder(mainTabsOrder));

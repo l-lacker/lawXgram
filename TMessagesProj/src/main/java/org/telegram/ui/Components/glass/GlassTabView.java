@@ -554,6 +554,9 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     }
 
     public void setTabAnimation(TabAnimation animation) {
+        if (tabAnimation == animation && tabAnimationBot == null) {
+            return;
+        }
         tabAnimation = animation;
         tabAnimationBot = null;
         lastIconAnimationRaw = 0;
@@ -563,6 +566,9 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     }
 
     public void setText(CharSequence text) {
+        if (TextUtils.equals(textView.getText(), text)) {
+            return;
+        }
         textView.setText(text);
     }
 

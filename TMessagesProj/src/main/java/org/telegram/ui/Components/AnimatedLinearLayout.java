@@ -4,7 +4,6 @@ import static org.telegram.messenger.AndroidUtilities.lerp;
 
 import android.content.Context;
 import android.graphics.RectF;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -40,11 +39,13 @@ public class AnimatedLinearLayout extends LinearLayout {
     }
 
 
-    public void setPriority(View child, int priority) {
+    public boolean setPriority(View child, int priority) {
         final Holder holder = viewHolders.get(child);
-        if (holder != null) {
+        if (holder != null && holder.priority != priority) {
             holder.priority = priority;
+            return true;
         }
+        return false;
     }
 
     public void setDebugName(View child, String tag) {
@@ -124,8 +125,6 @@ public class AnimatedLinearLayout extends LinearLayout {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
 
-        Log.i("LIST_DEBUG", "start list: ");
-
         visibleHolders.clear();
         for (int a = 0, N = getChildCount(); a < N; a++) {
             final View view = getChildAt(a);
@@ -137,7 +136,6 @@ public class AnimatedLinearLayout extends LinearLayout {
             holder.order = a;
             if (view.getVisibility() == VISIBLE && holder.isVisible) {
                 visibleHolders.add(holder);
-                Log.i("LIST_DEBUG", "show item: " + holder.tag + " " + a);
             }
         }
         Collections.sort(visibleHolders, comparator);

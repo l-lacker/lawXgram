@@ -32,6 +32,7 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
 
     private final int previewRow = rowId++;
     private BottomTabsPreview previewView;
+    private int[] draftOrder;
 
     @Override
     public View createView(Context context) {
@@ -42,7 +43,9 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
             for (int i = 0; i < items.size(); i++) {
                 order[i] = items.get(i).id - TAB_ROW_ID;
             }
+            draftOrder = order;
             LawxConfig.setMainTabsOrder(order);
+            draftOrder = LawxConfig.getMainTabsOrder();
             previewView.update();
         });
         listView.allowReorder(true);
@@ -65,7 +68,7 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
         if (adapter != null) {
             adapter.reorderSectionStart();
         }
-        int[] order = LawxConfig.getMainTabsOrder();
+        int[] order = getDraftOrder();
         for (int tab : order) {
             items.add(UItem.asCheck(TAB_ROW_ID + tab, getTabTitle(tab))
                     .setChecked(LawxConfig.isMainTabVisible(tab))
@@ -117,6 +120,13 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
     @Override
     protected String getActionBarTitle() {
         return LocaleController.getString(R.string.BottomNavigationButtons);
+    }
+
+    private int[] getDraftOrder() {
+        if (draftOrder == null) {
+            draftOrder = LawxConfig.getMainTabsOrder();
+        }
+        return draftOrder;
     }
 
     private class BottomTabsPreview extends FrameLayout {
@@ -175,7 +185,7 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
                 touchX = dragX = event.getRawX();
                 touchY = event.getRawY();
                 orderChanged = false;
-                cancelLongPress();
+                cancelPreviewLongPress();
                 if (getVisibleTabsCount() > 1) {
                     longPressRunnable = () -> {
                         if (touchTab == tab && getVisibleTabsCount() > 1) {
@@ -210,6 +220,7 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
                     update();
                     listView.adapter.update(true);
                 } else if (orderChanged) {
+                    LawxConfig.setMainTabsOrder(getDraftOrder());
                     listView.adapter.update(true);
                 }
                 touchTab = -1;
@@ -237,7 +248,7 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
         }
 
         private boolean movePreviewTab(int tab, boolean forward) {
-            int[] order = LawxConfig.getMainTabsOrder();
+            int[] order = getDraftOrder().clone();
             int from = -1;
             for (int i = 0; i < order.length; i++) {
                 if (order[i] == tab) {
@@ -262,15 +273,16 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
                 System.arraycopy(order, to, order, to + 1, from - to);
             }
             order[to] = moved;
-            LawxConfig.setMainTabsOrder(order);
+            draftOrder = order;
             update();
             return true;
         }
 
         public void update() {
-            int[] order = LawxConfig.getMainTabsOrder();
+            int[] order = getDraftOrder();
             boolean callsTab = UserConfig.getInstance(currentAccount).showCallsTab;
             int selectedTab = -1;
+            boolean orderChanged = false;
             tabs[LawxConfig.MAIN_TAB_SETTINGS].setText(LocaleController.getString(callsTab ? R.string.MainTabsCalls : R.string.Settings));
             tabs[LawxConfig.MAIN_TAB_SETTINGS].setTabAnimation(callsTab ? GlassTabView.TabAnimation.CALLS : GlassTabView.TabAnimation.SETTINGS);
             for (int i = 0; i < order.length; i++) {
@@ -278,13 +290,15 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
                 if (selectedTab < 0 && LawxConfig.isMainTabVisible(tab)) {
                     selectedTab = tab;
                 }
-                tabsLayout.setPriority(tabs[tab], i);
+                orderChanged |= tabsLayout.setPriority(tabs[tab], i);
                 tabsLayout.setViewVisible(tabs[tab], LawxConfig.isMainTabVisible(tab), true);
             }
             for (int tab : order) {
                 tabs[tab].setSelected(tab == selectedTab, false);
             }
-            tabsLayout.requestLayout();
+            if (orderChanged) {
+                tabsLayout.requestLayout();
+            }
         }
     }
 }

@@ -168,6 +168,10 @@ public class ViewPagerFixed extends FrameLayout {
         return true;
     }
 
+    protected int getNextScrollPosition(boolean forward) {
+        return currentPosition + (forward ? 1 : -1);
+    }
+
     protected void onScrollEnd() {}
 
     public ViewPagerFixed(@NonNull Context context) {
@@ -515,7 +519,9 @@ public class ViewPagerFixed extends FrameLayout {
     }
 
     private boolean prepareForMoving(MotionEvent ev, boolean forward) {
-        if ((!forward && currentPosition == 0 && !onBackProgress(backProgress = 0)) || (forward && currentPosition == adapter.getItemCount() - 1) || manualScrolling != null) {
+        boolean backGesture = !forward && currentPosition == 0;
+        int targetPosition = getNextScrollPosition(forward);
+        if (manualScrolling != null || (backGesture ? !onBackProgress(backProgress = 0) : (targetPosition < 0 || targetPosition >= adapter.getItemCount()))) {
             return false;
         }
         if (!canScroll(ev)) {
@@ -528,7 +534,7 @@ public class ViewPagerFixed extends FrameLayout {
             return false;
         }
 
-        if (adapter != null && !adapter.canScrollTo(currentPosition + (forward ? +1 : -1))) {
+        if (!backGesture && adapter != null && !adapter.canScrollTo(targetPosition)) {
             return false;
         }
 
@@ -543,7 +549,7 @@ public class ViewPagerFixed extends FrameLayout {
 
         notificationsLocker.lock();
         animatingForward = forward;
-        nextPosition = currentPosition + (forward ? 1 : -1);
+        nextPosition = backGesture ? -1 : targetPosition;
         updateViewForIndex(1);
         if (viewPages[1] != null) {
             if (forward) {
