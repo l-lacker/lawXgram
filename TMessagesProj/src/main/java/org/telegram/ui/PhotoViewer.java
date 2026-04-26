@@ -240,7 +240,6 @@ import org.telegram.ui.Components.ChatActivityEnterView;
 import org.telegram.ui.Components.ChatAttachAlert;
 import org.telegram.ui.Components.CheckBox;
 import org.telegram.ui.Components.ClippingImageView;
-import org.telegram.ui.Components.ColoredImageSpan;
 import org.telegram.ui.Components.CombinedDrawable;
 import org.telegram.ui.Components.Crop.CropTransform;
 import org.telegram.ui.Components.Crop.CropView;
@@ -937,7 +936,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private ArrayList<HintView2> muteHints;
     private ArrayList<HintView2> livePhotoHints;
     private VideoCompressButton compressItem;
-    private HintView2 compressPhotoHint;
     private GroupedPhotosListView groupedPhotosListView;
     private Tooltip tooltip;
     private UndoView hintView;
@@ -7870,22 +7868,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         compressItem.setOnClickListener(v -> {
             if (isCaptionOpen() || muteVideo) {
                 return;
-            }
-            if (currentIndex >= 0 && currentIndex < imagesArrLocals.size()) {
-                Object object = imagesArrLocals.get(currentIndex);
-                if (object instanceof MediaController.PhotoEntry) {
-                    MediaController.PhotoEntry photoEntry = (MediaController.PhotoEntry) object;
-                    if (!photoEntry.isVideo || photoEntry.isLivePhoto) {
-                        photoEntry.highQuality = !photoEntry.isHighQuality();
-                        compressItem.setPhotoState(photoEntry.isHighQuality());
-                        showPhotoQualityHint(photoEntry.isHighQuality());
-
-                        SharedConfig.photoHighQualityDefault = photoEntry.isHighQuality();
-                        final SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE);
-                        prefs.edit().putBoolean("photoHighQualityDefault", SharedConfig.photoHighQualityDefault).apply();
-                        return;
-                    }
-                }
             }
             if (compressItem.getTag() == null) {
                 if (videoConvertSupported) {
@@ -15140,7 +15122,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 }
             } else {
                 boolean isAnimation = false;
-                boolean highQuality = false;
                 if (object instanceof MediaController.PhotoEntry) {
                     MediaController.PhotoEntry photoEntry = ((MediaController.PhotoEntry) object);
                     currentPathObject = photoEntry.path;
@@ -15150,7 +15131,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     livePhotoTimestampUs = photoEntry.livePhotoTimestampUs;
                     duration = photoEntry.duration;
                     cropState = photoEntry.cropState;
-                    highQuality = photoEntry.isHighQuality();
                 } else if (object instanceof MediaController.SearchImage) {
                     MediaController.SearchImage searchImage = (MediaController.SearchImage) object;
                     currentPathObject = searchImage.getPathToAttach();
@@ -15258,9 +15238,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         }
                     }
                     if (isLivePhoto && object instanceof MediaController.PhotoEntry) {
-                        final MediaController.PhotoEntry entry = (MediaController.PhotoEntry) object;
-                        compressItem.setVisibility(sendPhotoTypeIsGif || sendPhotoTypeIsPollMedia ? View.GONE : View.VISIBLE);
-                        compressItem.setPhotoState(highQuality);
+                        compressItem.setVisibility(View.GONE);
                     }
                 } else {
                     showVideoTimeline(false, animated);
@@ -15272,17 +15250,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         animateCaption = false;
                     }
                     isCurrentVideo = false;
-                    if (object instanceof MediaController.PhotoEntry && !((MediaController.PhotoEntry) object).isVideo) {
-                        final MediaController.PhotoEntry entry = (MediaController.PhotoEntry) object;
-                        if (!entry.isVideo && sendPhotoType != SELECT_TYPE_STICKER && (currentIndex == index ? getCurrentVideoEditedInfo() : entry.editedInfo) == null) {
-                            compressItem.setVisibility(sendPhotoTypeIsGif || sendPhotoTypeIsPollMedia ? View.GONE : View.VISIBLE);
-                            compressItem.setPhotoState(highQuality);
-                        } else {
-                            compressItem.setVisibility(View.GONE);
-                        }
-                    } else {
-                        compressItem.setVisibility(View.GONE);
-                    }
+                    compressItem.setVisibility(View.GONE);
                     if (isAnimation || sendPhotoType == SELECT_TYPE_QR || isDocumentsPicker) {
                         paintItem.setVisibility(View.GONE);
                         paintItem.setTag(null);
@@ -23815,22 +23783,4 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         }
     }
 
-    private void showPhotoQualityHint(boolean highQuality) {
-        if (compressPhotoHint != null) {
-            compressPhotoHint.hide();
-            compressPhotoHint = null;
-        }
-        if (activityContext == null) return;
-        compressPhotoHint = new HintView2(activityContext, HintView2.DIRECTION_BOTTOM);
-        final SpannableStringBuilder sb = new SpannableStringBuilder("x ").append(getString(highQuality ? R.string.PhotoWillBeSentInHD : R.string.PhotoWillBeSentInSD));
-        sb.setSpan(new ColoredImageSpan(highQuality ? R.drawable.menu_quality_hd_filled : R.drawable.menu_quality_sd_filled), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        compressPhotoHint.setText(sb);
-        containerView.addView(compressPhotoHint, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 100, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL, 0, 0, 0, 48));
-        compressPhotoHint.setTranslationY(pickerView.getTranslationY());
-        compressPhotoHint.setJointPx(0, itemsLayout.getX() + compressItem.getX() + compressItem.getWidth() / 2.f);
-        final View thisHint = compressPhotoHint;
-        compressPhotoHint.setOnHiddenListener(() -> AndroidUtilities.removeFromParent(thisHint));
-        compressPhotoHint.setDuration(3500);
-        compressPhotoHint.show();
-    }
 }
