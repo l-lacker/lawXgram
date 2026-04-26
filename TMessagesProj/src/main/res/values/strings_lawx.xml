@@ -327,6 +327,10 @@
     <string name="TranslationKeepFormatting">Preserve text formatting in translation</string>
     <string name="PredictiveBackAnimation">Predictive back animation</string>
     <string name="HideBottomNavigationBar">Hide bottom navigation bar</string>
+    <string name="BottomNavigationButtons">Bottom buttons</string>
+    <string name="BottomNavigationButtonsAbout">The preview shows the current bottom bar. Drag the preview or rows below to change the order.</string>
+    <string name="BottomNavigationButtonsShown">Shown buttons</string>
+    <string name="BottomNavigationButtonsHint">Turn off buttons you do not use. At least one button always stays visible.</string>
     <string name="TabsPosition">Tabs position</string>
     <string name="TabsPositionTop">Top</string>
     <string name="TabsPositionBottom">Bottom</string>

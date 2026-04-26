@@ -4,6 +4,10 @@
     <string name="lawXgram" translatable="false">локсграм</string>
     <string name="lawXgramBeta" translatable="false">локсграм бета</string>
     <string name="LawxSettings">Настройки локсграм</string>
+    <string name="BottomNavigationButtons">Төмөнкү баскычтар</string>
+    <string name="BottomNavigationButtonsAbout">Алдын ала көрүү азыркы төмөнкү тилкени көрсөтөт. Тартибин өзгөртүү үчүн алдын ала көрүүнү же төмөнкү саптарды сүйрөңүз.</string>
+    <string name="BottomNavigationButtonsShown">Көрсөтүлгөн баскычтар</string>
+    <string name="BottomNavigationButtonsHint">Колдонбогон баскычтарды өчүрүңүз. Жок дегенде бир баскыч дайыма көрүнүп турат.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">Боттун баннерин жашыруу</string>
     <string name="HideBusinessBotPanelAbout">Активдүү бот тууралуу бизнес режиминдеги баннер бардык чаттарда жашырылат.</string>

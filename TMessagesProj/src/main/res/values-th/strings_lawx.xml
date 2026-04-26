@@ -312,6 +312,10 @@
     <string name="AutoInlineBotDesc">เรียกใช้อินไลน์บอทอัตโนมัติตามข้อความ</string>
     <string name="ShortStandardQuality">คุณภาพมาตรฐาน</string>
     <string name="ForceFontWeightFallback">บังคับใช้ความหนาฟอนต์แบบสำรอง</string>
+    <string name="BottomNavigationButtons">ปุ่มด้านล่าง</string>
+    <string name="BottomNavigationButtonsAbout">ตัวอย่างจะแสดงแถบด้านล่างปัจจุบัน ลากตัวอย่างหรือแถวด้านล่างเพื่อเปลี่ยนลำดับ</string>
+    <string name="BottomNavigationButtonsShown">ปุ่มที่แสดง</string>
+    <string name="BottomNavigationButtonsHint">ปิดปุ่มที่คุณไม่ได้ใช้ อย่างน้อยหนึ่งปุ่มจะยังคงแสดงอยู่เสมอ</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">การตั้งค่าการเข้าถึง</string>
     <string name="HideBusinessBotPanel">ซ่อนแบนเนอร์บอท</string>

@@ -317,6 +317,10 @@
     <string name="TranslationKeepFormatting">保留翻译文本格式</string>
     <string name="PredictiveBackAnimation">预测性返回动画</string>
     <string name="HideBottomNavigationBar">隐藏底部导航栏</string>
+    <string name="BottomNavigationButtons">底部按钮</string>
+    <string name="BottomNavigationButtonsAbout">预览会显示当前底部栏。拖动预览或下方行即可更改顺序。</string>
+    <string name="BottomNavigationButtonsShown">显示的按钮</string>
+    <string name="BottomNavigationButtonsHint">关闭不使用的按钮。至少会始终保留一个按钮可见。</string>
     <string name="TabsPosition">标签栏位置</string>
     <string name="TabsPositionTop">顶部</string>
     <string name="TabsPositionBottom">底部</string>

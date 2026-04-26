@@ -254,6 +254,10 @@
     <string name="SendLargePhotos">Lielu fotoattēlu sūtīšana</string>
     <string name="SendLargePhotosAbout">Palieliniet saspiesto attēlu sānu ierobežojumu līdz 2560px.</string>
     <string name="ExportAsJson">Kopēt kā JSON</string>
+    <string name="BottomNavigationButtons">Apakšējās pogas</string>
+    <string name="BottomNavigationButtonsAbout">Priekšskatījums rāda pašreizējo apakšējo joslu. Velc priekšskatījumu vai zemāk esošās rindas, lai mainītu secību.</string>
+    <string name="BottomNavigationButtonsShown">Rādītās pogas</string>
+    <string name="BottomNavigationButtonsHint">Izslēdz pogas, kuras neizmanto. Vismaz viena poga vienmēr paliek redzama.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Pieejamības iestatījumi</string>
     <string name="HideBusinessBotPanel">Paslēpt bota baneri</string>

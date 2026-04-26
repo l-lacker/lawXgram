@@ -194,6 +194,10 @@
     <string name="PasscodePanicCodeAbout">Använda panikkoden för att logga ut konton om något går fel.</string>
     <string name="HideTimeOnSticker">Dölj tid på klistermärken</string>
     <string name="TranslatorShowOriginal">Med originaltext</string>
+    <string name="BottomNavigationButtons">Nedre knappar</string>
+    <string name="BottomNavigationButtonsAbout">Förhandsvisningen visar den aktuella nedre raden. Dra förhandsvisningen eller raderna nedan för att ändra ordningen.</string>
+    <string name="BottomNavigationButtonsShown">Visade knappar</string>
+    <string name="BottomNavigationButtonsHint">Stäng av knappar som du inte använder. Minst en knapp är alltid synlig.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Tillgänglighetsinställningar</string>
     <string name="HideBusinessBotPanel">Dölj botbannern</string>

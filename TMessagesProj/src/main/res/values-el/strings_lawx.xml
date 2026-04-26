@@ -314,6 +314,10 @@
     <string name="TranslationKeepFormatting">Διατήρηση μορφοποίησης κειμένου στη μετάφραση</string>
     <string name="PredictiveBackAnimation">Πρόβλεψη πίσω εφέ</string>
     <string name="HideBottomNavigationBar">Απόκρυψη κάτω μπάρας πλοήγησης</string>
+    <string name="BottomNavigationButtons">Κάτω κουμπιά</string>
+    <string name="BottomNavigationButtonsAbout">Η προεπισκόπηση δείχνει την τρέχουσα κάτω μπάρα. Σύρε την προεπισκόπηση ή τις γραμμές παρακάτω για να αλλάξεις τη σειρά.</string>
+    <string name="BottomNavigationButtonsShown">Εμφανιζόμενα κουμπιά</string>
+    <string name="BottomNavigationButtonsHint">Απενεργοποίησε τα κουμπιά που δεν χρησιμοποιείς. Τουλάχιστον ένα κουμπί μένει πάντα ορατό.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Ρυθμίσεις προσβασιμότητας</string>
     <string name="HideBusinessBotPanel">Απόκρυψη του banner του bot</string>

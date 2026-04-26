@@ -311,6 +311,10 @@
     <string name="PreferOriginalQualityDesc">مشاهده فیلم ها با کیفیت اصلی.</string>
     <string name="AutoInlineBot">ربات درون‌خطی خودکار</string>
     <string name="AutoInlineBotDesc">پرس‌وجوی خودکار ربات درون‌خطی بر اساس متن پیام.</string>
+    <string name="BottomNavigationButtons">دکمه‌های پایین</string>
+    <string name="BottomNavigationButtonsAbout">پیش‌نمایش نوار پایین فعلی را نشان می‌دهد. برای تغییر ترتیب، پیش‌نمایش یا ردیف‌های پایین را بکشید.</string>
+    <string name="BottomNavigationButtonsShown">دکمه‌های نمایش‌داده‌شده</string>
+    <string name="BottomNavigationButtonsHint">دکمه‌هایی را که استفاده نمی‌کنید خاموش کنید. همیشه دست‌کم یک دکمه قابل مشاهده می‌ماند.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">تنظیمات دسترسی پذیری</string>
     <string name="HideBusinessBotPanel">پنهان کردن نوار ربات</string>

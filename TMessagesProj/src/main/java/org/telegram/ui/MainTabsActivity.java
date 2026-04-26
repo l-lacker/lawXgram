@@ -289,9 +289,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             });
 
             tabsView.addView(tabs[index]);
-            tabsView.setViewVisible(view, true, false);
+            tabsView.setViewVisible(view, false, false);
         }
-        checkUi_callTabVisible(getUserConfig().showCallsTab, false);
+        applyTabsConfig(false);
 
         selectTab(viewPager.getCurrentPosition(), false);
 
@@ -350,6 +350,80 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             tabs[INDEX_CHATS].setCounter(unreadCountFmt, false, animated);
         } else {
             tabs[INDEX_CHATS].setCounter(null, false, animated);
+        }
+    }
+
+    private int getTabIndex(int tab) {
+        return switch (tab) {
+            case LawxConfig.MAIN_TAB_CHATS -> INDEX_CHATS;
+            case LawxConfig.MAIN_TAB_CONTACTS -> INDEX_CONTACTS;
+            case LawxConfig.MAIN_TAB_SETTINGS -> getUserConfig().showCallsTab ? INDEX_CALLS : INDEX_SETTINGS;
+            case LawxConfig.MAIN_TAB_PROFILE -> INDEX_PROFILE;
+            default -> -1;
+        };
+    }
+
+    private int getConfigTabByPosition(int position) {
+        return switch (position) {
+            case POSITION_CONTACTS -> LawxConfig.MAIN_TAB_CONTACTS;
+            case POSITION_CALLS_OR_SETTINGS -> LawxConfig.MAIN_TAB_SETTINGS;
+            case POSITION_PROFILE -> LawxConfig.MAIN_TAB_PROFILE;
+            default -> LawxConfig.MAIN_TAB_CHATS;
+        };
+    }
+
+    private int getPositionByConfigTab(int tab) {
+        return switch (tab) {
+            case LawxConfig.MAIN_TAB_CONTACTS -> POSITION_CONTACTS;
+            case LawxConfig.MAIN_TAB_SETTINGS -> POSITION_CALLS_OR_SETTINGS;
+            case LawxConfig.MAIN_TAB_PROFILE -> POSITION_PROFILE;
+            default -> POSITION_CHATS;
+        };
+    }
+
+    private int getFirstVisiblePosition() {
+        int[] order = LawxConfig.getMainTabsOrder();
+        for (int tab : order) {
+            if (LawxConfig.isMainTabVisible(tab)) {
+                return getPositionByConfigTab(tab);
+            }
+        }
+        return POSITION_CHATS;
+    }
+
+    private boolean isPositionVisible(int position) {
+        return LawxConfig.isMainTabVisible(getConfigTabByPosition(position));
+    }
+
+    private void applyTabsConfig(boolean animated) {
+        if (tabsView == null || tabs == null) {
+            return;
+        }
+        boolean[] visibleTabs = new boolean[tabs.length];
+        int[] order = LawxConfig.getMainTabsOrder();
+        for (int i = 0; i < order.length; i++) {
+            int tab = order[i];
+            int index = getTabIndex(tab);
+            if (index >= 0 && LawxConfig.isMainTabVisible(tab)) {
+                tabsView.setPriority(tabs[index], i);
+                visibleTabs[index] = true;
+            }
+        }
+        for (int i = 0; i < tabs.length; i++) {
+            tabsView.setViewVisible(tabs[i], visibleTabs[i], animated);
+        }
+        tabsView.requestLayout();
+
+        if (viewPager != null && !isPositionVisible(viewPager.getCurrentPosition())) {
+            int position = getFirstVisiblePosition();
+            viewPager.scrollToPosition(position);
+            selectTab(position, false);
+        }
+        if (updateLayoutWrapper != null) {
+            checkUi_tabsPosition();
+        }
+        if (fadeView != null) {
+            checkUi_fadeView();
         }
     }
 
@@ -521,7 +595,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     @Override
     protected int getStartPosition() {
-        return POSITION_CHATS;
+        return getFirstVisiblePosition();
     }
 
     private DialogsActivity dialogsActivity;
@@ -643,6 +717,10 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (LawxConfig.hideBottomNavigationBar) {
             return false;
         }
+        int nextPosition = viewPager.getCurrentPosition() + (forward ? 1 : -1);
+        if (nextPosition < 0 || nextPosition >= TABS_COUNT || !isPositionVisible(nextPosition)) {
+            return false;
+        }
         final BaseFragment fragment = getCurrentVisibleFragment();
         if (fragment instanceof TabFragmentDelegate) {
             final TabFragmentDelegate delegate = (TabFragmentDelegate) fragment;
@@ -746,6 +824,8 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             }
         } else if (id == NotificationCenter.contactsPermissionBadgeCheck) {
             checkContactsTabBadge();
+        } else if (id == NotificationCenter.mainTabsConfigChanged) {
+            applyTabsConfig(true);
         }
     }
 
@@ -762,6 +842,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.appUpdateAvailable);
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.appUpdateLoading);
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.needSetDayNightTheme);
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.mainTabsConfigChanged);
 
         return super.onFragmentCreate();
     }
@@ -779,6 +860,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.appUpdateAvailable);
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.appUpdateLoading);
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.needSetDayNightTheme);
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.mainTabsConfigChanged);
 
         super.onFragmentDestroy();
     }
@@ -829,10 +911,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     }
 
     private void checkUi_callTabVisible(boolean callTabsVisible, boolean animated) {
-        if (tabsView != null) {
-            tabsView.setViewVisible(tabs[INDEX_SETTINGS], !callTabsVisible, animated);
-            tabsView.setViewVisible(tabs[INDEX_CALLS], callTabsVisible, animated);
-        }
+        applyTabsConfig(animated);
     }
 
     @Override
@@ -900,7 +979,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private boolean accountSwitchHintShown;
 
     private void showAccountChangeHint() {
-        if (accountSwitchHintShown || LawxConfig.hideBottomNavigationBar) return;
+        if (accountSwitchHintShown || LawxConfig.hideBottomNavigationBar || !LawxConfig.isMainTabVisible(LawxConfig.MAIN_TAB_PROFILE)) return;
 
         if (accountSwitchHint == null && MessagesController.getGlobalMainSettings().getInt("accountswitchhint", 0) < 2) {
             AndroidUtilities.runOnUIThread(() -> {

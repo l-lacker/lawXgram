@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="BottomNavigationButtons">כפתורים תחתונים</string>
+    <string name="BottomNavigationButtonsAbout">התצוגה המקדימה מציגה את הסרגל התחתון הנוכחי. גרור את התצוגה המקדימה או את השורות למטה כדי לשנות את הסדר.</string>
+    <string name="BottomNavigationButtonsShown">כפתורים מוצגים</string>
+    <string name="BottomNavigationButtonsHint">כבה כפתורים שאינך משתמש בהם. לפחות כפתור אחד תמיד יישאר גלוי.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">הסתרת באנר הבוט</string>
     <string name="HideBusinessBotPanelAbout">באנר מצב העסק של הבוט הפעיל יוסתר בכל הצ׳אטים.</string>

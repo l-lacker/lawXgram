@@ -313,6 +313,10 @@
     <string name="AutoInlineBotDesc">根據訊息文字自動查詢 Inline 機器人。</string>
     <string name="ShortStandardQuality">SD</string>
     <string name="ForceFontWeightFallback">強制使用字重替代</string>
+    <string name="BottomNavigationButtons">底部按鈕</string>
+    <string name="BottomNavigationButtonsAbout">預覽會顯示目前的底部列。拖曳預覽或下方列即可變更順序。</string>
+    <string name="BottomNavigationButtonsShown">顯示的按鈕</string>
+    <string name="BottomNavigationButtonsHint">關閉不使用的按鈕。至少會始終保留一個按鈕可見。</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">無障礙設定</string>
     <string name="HideBusinessBotPanel">隱藏機器人橫幅</string>

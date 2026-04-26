@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="BottomNavigationButtons">Onderste knoppies</string>
+    <string name="BottomNavigationButtonsAbout">Die voorskou wys die huidige onderste balk. Sleep die voorskou of die rye hieronder om die volgorde te verander.</string>
+    <string name="BottomNavigationButtonsShown">Sigbare knoppies</string>
+    <string name="BottomNavigationButtonsHint">Skakel knoppies af wat jy nie gebruik nie. Ten minste een knoppie bly altyd sigbaar.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">Versteek die botbanier</string>
     <string name="HideBusinessBotPanelAbout">Die besigheidsmodus-banier oor die aktiewe bot sal in alle kletse versteek word.</string>

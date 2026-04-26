@@ -308,6 +308,10 @@
     <string name="CloudflareCredentialsDialog">Configura un account Cloudflare e un Token API. \n**Come ottenerlo?**</string>
     <string name="PreferOriginalQuality">Mantieni la qualità originale</string>
     <string name="PreferOriginalQualityDesc">Visualizza i video nella qualità originale.</string>
+    <string name="BottomNavigationButtons">Pulsanti inferiori</string>
+    <string name="BottomNavigationButtonsAbout">L’anteprima mostra la barra inferiore attuale. Trascina l’anteprima o le righe qui sotto per cambiare l’ordine.</string>
+    <string name="BottomNavigationButtonsShown">Pulsanti mostrati</string>
+    <string name="BottomNavigationButtonsHint">Disattiva i pulsanti che non usi. Almeno un pulsante resta sempre visibile.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Impostazioni di accessibilità</string>
     <string name="HideBusinessBotPanel">Nascondi il banner del bot</string>

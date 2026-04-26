@@ -172,6 +172,10 @@
     <string name="EditRedo">Znovu</string>
     <string name="EditEnableMarkdown">Povolit značkování</string>
     <string name="EditDisableMarkdown">Zakázat značkování</string>
+    <string name="BottomNavigationButtons">Spodní tlačítka</string>
+    <string name="BottomNavigationButtonsAbout">Náhled ukazuje aktuální spodní lištu. Pořadí změníte přetažením náhledu nebo řádků níže.</string>
+    <string name="BottomNavigationButtonsShown">Zobrazená tlačítka</string>
+    <string name="BottomNavigationButtonsHint">Vypněte tlačítka, která nepoužíváte. Alespoň jedno tlačítko vždy zůstane viditelné.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">Skrýt banner bota</string>
     <string name="HideBusinessBotPanelAbout">Banner obchodního režimu aktivního bota bude skrytý ve všech chatech.</string>

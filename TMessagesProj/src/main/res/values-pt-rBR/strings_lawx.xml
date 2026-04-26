@@ -317,6 +317,10 @@
     <string name="TranslationKeepFormatting">Preservar a formatação do texto na tradução</string>
     <string name="PredictiveBackAnimation">Animação do gesto de volta preditivo</string>
     <string name="HideBottomNavigationBar">Ocultar barra de navegação inferior</string>
+    <string name="BottomNavigationButtons">Botões inferiores</string>
+    <string name="BottomNavigationButtonsAbout">A prévia mostra a barra inferior atual. Arraste a prévia ou as linhas abaixo para alterar a ordem.</string>
+    <string name="BottomNavigationButtonsShown">Botões exibidos</string>
+    <string name="BottomNavigationButtonsHint">Desative os botões que você não usa. Pelo menos um botão sempre fica visível.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Opções de acessibilidade</string>
     <string name="HideBusinessBotPanel">Ocultar o banner do bot</string>

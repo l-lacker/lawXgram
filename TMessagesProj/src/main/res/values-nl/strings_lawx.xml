@@ -190,6 +190,10 @@
     <string name="CreateCode">Code maken</string>
     <string name="CreateCodeLanguage">Taal</string>
     <string name="IgnoreContentRestriction">Inhoudsbeperking negeren</string>
+    <string name="BottomNavigationButtons">Onderste knoppen</string>
+    <string name="BottomNavigationButtonsAbout">De voorbeeldweergave toont de huidige onderste balk. Sleep de voorbeeldweergave of de rijen hieronder om de volgorde te wijzigen.</string>
+    <string name="BottomNavigationButtonsShown">Getoonde knoppen</string>
+    <string name="BottomNavigationButtonsHint">Schakel knoppen uit die je niet gebruikt. Minstens één knop blijft altijd zichtbaar.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Toegankelijkheidsinstellingen</string>
     <string name="HideBusinessBotPanel">Botbanner verbergen</string>

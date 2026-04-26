@@ -283,6 +283,10 @@
     <string name="MonoCode">Kode</string>
     <string name="CreateCode">Buat Kode</string>
     <string name="IgnoreContentRestriction">Kontol</string>
+    <string name="BottomNavigationButtons">Tombol bawah</string>
+    <string name="BottomNavigationButtonsAbout">Pratinjau menampilkan bilah bawah saat ini. Seret pratinjau atau baris di bawah untuk mengubah urutan.</string>
+    <string name="BottomNavigationButtonsShown">Tombol yang ditampilkan</string>
+    <string name="BottomNavigationButtonsHint">Matikan tombol yang tidak Anda gunakan. Setidaknya satu tombol selalu tetap terlihat.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Setelan Aksesibilitas</string>
     <string name="HideBusinessBotPanel">Sembunyikan banner bot</string>

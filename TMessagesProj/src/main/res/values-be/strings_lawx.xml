@@ -315,6 +315,10 @@
     <string name="ShortStandardQuality">SD</string>
     <string name="ForceFontWeightFallback">Прымусовае памяншэнне памеру тэксту</string>
     <string name="HideChannelBottomButtons">Схаваць ніжнія кнопкі ў канале</string>
+    <string name="BottomNavigationButtons">Ніжнія кнопкі</string>
+    <string name="BottomNavigationButtonsAbout">Папярэдні прагляд паказвае бягучую ніжнюю панэль. Перацягвайце прагляд або радкі ніжэй, каб змяніць парадак.</string>
+    <string name="BottomNavigationButtonsShown">Паказаныя кнопкі</string>
+    <string name="BottomNavigationButtonsHint">Адключайце кнопкі, якімі не карыстаецеся. Прынамсі адна кнопка заўсёды застаецца бачнай.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Адмысловыя магчымасці</string>
     <string name="HideBusinessBotPanel">Схаваць плашку бота</string>

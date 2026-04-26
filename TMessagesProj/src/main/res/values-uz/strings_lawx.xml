@@ -281,6 +281,10 @@
     <string name="CreateCode">Kod yaratish</string>
     <string name="CreateCodeLanguage">Til</string>
     <string name="IgnoreContentRestriction">Kontent cheklovlarini olib tashlash</string>
+    <string name="BottomNavigationButtons">Pastki tugmalar</string>
+    <string name="BottomNavigationButtonsAbout">Oldindan ko‘rish joriy pastki panelni ko‘rsatadi. Tartibni o‘zgartirish uchun oldindan ko‘rishni yoki pastdagi qatorlarni sudrang.</string>
+    <string name="BottomNavigationButtonsShown">Ko‘rsatiladigan tugmalar</string>
+    <string name="BottomNavigationButtonsHint">Ishlatmaydigan tugmalarni o‘chiring. Kamida bitta tugma doim ko‘rinib turadi.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Maxsus imkoniyatlar sozlamalari</string>
     <string name="HideBusinessBotPanel">Bot bannerini yashirish</string>

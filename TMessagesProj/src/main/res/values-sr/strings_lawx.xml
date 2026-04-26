@@ -317,6 +317,10 @@
     <string name="TranslationKeepFormatting">Сачувај форматирање текста у преводу</string>
     <string name="PredictiveBackAnimation">Предвиђање анимације назад</string>
     <string name="HideBottomNavigationBar">Сакриј доњу траку за навигацију</string>
+    <string name="BottomNavigationButtons">Доња дугмад</string>
+    <string name="BottomNavigationButtonsAbout">Преглед приказује тренутну доњу траку. Превуците преглед или редове испод да промените редослед.</string>
+    <string name="BottomNavigationButtonsShown">Приказана дугмад</string>
+    <string name="BottomNavigationButtonsHint">Искључите дугмад коју не користите. Бар једно дугме увек остаје видљиво.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Подешавања приступачности</string>
     <string name="HideBusinessBotPanel">Сакриј плашку бота</string>

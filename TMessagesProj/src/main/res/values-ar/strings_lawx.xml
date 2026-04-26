@@ -316,6 +316,10 @@
     <string name="TranslationKeepFormatting">الحفاظ على تنسيق النص في الترجمة</string>
     <string name="PredictiveBackAnimation">ميزة تنقل بالإيماءات المتحركة</string>
     <string name="HideBottomNavigationBar">إخفاء شريط التنقل السفلي</string>
+    <string name="BottomNavigationButtons">الأزرار السفلية</string>
+    <string name="BottomNavigationButtonsAbout">تعرض المعاينة الشريط السفلي الحالي. اسحب المعاينة أو الصفوف أدناه لتغيير الترتيب.</string>
+    <string name="BottomNavigationButtonsShown">الأزرار المعروضة</string>
+    <string name="BottomNavigationButtonsHint">أوقف الأزرار التي لا تستخدمها. يبقى زر واحد على الأقل ظاهرا دائما.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">إعدادات إمكانية الوصول</string>
     <string name="HideBusinessBotPanel">إخفاء شريط البوت</string>

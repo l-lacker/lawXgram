@@ -311,6 +311,10 @@
     <string name="PreferOriginalQualityDesc">Ver vídeos com a qualidade original.</string>
     <string name="AutoInlineBot">Bot inline automático</string>
     <string name="AutoInlineBotDesc">Consultar automaticamente o bot inline baseado na mensagem de texto.</string>
+    <string name="BottomNavigationButtons">Botões inferiores</string>
+    <string name="BottomNavigationButtonsAbout">A pré-visualização mostra a barra inferior atual. Arrasta a pré-visualização ou as linhas abaixo para alterar a ordem.</string>
+    <string name="BottomNavigationButtonsShown">Botões apresentados</string>
+    <string name="BottomNavigationButtonsHint">Desativa os botões que não usas. Pelo menos um botão fica sempre visível.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Configurações de acessibilidade</string>
     <string name="HideBusinessBotPanel">Ocultar o banner do bot</string>

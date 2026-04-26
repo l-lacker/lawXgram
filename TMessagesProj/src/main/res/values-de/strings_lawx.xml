@@ -311,6 +311,10 @@
     <string name="ShortStandardQuality">Standardauflösung</string>
     <string name="ForceFontWeightFallback">Zurückschalten der Schriftgröße erzwingen</string>
     <string name="HideChannelBottomButtons">Schaltflächen am unteren Rand des Kanals ausblenden</string>
+    <string name="BottomNavigationButtons">Untere Schaltflächen</string>
+    <string name="BottomNavigationButtonsAbout">Die Vorschau zeigt die aktuelle untere Leiste. Ziehe die Vorschau oder die Zeilen darunter, um die Reihenfolge zu ändern.</string>
+    <string name="BottomNavigationButtonsShown">Angezeigte Schaltflächen</string>
+    <string name="BottomNavigationButtonsHint">Deaktiviere Schaltflächen, die du nicht nutzt. Mindestens eine Schaltfläche bleibt immer sichtbar.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Zugangseinstellungen</string>
     <string name="HideBusinessBotPanel">Bot-Banner ausblenden</string>

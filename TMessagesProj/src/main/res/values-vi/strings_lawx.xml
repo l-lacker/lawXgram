@@ -313,6 +313,10 @@
     <string name="AutoInlineBotDesc">Truy vấn bot bằng cách dựa trên cú pháp tin nhắn.</string>
     <string name="ShortStandardQuality">Chất lượng cơ bản, ngắn gọn</string>
     <string name="ForceFontWeightFallback">Buộc kiểu chữ sử dụng độ đậm mặc định</string>
+    <string name="BottomNavigationButtons">Nút phía dưới</string>
+    <string name="BottomNavigationButtonsAbout">Bản xem trước hiển thị thanh dưới hiện tại. Kéo bản xem trước hoặc các hàng bên dưới để đổi thứ tự.</string>
+    <string name="BottomNavigationButtonsShown">Nút được hiển thị</string>
+    <string name="BottomNavigationButtonsHint">Tắt các nút bạn không dùng. Luôn có ít nhất một nút được hiển thị.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Cài đặt trợ năng</string>
     <string name="HideBusinessBotPanel">Ẩn biểu ngữ bot</string>

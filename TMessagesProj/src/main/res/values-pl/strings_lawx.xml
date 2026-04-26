@@ -311,6 +311,10 @@
     <string name="ShortStandardQuality">SD</string>
     <string name="ForceFontWeightFallback">Wymuś przywrócenie wagi czcionki</string>
     <string name="HideChannelBottomButtons">Ukryj dolne przyciski kanału</string>
+    <string name="BottomNavigationButtons">Dolne przyciski</string>
+    <string name="BottomNavigationButtonsAbout">Podgląd pokazuje bieżący dolny pasek. Przeciągnij podgląd lub wiersze poniżej, aby zmienić kolejność.</string>
+    <string name="BottomNavigationButtonsShown">Widoczne przyciski</string>
+    <string name="BottomNavigationButtonsHint">Wyłącz przyciski, których nie używasz. Co najmniej jeden przycisk zawsze pozostaje widoczny.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Ustawienia ułatwień dostępu</string>
     <string name="HideBusinessBotPanel">Ukryj baner bota</string>

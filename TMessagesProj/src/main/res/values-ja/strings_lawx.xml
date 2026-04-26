@@ -318,6 +318,10 @@
     <string name="TranslationKeepFormatting">翻訳時にテキストの書式を保持</string>
     <string name="PredictiveBackAnimation">予測バックアニメーション</string>
     <string name="HideBottomNavigationBar">下部のナビゲーションバーを非表示</string>
+    <string name="BottomNavigationButtons">下部ボタン</string>
+    <string name="BottomNavigationButtonsAbout">プレビューには現在の下部バーが表示されます。順序を変更するには、プレビューまたは下の行をドラッグします。</string>
+    <string name="BottomNavigationButtonsShown">表示するボタン</string>
+    <string name="BottomNavigationButtonsHint">使わないボタンをオフにできます。少なくとも1つのボタンは常に表示されます。</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">ユーザー補助の設定</string>
     <string name="HideBusinessBotPanel">ボットのバナーを非表示</string>

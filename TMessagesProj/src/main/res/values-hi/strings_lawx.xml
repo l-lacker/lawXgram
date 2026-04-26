@@ -255,6 +255,10 @@
     <string name="SendLargePhotos">विशाल चित्रों को भेजे</string>
     <string name="SendLargePhotosAbout">कंप्रेस की गई इमेज पर साइड लिमिट को बढ़ाकर, २५६०px करें।</string>
     <string name="ExportAsJson">JSON के रूप में कॉपी करें</string>
+    <string name="BottomNavigationButtons">नीचे के बटन</string>
+    <string name="BottomNavigationButtonsAbout">प्रीव्यू मौजूदा नीचे की पट्टी दिखाता है। क्रम बदलने के लिए प्रीव्यू या नीचे की पंक्तियों को खींचें।</string>
+    <string name="BottomNavigationButtonsShown">दिखाए गए बटन</string>
+    <string name="BottomNavigationButtonsHint">जिन बटनों का उपयोग नहीं करते उन्हें बंद करें। कम से कम एक बटन हमेशा दिखाई देगा।</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">एक्सेसिबिलिटी सेटिंग</string>
     <string name="HideBusinessBotPanel">बॉट बैनर छिपाएँ</string>

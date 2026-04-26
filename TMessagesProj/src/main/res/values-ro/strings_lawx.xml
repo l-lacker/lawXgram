@@ -313,6 +313,10 @@
     <string name="AutoInlineBotDesc">Interogarea automată a botului de inserare automată în linie bazat pe textul mesajului.</string>
     <string name="ShortStandardQuality">SD</string>
     <string name="ForceFontWeightFallback">Forțați opțiunile de rezervă pentru grosimea fontului</string>
+    <string name="BottomNavigationButtons">Butoane de jos</string>
+    <string name="BottomNavigationButtonsAbout">Previzualizarea arată bara de jos curentă. Trage previzualizarea sau rândurile de mai jos pentru a schimba ordinea.</string>
+    <string name="BottomNavigationButtonsShown">Butoane afișate</string>
+    <string name="BottomNavigationButtonsHint">Dezactivează butoanele pe care nu le folosești. Cel puțin un buton rămâne întotdeauna vizibil.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Setări de accesibilitate</string>
     <string name="HideBusinessBotPanel">Ascunde bannerul botului</string>

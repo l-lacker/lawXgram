@@ -319,6 +319,10 @@
     <string name="TranslationKeepFormatting">Зберігати форматування тексту в перекладі</string>
     <string name="PredictiveBackAnimation">Прогнозована задня анімація</string>
     <string name="HideBottomNavigationBar">Приховати нижню панель навігації</string>
+    <string name="BottomNavigationButtons">Нижні кнопки</string>
+    <string name="BottomNavigationButtonsAbout">Попередній перегляд показує поточну нижню панель. Перетягуй перегляд або рядки нижче, щоб змінити порядок.</string>
+    <string name="BottomNavigationButtonsShown">Показані кнопки</string>
+    <string name="BottomNavigationButtonsHint">Вимикай кнопки, якими не користуєшся. Принаймні одна кнопка завжди залишиться видимою.</string>
     <string name="TabsPosition">Розташування вкладок</string>
     <string name="TabsPositionTop">Зверху</string>
     <string name="TabsPositionBottom">Знизу</string>

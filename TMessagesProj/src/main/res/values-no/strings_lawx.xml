@@ -98,6 +98,10 @@
     <string name="WsEnableTls">Aktiver TLS</string>
     <string name="WsProvider">Forsørger</string>
     <string name="DatacenterStatusShort">Datasenter</string>
+    <string name="BottomNavigationButtons">Nederste knapper</string>
+    <string name="BottomNavigationButtonsAbout">Forhåndsvisningen viser den gjeldende nederste linjen. Dra forhåndsvisningen eller radene nedenfor for å endre rekkefølgen.</string>
+    <string name="BottomNavigationButtonsShown">Viste knapper</string>
+    <string name="BottomNavigationButtonsHint">Slå av knapper du ikke bruker. Minst én knapp forblir alltid synlig.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">Skjul bot-banneret</string>
     <string name="HideBusinessBotPanelAbout">Banneret for den aktive boten i bedriftsmodus blir skjult i alle chatter.</string>

@@ -319,6 +319,10 @@
     <string name="TranslationKeepFormatting">Сохранять форматирования текста при переводе</string>
     <string name="PredictiveBackAnimation">Предиктивная обратная анимация</string>
     <string name="HideBottomNavigationBar">Скрыть нижнюю панель навигации</string>
+    <string name="BottomNavigationButtons">Нижние кнопки</string>
+    <string name="BottomNavigationButtonsAbout">Превью показывает текущую нижнюю панель. Перетаскивай превью или строки ниже, чтобы изменить порядок.</string>
+    <string name="BottomNavigationButtonsShown">Показанные кнопки</string>
+    <string name="BottomNavigationButtonsHint">Выключай кнопки, которыми не пользуешься. Хотя бы одна кнопка всегда останется видимой.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Настройки доступности</string>
     <string name="HideBusinessBotPanel">Скрыть плашку бота</string>

@@ -309,6 +309,10 @@
     <string name="ForceFontWeightFallback">Yazı tipi ağırlığı yedeklemesini zorla</string>
     <string name="HideChannelBottomButtons">Kanallarda aşağı butonları gizle</string>
     <string name="TranslationKeepFormatting">Çeviri sırasında orijinal metin biçimini koru</string>
+    <string name="BottomNavigationButtons">Alt düğmeler</string>
+    <string name="BottomNavigationButtonsAbout">Önizleme mevcut alt çubuğu gösterir. Sıralamayı değiştirmek için önizlemeyi veya aşağıdaki satırları sürükleyin.</string>
+    <string name="BottomNavigationButtonsShown">Gösterilen düğmeler</string>
+    <string name="BottomNavigationButtonsHint">Kullanmadığınız düğmeleri kapatın. En az bir düğme her zaman görünür kalır.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">Bot afişini gizle</string>
     <string name="HideBusinessBotPanelAbout">Etkin botla ilgili işletme modu bannerı tüm sohbetlerde gizlenecek.</string>

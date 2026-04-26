@@ -310,6 +310,10 @@
     <string name="ShortStandardQuality">SD</string>
     <string name="ForceFontWeightFallback">Forzar el peso de la fuente por omisión</string>
     <string name="HideChannelBottomButtons">Ocultar los botones inferiores del canal</string>
+    <string name="BottomNavigationButtons">Botones inferiores</string>
+    <string name="BottomNavigationButtonsAbout">La vista previa muestra la barra inferior actual. Arrastra la vista previa o las filas de abajo para cambiar el orden.</string>
+    <string name="BottomNavigationButtonsShown">Botones visibles</string>
+    <string name="BottomNavigationButtonsHint">Desactiva los botones que no uses. Al menos un botón siempre permanece visible.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Ajustes de accesibilidad</string>
     <string name="AccSeekbarHeading">Configuración de la barra de búsqueda</string>

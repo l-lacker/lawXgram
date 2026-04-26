@@ -17,6 +17,10 @@
     <string name="EnableResidentNotification">Näytä asukasilmoitus</string>
     <string name="DisableResidentNotification">Poista asukasilmoitus käytöstä</string>
     <string name="IdTypeHidden">Piilota</string>
+    <string name="BottomNavigationButtons">Alapainikkeet</string>
+    <string name="BottomNavigationButtonsAbout">Esikatselu näyttää nykyisen alapalkin. Muuta järjestystä vetämällä esikatselua tai alla olevia rivejä.</string>
+    <string name="BottomNavigationButtonsShown">Näytettävät painikkeet</string>
+    <string name="BottomNavigationButtonsHint">Poista käytöstä painikkeet, joita et käytä. Vähintään yksi painike pysyy aina näkyvissä.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">Piilota botin banneri</string>
     <string name="HideBusinessBotPanelAbout">Aktiivista bottia koskeva yritystilan banneri piilotetaan kaikissa keskusteluissa.</string>

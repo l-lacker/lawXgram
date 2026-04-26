@@ -10,6 +10,10 @@
     <string name="NameOrder">Имечко</string>
     <string name="FirstLast">Ебалась</string>
     <string name="LastFirst">Была с котиками</string>
+    <string name="BottomNavigationButtons">Botons inferiors</string>
+    <string name="BottomNavigationButtonsAbout">La previsualització mostra la barra inferior actual. Arrossega la previsualització o les files de sota per canviar-ne l’ordre.</string>
+    <string name="BottomNavigationButtonsShown">Botons visibles</string>
+    <string name="BottomNavigationButtonsHint">Desactiva els botons que no facis servir. Com a mínim un botó sempre queda visible.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">Amaga el bàner del bot</string>
     <string name="HideBusinessBotPanelAbout">El banner del mode de negoci del bot actiu quedarà amagat a tots els xats.</string>

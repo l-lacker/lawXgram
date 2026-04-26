@@ -58,6 +58,10 @@
     <string name="RestartAppToTakeEffect">මෙය ක්‍රියාත්මක වීම සදහා ඇප් එක නැවත ක්‍රියාත්මක කරන්න.</string>
     <string name="DisableAppBarShadow">මාතෘකා තීරු සෙවනැල්ල අක්‍රීය කරන්න</string>
     <string name="IdTypeHidden">හංගන්න</string>
+    <string name="BottomNavigationButtons">පහළ බොත්තම්</string>
+    <string name="BottomNavigationButtonsAbout">පෙරදසුන වත්මන් පහළ තීරුව පෙන්වයි. අනුපිළිවෙළ වෙනස් කිරීමට පෙරදසුන හෝ පහළ පේළි ඇදගෙන යන්න.</string>
+    <string name="BottomNavigationButtonsShown">පෙන්වන බොත්තම්</string>
+    <string name="BottomNavigationButtonsHint">ඔබ භාවිතා නොකරන බොත්තම් අක්‍රිය කරන්න. අවම වශයෙන් එක් බොත්තමක් සැමවිටම පෙනේ.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">බොට් බැනරය සඟවන්න</string>
     <string name="HideBusinessBotPanelAbout">සක්‍රිය බොට් සඳහා වන ව්‍යාපාරික මාදිලි බැනරය සියලුම චැට්වල සඟවනු ඇත.</string>

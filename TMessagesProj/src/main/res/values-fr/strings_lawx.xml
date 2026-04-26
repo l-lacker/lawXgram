@@ -287,6 +287,10 @@
     <string name="CreateCode">Créer un code</string>
     <string name="CreateCodeLanguage">Langue</string>
     <string name="IgnoreContentRestriction">Ignorer la restriction de contenu</string>
+    <string name="BottomNavigationButtons">Boutons du bas</string>
+    <string name="BottomNavigationButtonsAbout">L’aperçu affiche la barre inférieure actuelle. Fais glisser l’aperçu ou les lignes ci-dessous pour changer l’ordre.</string>
+    <string name="BottomNavigationButtonsShown">Boutons affichés</string>
+    <string name="BottomNavigationButtonsHint">Désactive les boutons que tu n’utilises pas. Au moins un bouton reste toujours visible.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Paramètres d\'accessibilité</string>
     <string name="HideBusinessBotPanel">Masquer la bannière du bot</string>

@@ -30,6 +30,7 @@ public class LawxAppearanceSettingsActivity extends BaseLawxSettingsActivity imp
     private final int formatTimeWithSecondsRow = rowId++;
     private final int disableNumberRoundingRow = rowId++;
     private final int hideBottomNavigationBarRow = rowId++;
+    private final int bottomTabsRow = rowId++;
     private final int tabletModeRow = rowId++;
 
     private final int hideStoriesRow = rowId++;
@@ -70,6 +71,7 @@ public class LawxAppearanceSettingsActivity extends BaseLawxSettingsActivity imp
         items.add(UItem.asCheck(formatTimeWithSecondsRow, LocaleController.getString(R.string.FormatWithSeconds)).slug("formatTimeWithSeconds").setChecked(LawxConfig.formatTimeWithSeconds));
         items.add(UItem.asCheck(disableNumberRoundingRow, LocaleController.getString(R.string.DisableNumberRounding), "4.8K -> 4777").slug("disableNumberRounding").setChecked(LawxConfig.disableNumberRounding));
         items.add(UItem.asCheck(hideBottomNavigationBarRow, LocaleController.getString(R.string.HideBottomNavigationBar)).setChecked(LawxConfig.hideBottomNavigationBar).slug("hideBottomNavigationBar"));
+        items.add(TextSettingsCellFactory.of(bottomTabsRow, LocaleController.getString(R.string.BottomNavigationButtons)).slug("bottomNavigationButtons"));
         items.add(TextSettingsCellFactory.of(tabletModeRow, LocaleController.getString(R.string.TabletMode), switch (LawxConfig.tabletMode) {
             case LawxConfig.TABLET_AUTO -> LocaleController.getString(R.string.TabletModeAuto);
             case LawxConfig.TABLET_ENABLE -> LocaleController.getString(R.string.Enable);
@@ -193,6 +195,8 @@ public class LawxAppearanceSettingsActivity extends BaseLawxSettingsActivity imp
                 ((TextCheckCell) view).setChecked(LawxConfig.hideBottomNavigationBar);
             }
             parentLayout.rebuildAllFragmentViews(false, false);
+        } else if (id == bottomTabsRow) {
+            presentFragment(new LawxBottomTabsSettingsActivity());
         } else if (id == tabsPositionRow) {
             ArrayList<String> arrayList = new ArrayList<>();
             arrayList.add(LocaleController.getString(R.string.TabsPositionTop));

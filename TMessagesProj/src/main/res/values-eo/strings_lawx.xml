@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="BottomNavigationButtons">Malsupraj butonoj</string>
+    <string name="BottomNavigationButtonsAbout">La antaŭvido montras la nunan malsupran breton. Trenu la antaŭvidon aŭ la subajn vicojn por ŝanĝi la ordon.</string>
+    <string name="BottomNavigationButtonsShown">Montrataj butonoj</string>
+    <string name="BottomNavigationButtonsHint">Malŝaltu butonojn, kiujn vi ne uzas. Almenaŭ unu butono ĉiam restas videbla.</string>
     <!-- Accessibility -->
     <string name="HideBusinessBotPanel">Kaŝi la rubandon de la bota</string>
     <string name="HideBusinessBotPanelAbout">La komerca reĝima rubando de la aktiva bot estos kaŝita en ĉiuj babilejoj.</string>

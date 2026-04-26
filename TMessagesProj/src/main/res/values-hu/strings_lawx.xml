@@ -307,6 +307,10 @@
     <string name="CloudflareAccountID">Számlaazonosító</string>
     <string name="CloudflareAPIToken">API token</string>
     <string name="CloudflareCredentialsDialog">Konfigurálja a Cloudflare fiók azonosítóját és API tokenjét.\n**Hogyan szerezhető be?**</string>
+    <string name="BottomNavigationButtons">Alsó gombok</string>
+    <string name="BottomNavigationButtonsAbout">Az előnézet a jelenlegi alsó sávot mutatja. A sorrend módosításához húzd az előnézetet vagy az alábbi sorokat.</string>
+    <string name="BottomNavigationButtonsShown">Megjelenített gombok</string>
+    <string name="BottomNavigationButtonsHint">Kapcsold ki a nem használt gombokat. Legalább egy gomb mindig látható marad.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Kisegítő lehetőségek beállításai</string>
     <string name="HideBusinessBotPanel">A bot szalaghirdetésének elrejtése</string>

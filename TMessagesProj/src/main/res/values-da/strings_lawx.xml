@@ -201,6 +201,10 @@
     <string name="DatacenterStatusAbout">Kontroller status for Telegrams **datacentre**.</string>
     <string name="DatacenterStatus">Datacenter status</string>
     <string name="MonoCode">Kode</string>
+    <string name="BottomNavigationButtons">Nederste knapper</string>
+    <string name="BottomNavigationButtonsAbout">Forhåndsvisningen viser den aktuelle nederste bjælke. Træk forhåndsvisningen eller rækkerne nedenfor for at ændre rækkefølgen.</string>
+    <string name="BottomNavigationButtonsShown">Viste knapper</string>
+    <string name="BottomNavigationButtonsHint">Slå knapper fra, du ikke bruger. Mindst en knap forbliver altid synlig.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Tilgængelighedsindstillinger</string>
     <string name="AccSeekbarHeading">Indstillinger for søgepanel</string>

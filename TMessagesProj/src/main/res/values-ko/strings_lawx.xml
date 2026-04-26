@@ -282,6 +282,10 @@
     <string name="CreateCode">코드 생성</string>
     <string name="CreateCodeLanguage">언어</string>
     <string name="IgnoreContentRestriction">콘텐츠 제한 무시</string>
+    <string name="BottomNavigationButtons">하단 버튼</string>
+    <string name="BottomNavigationButtonsAbout">미리보기는 현재 하단 바를 보여줍니다. 순서를 바꾸려면 미리보기나 아래 행을 드래그하세요.</string>
+    <string name="BottomNavigationButtonsShown">표시할 버튼</string>
+    <string name="BottomNavigationButtonsHint">사용하지 않는 버튼을 끄세요. 최소 하나의 버튼은 항상 표시됩니다.</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">접근성 설정</string>
     <string name="AccSeekbarHeading">검색바 설정</string>

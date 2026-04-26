@@ -38,6 +38,25 @@ public class LawxConfig {
     public static final int TITLE_TYPE_ICON = 1;
     public static final int TITLE_TYPE_MIX = 2;
 
+    public static final int MAIN_TAB_CHATS = 0;
+    public static final int MAIN_TAB_CONTACTS = 1;
+    public static final int MAIN_TAB_SETTINGS = 2;
+    public static final int MAIN_TAB_PROFILE = 3;
+    public static final int MAIN_TABS_COUNT = 4;
+
+    private static final int DEFAULT_MAIN_TABS_VISIBLE_MASK =
+            (1 << MAIN_TAB_CHATS) |
+            (1 << MAIN_TAB_CONTACTS) |
+            (1 << MAIN_TAB_SETTINGS) |
+            (1 << MAIN_TAB_PROFILE);
+    private static final int[] DEFAULT_MAIN_TABS_ORDER = new int[]{
+            MAIN_TAB_CHATS,
+            MAIN_TAB_CONTACTS,
+            MAIN_TAB_SETTINGS,
+            MAIN_TAB_PROFILE
+    };
+    private static final String DEFAULT_MAIN_TABS_ORDER_VALUE = "0,1,2,3";
+
     public static final int ID_TYPE_HIDDEN = 0;
     public static final int ID_TYPE_API = 1;
     public static final int ID_TYPE_BOTAPI = 2;
@@ -148,6 +167,8 @@ public class LawxConfig {
     public static boolean hideBottomNavigationBar = false;
     public static boolean hideBusinessBotPanel = false;
     public static boolean bottomFilterTabs = false;
+    public static int mainTabsVisibleMask = DEFAULT_MAIN_TABS_VISIBLE_MASK;
+    public static int[] mainTabsOrder = DEFAULT_MAIN_TABS_ORDER.clone();
     public static boolean strokeOnViews = true;
 
     public static boolean shouldNOTTrustMe = false;
@@ -258,6 +279,8 @@ public class LawxConfig {
             hideBottomNavigationBar = preferences.getBoolean("hideBottomNavigationBar", false);
             hideBusinessBotPanel = preferences.getBoolean("hideBusinessBotPanel", false);
             bottomFilterTabs = preferences.getBoolean("bottomFilterTabs", false);
+            mainTabsVisibleMask = sanitizeMainTabsVisibleMask(preferences.getInt("mainTabsVisibleMask", DEFAULT_MAIN_TABS_VISIBLE_MASK));
+            mainTabsOrder = parseMainTabsOrder(preferences.getString("mainTabsOrder", DEFAULT_MAIN_TABS_ORDER_VALUE));
             strokeOnViews = preferences.getBoolean("strokeOnViews", true);
 
             LensHelper.checkLensSupportAsync();
@@ -424,6 +447,115 @@ public class LawxConfig {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("bottomFilterTabs", bottomFilterTabs);
         editor.apply();
+    }
+
+    public static int[] getMainTabsOrder() {
+        return mainTabsOrder.clone();
+    }
+
+    public static boolean isMainTabVisible(int tab) {
+        return isKnownMainTab(tab) && (mainTabsVisibleMask & (1 << tab)) != 0;
+    }
+
+    public static void setMainTabsOrder(int[] order) {
+        mainTabsOrder = normalizeMainTabsOrder(order);
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("mainTabsOrder", encodeMainTabsOrder(mainTabsOrder));
+        editor.apply();
+        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.mainTabsConfigChanged);
+    }
+
+    public static void setMainTabVisible(int tab, boolean visible) {
+        if (!isKnownMainTab(tab)) {
+            return;
+        }
+        int mask = mainTabsVisibleMask;
+        if (visible) {
+            mask |= 1 << tab;
+        } else {
+            mask &= ~(1 << tab);
+        }
+        mask = sanitizeMainTabsVisibleMask(mask);
+        if (mainTabsVisibleMask == mask) {
+            return;
+        }
+        mainTabsVisibleMask = mask;
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("mainTabsVisibleMask", mainTabsVisibleMask);
+        editor.apply();
+        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.mainTabsConfigChanged);
+    }
+
+    private static boolean isKnownMainTab(int tab) {
+        return tab >= 0 && tab < MAIN_TABS_COUNT;
+    }
+
+    private static int sanitizeMainTabsVisibleMask(int mask) {
+        mask &= (1 << MAIN_TABS_COUNT) - 1;
+        if (mask == 0) {
+            mask = 1 << MAIN_TAB_CHATS;
+        }
+        return mask;
+    }
+
+    private static int[] parseMainTabsOrder(String value) {
+        int[] parsed = new int[MAIN_TABS_COUNT];
+        boolean[] used = new boolean[MAIN_TABS_COUNT];
+        int count = 0;
+        if (value != null) {
+            String[] parts = value.split(",");
+            for (String part : parts) {
+                try {
+                    int tab = Integer.parseInt(part.trim());
+                    if (isKnownMainTab(tab) && !used[tab]) {
+                        used[tab] = true;
+                        parsed[count++] = tab;
+                    }
+                } catch (Exception ignore) {
+                }
+            }
+        }
+        for (int tab : DEFAULT_MAIN_TABS_ORDER) {
+            if (!used[tab]) {
+                used[tab] = true;
+                parsed[count++] = tab;
+            }
+        }
+        return parsed;
+    }
+
+    private static int[] normalizeMainTabsOrder(int[] order) {
+        int[] normalized = new int[MAIN_TABS_COUNT];
+        boolean[] used = new boolean[MAIN_TABS_COUNT];
+        int count = 0;
+        if (order != null) {
+            for (int tab : order) {
+                if (isKnownMainTab(tab) && !used[tab]) {
+                    used[tab] = true;
+                    normalized[count++] = tab;
+                }
+            }
+        }
+        for (int tab : DEFAULT_MAIN_TABS_ORDER) {
+            if (!used[tab]) {
+                used[tab] = true;
+                normalized[count++] = tab;
+            }
+        }
+        return normalized;
+    }
+
+    private static String encodeMainTabsOrder(int[] order) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < order.length; i++) {
+            if (i > 0) {
+                builder.append(',');
+            }
+            builder.append(order[i]);
+        }
+        return builder.toString();
     }
 
     public static void toggleStrokeOnViews() {
