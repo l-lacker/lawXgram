@@ -293,4 +293,8 @@
     <string name="BusinessBotPanelHiddenTitle">Bot paneli barcha chatlarda yashirilgan.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Uni klient sozlamalarida yana yoqishingiz mumkin.</string>
     <string name="RestartNow">Hozir qayta ishga tushirish</string>
+    <string name="InlineBotsManage">Inline botlarni boshqarish</string>
+    <string name="InlineBotsManageMenu">Botlarni boshqarish</string>
+    <string name="ShowInlineBotManageButton">Botlarni boshqarish tugmasi</string>
+    <string name="ShowInlineBotManageButtonDesc">Xabar maydoniga @ yozilganda Botlarni boshqarish tugmasini ko‘rsatish.</string>
 </resources>

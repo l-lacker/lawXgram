@@ -326,4 +326,8 @@
     <string name="BusinessBotPanelHiddenTitle">Το πάνελ του bot είναι κρυφό σε όλες τις συνομιλίες.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Μπορείτε να το ενεργοποιήσετε ξανά στις ρυθμίσεις πελάτη.</string>
     <string name="RestartNow">Επανεκκίνηση τώρα</string>
+    <string name="InlineBotsManage">Διαχείριση inline bot</string>
+    <string name="InlineBotsManageMenu">Διαχείριση bot</string>
+    <string name="ShowInlineBotManageButton">Κουμπί διαχείρισης bot</string>
+    <string name="ShowInlineBotManageButtonDesc">Εμφάνιση του κουμπιού διαχείρισης bot όταν πληκτρολογείς @ στο πεδίο μηνύματος.</string>
 </resources>

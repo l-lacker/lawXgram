@@ -79,9 +79,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import ru.llacker.lawxgram.LawxConfig;
 import ru.llacker.lawxgram.helpers.InlineBotHelper;
 
 public class MentionsAdapter extends RecyclerListView.SelectionAdapter implements NotificationCenter.NotificationCenterDelegate {
+
+    private static final TLObject ADD_INLINE_BOT_ITEM = new TLObject();
 
     private boolean allowStickers = true;
     private boolean allowBots = true;
@@ -106,6 +109,9 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
     private ArrayList<TLObject> searchResultUsernames;
     private LongSparseArray<TLObject> searchResultUsernamesMap;
     private Runnable searchGlobalRunnable;
+    private String lastInlineBotMenuText;
+    private int lastInlineBotMenuPosition;
+    private boolean lastInlineBotMenuForSearch;
     private String hintHashtag;
     private boolean hintHashtagDivider;
     private HashtagHint topHint, bottomHint;
@@ -233,6 +239,7 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
         }
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.recentDocumentsDidLoad);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.stickersDidLoad);
+        NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.reloadInlineHints);
     }
 
     public TLRPC.User getFoundContextBot() {
@@ -260,6 +267,10 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
                     AndroidUtilities.runOnUIThread(checkAgainRunnable);
                     checkAgainRunnable = null;
                 }
+            }
+        } else if (id == NotificationCenter.reloadInlineHints) {
+            if (lastInlineBotMenuText != null) {
+                searchUsernameOrHashtag(lastInlineBotMenuText, lastInlineBotMenuPosition, null, false, lastInlineBotMenuForSearch);
             }
         }
     }
@@ -483,6 +494,7 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
         }
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.recentDocumentsDidLoad);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.stickersDidLoad);
+        NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.reloadInlineHints);
     }
 
     public void setParentFragment(ChatActivity fragment) {
@@ -964,6 +976,7 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
             AndroidUtilities.cancelRunOnUIThread(checkAgainRunnable);
             checkAgainRunnable = null;
         }
+        lastInlineBotMenuText = null;
         if (TextUtils.isEmpty(text) || text.length() > MessagesController.getInstance(currentAccount).maxMessageLength) {
             searchForContextBot(null, null);
             delegate.needChangePanelVisibility(false);
@@ -1256,6 +1269,12 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
             final String usernameString = result.toString().toLowerCase();
             boolean hasSpace = usernameString.indexOf(' ') >= 0;
             ArrayList<TLObject> newResult = new ArrayList<>();
+            boolean showAddInlineBotItem = LawxConfig.showInlineBotManageButton && !usernameOnly && needBotContext && dogPostion == 0 && usernameString.length() == 0;
+            if (showAddInlineBotItem) {
+                lastInlineBotMenuText = text;
+                lastInlineBotMenuPosition = position;
+                lastInlineBotMenuForSearch = forSearch;
+            }
             final LongSparseArray<TLRPC.User> newResultsHashMap = new LongSparseArray<>();
             final LongSparseArray<TLObject> newMap = new LongSparseArray<>();
             ArrayList<TLRPC.TL_topPeer> inlineBots = MediaDataController.getInstance(currentAccount).inlineBots;
@@ -1436,6 +1455,9 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
                     return 0;
                 }
             });
+            if (showAddInlineBotItem) {
+                newResult.add(0, ADD_INLINE_BOT_ITEM);
+            }
             searchResultHashtags = null;
             stickers = null;
             quickReplies = null;
@@ -1783,6 +1805,10 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
         return stickers != null && i >= 0 && i < stickers.size() ? stickers.get(i).parent : null;
     }
 
+    public boolean isAddInlineBotItem(int i) {
+        return getItem(i) == ADD_INLINE_BOT_ITEM;
+    }
+
     public Object getItem(int i) {
         if (hintHashtag != null) {
             if (i < 2) return null;
@@ -1987,7 +2013,9 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
             MentionCell cell = (MentionCell) holder.itemView;
             if (searchResultUsernames != null) {
                 TLObject object = searchResultUsernames.get(position);
-                if (object instanceof TLRPC.User) {
+                if (object == ADD_INLINE_BOT_ITEM) {
+                    cell.setText(LocaleController.getString(R.string.InlineBotsManageMenu), R.drawable.menu_bots_add);
+                } else if (object instanceof TLRPC.User) {
                     cell.setUser((TLRPC.User) object);
                 } else if (object instanceof TLRPC.Chat) {
                     cell.setChat((TLRPC.Chat) object);

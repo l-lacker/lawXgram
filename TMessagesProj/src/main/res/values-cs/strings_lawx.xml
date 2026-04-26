@@ -183,4 +183,8 @@
     <string name="BusinessBotPanelHiddenTitle">Panel bota je skrytý ve všech chatech.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Znovu ho můžete zapnout v nastavení klienta.</string>
     <string name="RestartNow">Restartovat nyní</string>
+    <string name="InlineBotsManage">Správa inline botů</string>
+    <string name="InlineBotsManageMenu">Správa botů</string>
+    <string name="ShowInlineBotManageButton">Tlačítko Správa botů</string>
+    <string name="ShowInlineBotManageButtonDesc">Zobrazit tlačítko Správa botů při zadání @ do pole zprávy.</string>
 </resources>

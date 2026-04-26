@@ -11,4 +11,8 @@
     <string name="BusinessBotPanelHiddenTitle">פאנל הבוט מוסתר בכל הצ׳אטים.</string>
     <string name="BusinessBotPanelHiddenSubtitle">אפשר להפעיל אותו שוב בהגדרות הלקוח.</string>
     <string name="RestartNow">הפעל מחדש עכשיו</string>
+    <string name="InlineBotsManage">ניהול בוטים inline</string>
+    <string name="InlineBotsManageMenu">ניהול בוטים</string>
+    <string name="ShowInlineBotManageButton">כפתור ניהול בוטים</string>
+    <string name="ShowInlineBotManageButtonDesc">הצג את כפתור ניהול הבוטים בעת הקלדת @ בשדה ההודעה.</string>
 </resources>

@@ -320,4 +320,8 @@
     <string name="BusinessBotPanelHiddenTitle">Bot paneli tüm sohbetlerde gizli.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Bunu istemci ayarlarından yeniden etkinleştirebilirsiniz.</string>
     <string name="RestartNow">Şimdi yeniden başlat</string>
+    <string name="InlineBotsManage">Satır içi botları yönet</string>
+    <string name="InlineBotsManageMenu">Botları yönet</string>
+    <string name="ShowInlineBotManageButton">Botları yönet düğmesi</string>
+    <string name="ShowInlineBotManageButtonDesc">Mesaj alanına @ yazarken Botları yönet düğmesini göster.</string>
 </resources>

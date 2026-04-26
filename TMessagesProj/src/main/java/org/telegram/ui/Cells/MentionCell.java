@@ -10,6 +10,8 @@ package org.telegram.ui.Cells;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -88,6 +90,9 @@ public class MentionCell extends LinearLayout {
 
     public void setUser(TLRPC.User user) {
         resetEmojiSuggestion();
+        imageView.setRoundRadius(AndroidUtilities.dp(14));
+        imageView.setSize(-1, -1);
+        imageView.setColorFilter(null);
         if (user == null) {
             nameTextView.setText("");
             usernameTextView.setText("");
@@ -129,6 +134,9 @@ public class MentionCell extends LinearLayout {
 
     public void setChat(TLRPC.Chat chat) {
         resetEmojiSuggestion();
+        imageView.setRoundRadius(AndroidUtilities.dp(14));
+        imageView.setSize(-1, -1);
+        imageView.setColorFilter(null);
         if (chat == null) {
             nameTextView.setText("");
             usernameTextView.setText("");
@@ -154,7 +162,20 @@ public class MentionCell extends LinearLayout {
 
     public void setText(String text) {
         resetEmojiSuggestion();
+        imageView.setSize(-1, -1);
+        imageView.setColorFilter(null);
         imageView.setVisibility(INVISIBLE);
+        usernameTextView.setVisibility(INVISIBLE);
+        nameTextView.setText(text);
+    }
+
+    public void setText(String text, int iconResId) {
+        resetEmojiSuggestion();
+        imageView.setRoundRadius(0);
+        imageView.setSize(AndroidUtilities.dp(20), AndroidUtilities.dp(20));
+        imageView.setImageResource(iconResId);
+        imageView.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_windowBackgroundWhiteBlueText), PorterDuff.Mode.SRC_IN));
+        imageView.setVisibility(VISIBLE);
         usernameTextView.setVisibility(INVISIBLE);
         nameTextView.setText(text);
     }
@@ -229,6 +250,9 @@ public class MentionCell extends LinearLayout {
         resetEmojiSuggestion();
         if (user != null) {
             imageView.setVisibility(VISIBLE);
+            imageView.setRoundRadius(AndroidUtilities.dp(14));
+            imageView.setSize(-1, -1);
+            imageView.setColorFilter(null);
             avatarDrawable.setInfo(user);
             if (user.photo != null && user.photo.photo_small != null) {
                 imageView.setForUserOrChat(user, avatarDrawable);

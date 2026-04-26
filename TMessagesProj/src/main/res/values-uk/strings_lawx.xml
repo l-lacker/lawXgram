@@ -334,4 +334,8 @@
     <string name="BusinessBotPanelHiddenTitle">Панель бота приховано в усіх чатах.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Ви можете знову ввімкнути її в налаштуваннях клієнта.</string>
     <string name="RestartNow">Перезапустити</string>
+    <string name="InlineBotsManage">Керування inline-ботами</string>
+    <string name="InlineBotsManageMenu">Керування ботами</string>
+    <string name="ShowInlineBotManageButton">Кнопка «Керування ботами»</string>
+    <string name="ShowInlineBotManageButtonDesc">Показувати кнопку «Керування ботами» під час введення @ у полі повідомлення.</string>
 </resources>

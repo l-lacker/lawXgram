@@ -58,6 +58,8 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
     private final int ignoreBlockedRow = rowId++;
     private final int quickForwardRow = rowId++;
     private final int hideKeyboardOnChatScrollRow = rowId++;
+    private final int inlineBotsRow = rowId++;
+    private final int showInlineBotManageButtonRow = rowId++;
     private final int tryToOpenAllLinksInIVRow = rowId++;
     private final int disableJumpToNextRow = rowId++;
     private final int disableGreetingStickerRow = rowId++;
@@ -170,6 +172,8 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
         items.add(UItem.asCheck(ignoreBlockedRow, LocaleController.getString(R.string.IgnoreBlocked), LocaleController.getString(R.string.IgnoreBlockedAbout)).slug("ignoreBlocked").setChecked(LawxConfig.ignoreBlocked));
         items.add(UItem.asCheck(quickForwardRow, LocaleController.getString(R.string.QuickForward)).slug("quickForward").setChecked(LawxConfig.quickForward));
         items.add(UItem.asCheck(hideKeyboardOnChatScrollRow, LocaleController.getString(R.string.HideKeyboardOnChatScroll)).slug("hideKeyboardOnChatScroll").setChecked(LawxConfig.hideKeyboardOnChatScroll));
+        items.add(TextSettingsCellFactory.of(inlineBotsRow, LocaleController.getString(R.string.InlineBotsManage)).slug("inlineBotsManage"));
+        items.add(UItem.asCheck(showInlineBotManageButtonRow, LocaleController.getString(R.string.ShowInlineBotManageButton), LocaleController.getString(R.string.ShowInlineBotManageButtonDesc)).slug("showInlineBotManageButton").setChecked(LawxConfig.showInlineBotManageButton));
         items.add(UItem.asCheck(tryToOpenAllLinksInIVRow, LocaleController.getString(R.string.OpenAllLinksInInstantView)).slug("tryToOpenAllLinksInIV").setChecked(LawxConfig.tryToOpenAllLinksInIV));
         items.add(UItem.asCheck(disableJumpToNextRow, LocaleController.getString(R.string.DisableJumpToNextChannel)).slug("disableJumpToNext").setChecked(LawxConfig.disableJumpToNextChannel));
         items.add(UItem.asCheck(disableGreetingStickerRow, LocaleController.getString(R.string.DisableGreetingSticker)).slug("disableGreetingSticker").setChecked(LawxConfig.disableGreetingSticker));
@@ -240,6 +244,13 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
             LawxConfig.toggleHideKeyboardOnChatScroll();
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(LawxConfig.hideKeyboardOnChatScroll);
+            }
+        } else if (id == inlineBotsRow) {
+            presentFragment(new LawxInlineBotsActivity());
+        } else if (id == showInlineBotManageButtonRow) {
+            LawxConfig.toggleShowInlineBotManageButton();
+            if (view instanceof TextCheckCell) {
+                ((TextCheckCell) view).setChecked(LawxConfig.showInlineBotManageButton);
             }
         } else if (id == rearVideoMessagesRow) {
             LawxConfig.toggleRearVideoMessages();

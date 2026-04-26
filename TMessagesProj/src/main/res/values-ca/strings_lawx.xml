@@ -21,4 +21,8 @@
     <string name="BusinessBotPanelHiddenTitle">El panell del bot està amagat a tots els xats.</string>
     <string name="BusinessBotPanelHiddenSubtitle">El pots tornar a activar a la configuració del client.</string>
     <string name="RestartNow">Reinicia ara</string>
+    <string name="InlineBotsManage">Gestiona bots inline</string>
+    <string name="InlineBotsManageMenu">Gestiona bots</string>
+    <string name="ShowInlineBotManageButton">Botó Gestiona bots</string>
+    <string name="ShowInlineBotManageButtonDesc">Mostra el botó Gestiona bots quan escriguis @ al camp del missatge.</string>
 </resources>

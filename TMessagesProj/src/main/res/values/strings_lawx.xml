@@ -344,4 +344,8 @@
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Accessibility settings</string>
     <string name="RestartNow">Restart now</string>
+    <string name="InlineBotsManage">Manage inline bots</string>
+    <string name="InlineBotsManageMenu">Manage bots</string>
+    <string name="ShowInlineBotManageButton">Manage bots button</string>
+    <string name="ShowInlineBotManageButtonDesc">Show the Manage bots button when typing @ in the message field.</string>
 </resources>

@@ -15,4 +15,8 @@
     <string name="BusinessBotPanelHiddenTitle">Бот панели бардык чаттарда жашырылган.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Аны клиент жөндөөлөрүнөн кайра күйгүзө аласыз.</string>
     <string name="RestartNow">Азыр кайра иштетүү</string>
+    <string name="InlineBotsManage">Inline ботторду башкаруу</string>
+    <string name="InlineBotsManageMenu">Ботторду башкаруу</string>
+    <string name="ShowInlineBotManageButton">«Ботторду башкаруу» баскычы</string>
+    <string name="ShowInlineBotManageButtonDesc">Билдирүү талаасына @ киргизгенде «Ботторду башкаруу» баскычын көрсөтүү.</string>
 </resources>

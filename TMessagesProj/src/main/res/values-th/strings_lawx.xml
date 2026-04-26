@@ -324,4 +324,8 @@
     <string name="BusinessBotPanelHiddenTitle">แผงบอทถูกซ่อนในทุกแชท</string>
     <string name="BusinessBotPanelHiddenSubtitle">คุณสามารถเปิดใช้งานอีกครั้งได้ในการตั้งค่าไคลเอนต์</string>
     <string name="RestartNow">เริ่มใหม่ทันที</string>
+    <string name="InlineBotsManage">จัดการบอตแบบอินไลน์</string>
+    <string name="InlineBotsManageMenu">จัดการบอต</string>
+    <string name="ShowInlineBotManageButton">ปุ่มจัดการบอต</string>
+    <string name="ShowInlineBotManageButtonDesc">แสดงปุ่มจัดการบอตเมื่อพิมพ์ @ ในช่องข้อความ</string>
 </resources>

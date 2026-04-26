@@ -217,4 +217,8 @@
     <string name="BusinessBotPanelHiddenTitle">Botpanelet er skjult i alle chats.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Du kan slå det til igen i klientindstillingerne.</string>
     <string name="RestartNow">Genstart nu</string>
+    <string name="InlineBotsManage">Administrer inline-bots</string>
+    <string name="InlineBotsManageMenu">Administrer bots</string>
+    <string name="ShowInlineBotManageButton">Knappen Administrer bots</string>
+    <string name="ShowInlineBotManageButtonDesc">Vis knappen Administrer bots, når du skriver @ i beskedfeltet.</string>
 </resources>

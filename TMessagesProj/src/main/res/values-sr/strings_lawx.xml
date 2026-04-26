@@ -329,4 +329,8 @@
     <string name="BusinessBotPanelHiddenTitle">Панел бота је сакривен у свим ћаскањима.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Можете поново да га укључите у подешавањима клијента.</string>
     <string name="RestartNow">Поново покрени</string>
+    <string name="InlineBotsManage">Управљање inline ботовима</string>
+    <string name="InlineBotsManageMenu">Управљање ботовима</string>
+    <string name="ShowInlineBotManageButton">Дугме „Управљање ботовима“</string>
+    <string name="ShowInlineBotManageButtonDesc">Прикажи дугме „Управљање ботовима“ када у поље поруке унесеш @.</string>
 </resources>

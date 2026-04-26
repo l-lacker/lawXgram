@@ -323,4 +323,8 @@
     <string name="BusinessBotPanelHiddenTitle">پنل ربات در همهٔ چت‌ها پنهان است.</string>
     <string name="BusinessBotPanelHiddenSubtitle">می‌توانید دوباره آن را در تنظیمات کلاینت فعال کنید.</string>
     <string name="RestartNow">اکنون راه‌اندازی مجدد</string>
+    <string name="InlineBotsManage">مدیریت ربات‌های درون‌خطی</string>
+    <string name="InlineBotsManageMenu">مدیریت ربات‌ها</string>
+    <string name="ShowInlineBotManageButton">دکمه مدیریت ربات‌ها</string>
+    <string name="ShowInlineBotManageButtonDesc">نمایش دکمه مدیریت ربات‌ها هنگام وارد کردن @ در کادر پیام.</string>
 </resources>

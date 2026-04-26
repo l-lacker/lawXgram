@@ -323,4 +323,8 @@
     <string name="BusinessBotPanelHiddenTitle">Das Bot-Panel ist in allen Chats ausgeblendet.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Du kannst es in den Client-Einstellungen wieder aktivieren.</string>
     <string name="RestartNow">Jetzt neu starten</string>
+    <string name="InlineBotsManage">Inline-Bots verwalten</string>
+    <string name="InlineBotsManageMenu">Bots verwalten</string>
+    <string name="ShowInlineBotManageButton">Schaltfläche Bots verwalten</string>
+    <string name="ShowInlineBotManageButtonDesc">Zeige die Schaltfläche Bots verwalten, wenn du @ im Nachrichtenfeld eingibst.</string>
 </resources>

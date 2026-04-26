@@ -325,4 +325,8 @@
     <string name="BusinessBotPanelHiddenTitle">Panoul botului este ascuns în toate chat-urile.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Îl poți activa din nou din setările clientului.</string>
     <string name="RestartNow">Repornește acum</string>
+    <string name="InlineBotsManage">Gestionează boții inline</string>
+    <string name="InlineBotsManageMenu">Gestionează boții</string>
+    <string name="ShowInlineBotManageButton">Butonul Gestionează boții</string>
+    <string name="ShowInlineBotManageButtonDesc">Afișează butonul Gestionează boții când tastezi @ în câmpul mesajului.</string>
 </resources>

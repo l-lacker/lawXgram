@@ -202,4 +202,8 @@
     <string name="BusinessBotPanelHiddenTitle">Het botpaneel is in alle chats verborgen.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Je kunt het opnieuw inschakelen in de clientinstellingen.</string>
     <string name="RestartNow">Nu opnieuw starten</string>
+    <string name="InlineBotsManage">Inline bots beheren</string>
+    <string name="InlineBotsManageMenu">Bots beheren</string>
+    <string name="ShowInlineBotManageButton">Knop Bots beheren</string>
+    <string name="ShowInlineBotManageButtonDesc">Toon de knop Bots beheren wanneer je @ typt in het berichtveld.</string>
 </resources>

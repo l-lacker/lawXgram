@@ -330,4 +330,8 @@
     <string name="BusinessBotPanelHiddenTitle">ボットパネルはすべてのチャットで非表示になっています。</string>
     <string name="BusinessBotPanelHiddenSubtitle">クライアント設定から再度有効にできます。</string>
     <string name="RestartNow">今すぐ再起動</string>
+    <string name="InlineBotsManage">インラインボットを管理</string>
+    <string name="InlineBotsManageMenu">ボットを管理</string>
+    <string name="ShowInlineBotManageButton">ボットを管理ボタン</string>
+    <string name="ShowInlineBotManageButtonDesc">メッセージ欄に @ を入力したときに「ボットを管理」ボタンを表示します。</string>
 </resources>

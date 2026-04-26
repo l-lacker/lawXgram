@@ -328,4 +328,8 @@
     <string name="BusinessBotPanelHiddenTitle">لوحة البوت مخفية في جميع الدردشات.</string>
     <string name="BusinessBotPanelHiddenSubtitle">يمكنك تفعيله مرة أخرى من إعدادات العميل.</string>
     <string name="RestartNow">أعد التشغيل الآن</string>
+    <string name="InlineBotsManage">إدارة روبوتات Inline</string>
+    <string name="InlineBotsManageMenu">إدارة الروبوتات</string>
+    <string name="ShowInlineBotManageButton">زر إدارة الروبوتات</string>
+    <string name="ShowInlineBotManageButtonDesc">إظهار زر إدارة الروبوتات عند كتابة @ في حقل الرسالة.</string>
 </resources>

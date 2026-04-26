@@ -28,4 +28,8 @@
     <string name="BusinessBotPanelHiddenTitle">Bottipaneeli on piilotettu kaikissa keskusteluissa.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Voit ottaa sen uudelleen käyttöön asiakasasetuksissa.</string>
     <string name="RestartNow">Käynnistä uudelleen nyt</string>
+    <string name="InlineBotsManage">Hallitse inline-botteja</string>
+    <string name="InlineBotsManageMenu">Hallitse botteja</string>
+    <string name="ShowInlineBotManageButton">Hallitse botteja -painike</string>
+    <string name="ShowInlineBotManageButtonDesc">Näytä Hallitse botteja -painike, kun kirjoitat @ viestikenttään.</string>
 </resources>

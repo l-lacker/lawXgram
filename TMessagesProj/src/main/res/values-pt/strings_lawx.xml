@@ -323,4 +323,8 @@
     <string name="BusinessBotPanelHiddenTitle">O painel do bot está oculto em todas as conversas.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Pode voltar a ativá-lo nas definições do cliente.</string>
     <string name="RestartNow">Reiniciar agora</string>
+    <string name="InlineBotsManage">Gerir bots inline</string>
+    <string name="InlineBotsManageMenu">Gerir bots</string>
+    <string name="ShowInlineBotManageButton">Botão Gerir bots</string>
+    <string name="ShowInlineBotManageButtonDesc">Mostrar o botão Gerir bots ao escrever @ no campo de mensagem.</string>
 </resources>

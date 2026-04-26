@@ -299,4 +299,8 @@
     <string name="BusinessBotPanelHiddenTitle">Le panneau du bot est masqué dans toutes les discussions.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Vous pouvez le réactiver dans les paramètres du client.</string>
     <string name="RestartNow">Redémarrer maintenant</string>
+    <string name="InlineBotsManage">Gérer les bots inline</string>
+    <string name="InlineBotsManageMenu">Gérer les bots</string>
+    <string name="ShowInlineBotManageButton">Bouton Gérer les bots</string>
+    <string name="ShowInlineBotManageButtonDesc">Afficher le bouton Gérer les bots lors de la saisie de @ dans le champ de message.</string>
 </resources>

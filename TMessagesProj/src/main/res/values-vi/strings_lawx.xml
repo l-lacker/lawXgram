@@ -325,4 +325,8 @@
     <string name="BusinessBotPanelHiddenTitle">Bảng bot đã bị ẩn trong mọi cuộc trò chuyện.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Bạn có thể bật lại trong cài đặt ứng dụng khách.</string>
     <string name="RestartNow">Khởi động lại ngay</string>
+    <string name="InlineBotsManage">Quản lý bot inline</string>
+    <string name="InlineBotsManageMenu">Quản lý bot</string>
+    <string name="ShowInlineBotManageButton">Nút Quản lý bot</string>
+    <string name="ShowInlineBotManageButtonDesc">Hiển thị nút Quản lý bot khi nhập @ trong ô tin nhắn.</string>
 </resources>

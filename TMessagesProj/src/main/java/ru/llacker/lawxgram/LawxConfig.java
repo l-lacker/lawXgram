@@ -159,6 +159,7 @@ public class LawxConfig {
     public static boolean showTimeHint = false;
     public static boolean preferOriginalQuality = false;
     public static boolean autoInlineBot = false;
+    public static boolean showInlineBotManageButton = true;
     public static boolean forceFontWeightFallback = false;
     public static boolean minimizedStickerCreator = false;
     public static boolean hideChannelBottomButtons = false;
@@ -271,6 +272,7 @@ public class LawxConfig {
             cfApiToken = preferences.getString("cfApiToken", "");
             preferOriginalQuality = preferences.getBoolean("preferOriginalQuality", false);
             autoInlineBot = preferences.getBoolean("autoInlineBot", false);
+            showInlineBotManageButton = preferences.getBoolean("showInlineBotManageButton", true);
             forceFontWeightFallback = preferences.getBoolean("forceFontWeightFallback", false);
             minimizedStickerCreator = preferences.getBoolean("minimizedStickerCreator", false);
             hideChannelBottomButtons = preferences.getBoolean("hideChannelBottomButtons", false);
@@ -635,6 +637,14 @@ public class LawxConfig {
         SharedPreferences preferences = LawxConfig.getConfigPreferences();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("autoInlineBot", autoInlineBot);
+        editor.apply();
+    }
+
+    public static void toggleShowInlineBotManageButton() {
+        showInlineBotManageButton = !showInlineBotManageButton;
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("showInlineBotManageButton", showInlineBotManageButton);
         editor.apply();
     }
 

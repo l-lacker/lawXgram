@@ -11,4 +11,8 @@
     <string name="BusinessBotPanelHiddenTitle">La bot-panelo estas kaŝita en ĉiuj babilejoj.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Vi povas reŝalti ĝin en la klientaj agordoj.</string>
     <string name="RestartNow">Rekomenci nun</string>
+    <string name="InlineBotsManage">Administri enliniajn robotojn</string>
+    <string name="InlineBotsManageMenu">Administri robotojn</string>
+    <string name="ShowInlineBotManageButton">Butono Administri robotojn</string>
+    <string name="ShowInlineBotManageButtonDesc">Montri la butonon Administri robotojn kiam vi tajpas @ en la mesaĝa kampo.</string>
 </resources>

@@ -319,4 +319,8 @@
     <string name="BusinessBotPanelHiddenTitle">A botpanel minden csevegésben rejtve van.</string>
     <string name="BusinessBotPanelHiddenSubtitle">A kliens beállításaiban újra bekapcsolhatod.</string>
     <string name="RestartNow">Újraindítás most</string>
+    <string name="InlineBotsManage">Inline botok kezelése</string>
+    <string name="InlineBotsManageMenu">Botok kezelése</string>
+    <string name="ShowInlineBotManageButton">Botok kezelése gomb</string>
+    <string name="ShowInlineBotManageButtonDesc">A Botok kezelése gomb megjelenítése, amikor @ jelet írsz az üzenetmezőbe.</string>
 </resources>

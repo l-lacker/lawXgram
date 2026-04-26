@@ -267,4 +267,8 @@
     <string name="BusinessBotPanelHiddenTitle">बॉट पैनल सभी चैट में छिपा हुआ है।</string>
     <string name="BusinessBotPanelHiddenSubtitle">आप इसे क्लाइंट सेटिंग्स में फिर से चालू कर सकते हैं।</string>
     <string name="RestartNow">अभी रीस्टार्ट करें</string>
+    <string name="InlineBotsManage">इनलाइन बॉट प्रबंधित करें</string>
+    <string name="InlineBotsManageMenu">बॉट प्रबंधित करें</string>
+    <string name="ShowInlineBotManageButton">बॉट प्रबंधित करें बटन</string>
+    <string name="ShowInlineBotManageButtonDesc">संदेश फ़ील्ड में @ टाइप करते समय बॉट प्रबंधित करें बटन दिखाएं।</string>
 </resources>

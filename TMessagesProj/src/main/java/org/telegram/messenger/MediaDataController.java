@@ -4956,6 +4956,7 @@ public class MediaDataController extends BaseController {
     public ArrayList<TLRPC.TL_topPeer> webapps = new ArrayList<>();
     boolean loaded;
     boolean loading;
+    private static final String MANUAL_INLINE_BOTS_PREFIX = "lawx_manual_inline_bots_";
 
     private static Paint roundPaint, erasePaint;
     private static RectF bitmapRect;
@@ -5200,6 +5201,7 @@ public class MediaDataController extends BaseController {
                         loaded = true;
                         hints = hintsNew;
                         inlineBots = inlineBotsNew;
+                        applyManualInlineBots();
                         webapps = webappsNew;
                         buildShortcuts();
                         getNotificationCenter().postNotificationName(NotificationCenter.reloadHints);
@@ -5253,6 +5255,7 @@ public class MediaDataController extends BaseController {
                                 getUserConfig().ratingLoadTime = (int) (System.currentTimeMillis() / 1000);
                             }
                         }
+                        applyManualInlineBots();
                         getUserConfig().saveConfig(false);
                         buildShortcuts();
                         getNotificationCenter().postNotificationName(NotificationCenter.reloadHints);
@@ -5332,6 +5335,9 @@ public class MediaDataController extends BaseController {
         if (!getUserConfig().suggestContacts) {
             return;
         }
+        if (hasManualInlineBots()) {
+            return;
+        }
         int dt;
         if (getUserConfig().botRatingLoadTime != 0) {
             dt = Math.max(1, ((int) (System.currentTimeMillis() / 1000)) - getUserConfig().botRatingLoadTime);
@@ -5367,6 +5373,93 @@ public class MediaDataController extends BaseController {
         }
         savePeer(uid, 1, peer.rating);
         getNotificationCenter().postNotificationName(NotificationCenter.reloadInlineHints);
+    }
+
+    public boolean hasManualInlineBots() {
+        return ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE).contains(getManualInlineBotsKey());
+    }
+
+    public ArrayList<Long> getManualInlineBotIds() {
+        ArrayList<Long> ids = new ArrayList<>();
+        String value = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE).getString(getManualInlineBotsKey(), null);
+        if (value == null) {
+            return ids;
+        }
+        String[] parts = value.split(",");
+        for (String part : parts) {
+            try {
+                long id = Long.parseLong(part.trim());
+                if (id > 0 && !ids.contains(id)) {
+                    ids.add(id);
+                }
+            } catch (Exception ignore) {
+            }
+        }
+        return ids;
+    }
+
+    public void setManualInlineBots(ArrayList<Long> ids) {
+        ArrayList<Long> cleanIds = new ArrayList<>();
+        for (int a = 0; a < ids.size(); a++) {
+            long id = ids.get(a);
+            if (id > 0 && !cleanIds.contains(id)) {
+                cleanIds.add(id);
+            }
+        }
+        StringBuilder builder = new StringBuilder();
+        for (int a = 0; a < cleanIds.size(); a++) {
+            if (a > 0) {
+                builder.append(',');
+            }
+            builder.append(cleanIds.get(a));
+        }
+        ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE).edit().putString(getManualInlineBotsKey(), builder.toString()).apply();
+        inlineBots = buildInlineBotPeers(cleanIds);
+        saveManualInlineBotsToStorage(cleanIds);
+        getNotificationCenter().postNotificationName(NotificationCenter.reloadInlineHints);
+    }
+
+    private void applyManualInlineBots() {
+        if (hasManualInlineBots()) {
+            inlineBots = buildInlineBotPeers(getManualInlineBotIds());
+        }
+    }
+
+    private ArrayList<TLRPC.TL_topPeer> buildInlineBotPeers(ArrayList<Long> ids) {
+        ArrayList<TLRPC.TL_topPeer> peers = new ArrayList<>();
+        for (int a = 0; a < ids.size(); a++) {
+            TLRPC.TL_topPeer peer = new TLRPC.TL_topPeer();
+            peer.peer = new TLRPC.TL_peerUser();
+            peer.peer.user_id = ids.get(a);
+            peer.rating = ids.size() - a;
+            peers.add(peer);
+        }
+        return peers;
+    }
+
+    private String getManualInlineBotsKey() {
+        return MANUAL_INLINE_BOTS_PREFIX + currentAccount + "_" + getUserConfig().getClientUserId();
+    }
+
+    private void saveManualInlineBotsToStorage(ArrayList<Long> ids) {
+        ArrayList<Long> idsCopy = new ArrayList<>(ids);
+        getMessagesStorage().getStorageQueue().postRunnable(() -> {
+            try {
+                getMessagesStorage().getDatabase().executeFast("DELETE FROM chat_hints WHERE type = 1").stepThis().dispose();
+                SQLitePreparedStatement state = getMessagesStorage().getDatabase().executeFast("REPLACE INTO chat_hints VALUES(?, ?, ?, ?)");
+                for (int a = 0; a < idsCopy.size(); a++) {
+                    state.requery();
+                    state.bindLong(1, idsCopy.get(a));
+                    state.bindInteger(2, 1);
+                    state.bindDouble(3, idsCopy.size() - a);
+                    state.bindInteger(4, (int) System.currentTimeMillis() / 1000);
+                    state.step();
+                }
+                state.dispose();
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        });
     }
 
     public void increaseWebappRating(long uid) {

@@ -69,4 +69,8 @@
     <string name="BusinessBotPanelHiddenTitle">බොට් පැනලය සියලුම චැට්වල සඟවා ඇත.</string>
     <string name="BusinessBotPanelHiddenSubtitle">ඔබට එය නැවත ක්ලයන්ට් සැකසුම් තුළ සක්‍රිය කළ හැක.</string>
     <string name="RestartNow">දැන් නැවත අරඹන්න</string>
+    <string name="InlineBotsManage">inline බොට් කළමනාකරණය</string>
+    <string name="InlineBotsManageMenu">බොට් කළමනාකරණය</string>
+    <string name="ShowInlineBotManageButton">බොට් කළමනාකරණ බොත්තම</string>
+    <string name="ShowInlineBotManageButtonDesc">පණිවිඩ ක්ෂේත්‍රයේ @ ටයිප් කරන විට බොට් කළමනාකරණ බොත්තම පෙන්වන්න.</string>
 </resources>

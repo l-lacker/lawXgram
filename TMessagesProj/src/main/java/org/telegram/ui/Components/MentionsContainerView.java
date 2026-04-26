@@ -55,6 +55,8 @@ import org.telegram.ui.PhotoViewer;
 
 import java.util.ArrayList;
 
+import ru.llacker.lawxgram.settings.LawxInlineBotsActivity;
+
 public class MentionsContainerView extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
 
     private final Theme.ResourcesProvider resourcesProvider;
@@ -611,6 +613,11 @@ public class MentionsContainerView extends FrameLayout implements NotificationCe
             Object object = getAdapter().getItem(position);
             int start = getAdapter().getResultStartPosition();
             int len = getAdapter().getResultLength();
+            if (getAdapter().isAddInlineBotItem(position)) {
+                updateVisibility(false);
+                baseFragment.presentFragment(new LawxInlineBotsActivity());
+                return;
+            }
             if (getAdapter().isLocalHashtagHint(position)) {
                 TLRPC.Chat currentChat = getAdapter().chat;
                 if (currentChat == null && getAdapter().parentFragment != null) {

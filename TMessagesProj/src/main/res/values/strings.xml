@@ -264,6 +264,7 @@
     <string name="SelectChat">Select Chat</string>
     <string name="ChooseBot">Choose Bot</string>
     <string name="ChooseBots">Choose Bots</string>
+    <string name="SelectedBots">Selected Bots</string>
     <string name="ChooseUser">Choose User</string>
     <string name="ChooseUsers">Choose Users</string>
     <string name="ChooseGroup">Choose Group</string>

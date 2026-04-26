@@ -295,4 +295,8 @@
     <string name="BusinessBotPanelHiddenTitle">Panel bot disembunyikan di semua chat.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Anda dapat mengaktifkannya lagi di pengaturan klien.</string>
     <string name="RestartNow">Mulai ulang sekarang</string>
+    <string name="InlineBotsManage">Kelola bot inline</string>
+    <string name="InlineBotsManageMenu">Kelola bot</string>
+    <string name="ShowInlineBotManageButton">Tombol Kelola bot</string>
+    <string name="ShowInlineBotManageButtonDesc">Tampilkan tombol Kelola bot saat mengetik @ di kolom pesan.</string>
 </resources>

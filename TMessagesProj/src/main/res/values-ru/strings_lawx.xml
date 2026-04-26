@@ -331,4 +331,8 @@
     <string name="BusinessBotPanelHiddenTitle">Панель бота скрыта для всех чатов.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Вы можете её заново активировать в настройках клиента</string>
     <string name="RestartNow">Перезапустить</string>
+    <string name="InlineBotsManage">Управление inline-ботами</string>
+    <string name="InlineBotsManageMenu">Управление ботами</string>
+    <string name="ShowInlineBotManageButton">Кнопка «Управление ботами»</string>
+    <string name="ShowInlineBotManageButtonDesc">Показывать кнопку «Управление ботами» при вводе @ в поле сообщения.</string>
 </resources>

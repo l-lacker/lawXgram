@@ -206,4 +206,8 @@
     <string name="BusinessBotPanelHiddenTitle">Botpanelen är dold i alla chattar.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Du kan aktivera den igen i klientinställningarna.</string>
     <string name="RestartNow">Starta om nu</string>
+    <string name="InlineBotsManage">Hantera inline-botar</string>
+    <string name="InlineBotsManageMenu">Hantera botar</string>
+    <string name="ShowInlineBotManageButton">Knappen Hantera botar</string>
+    <string name="ShowInlineBotManageButtonDesc">Visa knappen Hantera botar när du skriver @ i meddelandefältet.</string>
 </resources>

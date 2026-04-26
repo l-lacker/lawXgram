@@ -266,4 +266,8 @@
     <string name="BusinessBotPanelHiddenTitle">Bota panelis ir paslēpts visos čatos.</string>
     <string name="BusinessBotPanelHiddenSubtitle">To var atkal ieslēgt klienta iestatījumos.</string>
     <string name="RestartNow">Restartēt tagad</string>
+    <string name="InlineBotsManage">Pārvaldīt inline botus</string>
+    <string name="InlineBotsManageMenu">Pārvaldīt botus</string>
+    <string name="ShowInlineBotManageButton">Poga Pārvaldīt botus</string>
+    <string name="ShowInlineBotManageButtonDesc">Rādīt pogu Pārvaldīt botus, kad ziņojuma laukā ievadi @.</string>
 </resources>

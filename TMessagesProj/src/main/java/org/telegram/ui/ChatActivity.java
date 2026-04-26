@@ -322,6 +322,7 @@ import ru.llacker.lawxgram.helpers.MessageHelper;
 import ru.llacker.lawxgram.helpers.QrHelper;
 import ru.llacker.lawxgram.helpers.EmojiHelper;
 import ru.llacker.lawxgram.helpers.WebAppHelper;
+import ru.llacker.lawxgram.settings.LawxInlineBotsActivity;
 import ru.llacker.lawxgram.streaming.MediaStreamingProvider;
 import ru.llacker.lawxgram.translator.Translator;
 import ru.llacker.lawxgram.translator.TranslatorSettingsPopupWrapper;
@@ -7363,6 +7364,11 @@ public class ChatActivity extends BaseFragment implements
             Object object = mentionContainer.getAdapter().getItem(position);
             int start = mentionContainer.getAdapter().getResultStartPosition();
             int len = mentionContainer.getAdapter().getResultLength();
+            if (mentionContainer.getAdapter().isAddInlineBotItem(position)) {
+                mentionContainer.updateVisibility(false);
+                presentFragment(new LawxInlineBotsActivity());
+                return;
+            }
             if (mentionContainer.getAdapter().isLocalHashtagHint(position)) {
                 chatActivityEnterView.replaceWithText(start, len, mentionContainer.getAdapter().getHashtagHint() + "@" + ChatObject.getPublicUsername(currentChat) + " ", false);
                 return;

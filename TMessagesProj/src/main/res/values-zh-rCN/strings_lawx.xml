@@ -333,4 +333,8 @@
     <string name="BusinessBotPanelHiddenTitle">机器人面板已在所有聊天中隐藏。</string>
     <string name="BusinessBotPanelHiddenSubtitle">您可以在客户端设置中重新启用它。</string>
     <string name="RestartNow">立即重启</string>
+    <string name="InlineBotsManage">管理 Inline 机器人</string>
+    <string name="InlineBotsManageMenu">管理机器人</string>
+    <string name="ShowInlineBotManageButton">“管理机器人”按钮</string>
+    <string name="ShowInlineBotManageButtonDesc">在消息输入框中输入 @ 时显示“管理机器人”按钮。</string>
 </resources>

@@ -320,4 +320,8 @@
     <string name="BusinessBotPanelHiddenTitle">Il pannello del bot è nascosto in tutte le chat.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Puoi riattivarlo nelle impostazioni del client.</string>
     <string name="RestartNow">Riavvia ora</string>
+    <string name="InlineBotsManage">Gestisci bot inline</string>
+    <string name="InlineBotsManageMenu">Gestisci bot</string>
+    <string name="ShowInlineBotManageButton">Pulsante Gestisci bot</string>
+    <string name="ShowInlineBotManageButtonDesc">Mostra il pulsante Gestisci bot quando digiti @ nel campo del messaggio.</string>
 </resources>

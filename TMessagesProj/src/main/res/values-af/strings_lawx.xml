@@ -11,4 +11,8 @@
     <string name="BusinessBotPanelHiddenTitle">Die bot-paneel is in alle kletse versteek.</string>
     <string name="BusinessBotPanelHiddenSubtitle">Jy kan dit weer in die klientinstellings aktiveer.</string>
     <string name="RestartNow">Herbegin nou</string>
+    <string name="InlineBotsManage">Bestuur inline-bots</string>
+    <string name="InlineBotsManageMenu">Bestuur bots</string>
+    <string name="ShowInlineBotManageButton">Bestuur bots-knoppie</string>
+    <string name="ShowInlineBotManageButtonDesc">Wys die Bestuur bots-knoppie wanneer jy @ in die boodskapveld tik.</string>
 </resources>
