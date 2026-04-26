@@ -38,6 +38,7 @@ public final class PreferencesMigrationHelper {
         SharedPreferences legacyPreferences = context.getSharedPreferences(legacyPreferencesName, Context.MODE_PRIVATE);
         Map<String, ?> legacyValues = legacyPreferences.getAll();
         if (legacyValues.isEmpty()) {
+            preferences.edit().putBoolean(migrationMarkerKey, true).apply();
             return preferences;
         }
 
