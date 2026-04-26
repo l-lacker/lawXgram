@@ -365,6 +365,10 @@ public class DownscaleScrollableNoiseSuppressor {
     private final Blur3HashImpl builder = new Blur3HashImpl();
 
     public boolean invalidateResultRenderNodes(IBlur3Capture capture, int width, int height) {
+        if (recordingPos != null) {
+            return false;
+        }
+
         int updatedCount = 0;
         for (int a = 0; a < rectRenderNodesCount; a++) {
             final SourcePart sourcePart = rectRenderNodes.get(a);
@@ -382,12 +386,17 @@ public class DownscaleScrollableNoiseSuppressor {
             sourcePart.lastHash = hash;
 
             Canvas c = beginRecordingRect(a);
-            c.save();
-            c.translate(-position.left, -position.top);
-
-            capture.capture(c, tmpRectF);
-            c.restore();
-            endRecordingRect();
+            try {
+                c.save();
+                try {
+                    c.translate(-position.left, -position.top);
+                    capture.capture(c, tmpRectF);
+                } finally {
+                    c.restore();
+                }
+            } finally {
+                endRecordingRect();
+            }
 
             updatedCount++;
         }
