@@ -1623,7 +1623,8 @@ public class SharedConfig {
 
     public static int getChatSwipeAction(int currentAccount) {
         if (chatSwipeAction >= 0) {
-            if (chatSwipeAction == SwipeGestureSettingsView.SWIPE_GESTURE_FOLDERS && MessagesController.getInstance(currentAccount).dialogFilters.isEmpty()) {
+            MessagesController messagesController = MessagesController.getInstance(currentAccount);
+            if (chatSwipeAction == SwipeGestureSettingsView.SWIPE_GESTURE_FOLDERS && messagesController.dialogFiltersLoaded && messagesController.dialogFilters.isEmpty()) {
                 return SwipeGestureSettingsView.SWIPE_GESTURE_ARCHIVE;
             }
             return chatSwipeAction;

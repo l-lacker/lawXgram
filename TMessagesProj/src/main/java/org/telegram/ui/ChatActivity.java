@@ -2417,6 +2417,7 @@ public class ChatActivity extends BaseFragment implements
                 chatActivityEnterViewAnimateBeforeSending = false;
             }
             lastSize = size2;
+            syncPlayingRoundVideoInputState();
         }
 
         @Override
@@ -9183,9 +9184,11 @@ public class ChatActivity extends BaseFragment implements
         checkUi_chatListViewPaddings();
 
         final boolean keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
+        imeVisibilityKnown = true;
         if (lastImeVisible != keyboardVisible) {
             lastImeVisible = keyboardVisible;
             contentView.notifyHeightChanged();
+            syncPlayingRoundVideoInputState();
         }
 
         if (searchViewPager != null) {
@@ -9193,6 +9196,49 @@ public class ChatActivity extends BaseFragment implements
         }
 
         return WindowInsetsCompat.CONSUMED;
+    }
+
+    private boolean imeVisibilityKnown;
+    private boolean lastRoundVideoInputVisible;
+    private boolean lastRoundVideoInputVisibleSet;
+
+    private boolean isRoundVideoInputVisible() {
+        boolean inAppInputVisible = chatActivityEnterView != null && (chatActivityEnterView.isPopupShowing() || chatEmojiViewPadding >= AndroidUtilities.dp(20));
+        if (imeVisibilityKnown) {
+            return lastImeVisible || inAppInputVisible;
+        }
+        return inAppInputVisible || contentView != null && contentView.getKeyboardHeight() + chatEmojiViewPadding >= AndroidUtilities.dp(20);
+    }
+
+    private void syncPlayingRoundVideoInputState() {
+        boolean inputVisible = isRoundVideoInputVisible();
+        if (lastRoundVideoInputVisibleSet && lastRoundVideoInputVisible == inputVisible) {
+            return;
+        }
+        lastRoundVideoInputVisibleSet = true;
+        lastRoundVideoInputVisible = inputVisible;
+        if (chatListView == null || chatAdapter == null) {
+            return;
+        }
+        MessageObject playingMessage = MediaController.getInstance().getPlayingMessageObject();
+        if (playingMessage == null || !playingMessage.isRoundVideo()) {
+            return;
+        }
+        for (int i = 0; i < chatListView.getChildCount(); i++) {
+            View child = chatListView.getChildAt(i);
+            if (child instanceof ChatMessageCell) {
+                ChatMessageCell cell = (ChatMessageCell) child;
+                MessageObject messageObject = cell.getMessageObject();
+                if (messageObject != null && MediaController.getInstance().isPlayingMessage(messageObject)) {
+                    int position = chatListView.getChildAdapterPosition(child);
+                    if (position >= 0) {
+                        chatAdapter.notifyItemChanged(position);
+                    }
+                    updateTextureViewPosition(false, false);
+                    break;
+                }
+            }
+        }
     }
 
     private boolean lastInAppInputVisible;
@@ -41603,7 +41649,7 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public boolean keyboardIsOpened() {
-            return contentView.getKeyboardHeight() + chatEmojiViewPadding >= AndroidUtilities.dp(20);
+            return isRoundVideoInputVisible();
         }
 
         public boolean isLandscape() {
