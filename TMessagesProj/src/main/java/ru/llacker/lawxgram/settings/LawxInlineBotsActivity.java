@@ -27,8 +27,10 @@ public class LawxInlineBotsActivity extends BaseLawxSettingsActivity {
 
     private final ArrayList<Long> selectedOrder = new ArrayList<>();
     private final ArrayList<TLRPC.User> searchResults = new ArrayList<>();
+    private final ArrayList<TLRPC.User> availableBotsCache = new ArrayList<>();
     private SearchAdapterHelper searchAdapterHelper;
     private String searchQuery;
+    private boolean availableBotsLoaded;
 
     @Override
     public boolean onFragmentCreate() {
@@ -278,15 +280,30 @@ public class LawxInlineBotsActivity extends BaseLawxSettingsActivity {
     }
 
     private ArrayList<TLRPC.User> getAvailableBots() {
+        ensureAvailableBots();
         ArrayList<TLRPC.User> bots = new ArrayList<>();
-        for (int i = 0; i < getMessagesController().dialogsUsersOnly.size(); i++) {
-            long id = getMessagesController().dialogsUsersOnly.get(i).id;
-            TLRPC.User user = getMessagesController().getUser(id);
-            if (isAvailableInlineBot(user) && !selectedOrder.contains(id)) {
+        for (int i = 0; i < availableBotsCache.size(); i++) {
+            TLRPC.User user = availableBotsCache.get(i);
+            if (isAvailableInlineBot(user) && !selectedOrder.contains(user.id)) {
                 bots.add(user);
             }
         }
         return bots;
+    }
+
+    private void ensureAvailableBots() {
+        if (availableBotsLoaded) {
+            return;
+        }
+        availableBotsLoaded = true;
+        availableBotsCache.clear();
+        for (int i = 0; i < getMessagesController().dialogsUsersOnly.size(); i++) {
+            long id = getMessagesController().dialogsUsersOnly.get(i).id;
+            TLRPC.User user = getMessagesController().getUser(id);
+            if (isAvailableInlineBot(user)) {
+                availableBotsCache.add(user);
+            }
+        }
     }
 
     private boolean isAvailableInlineBot(TLRPC.User user) {

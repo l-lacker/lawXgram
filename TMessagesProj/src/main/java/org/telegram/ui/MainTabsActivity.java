@@ -391,6 +391,14 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         return POSITION_CHATS;
     }
 
+    private int getNextVisiblePosition(boolean forward) {
+        int position = viewPager.getCurrentPosition();
+        do {
+            position += forward ? 1 : -1;
+        } while (position >= 0 && position < TABS_COUNT && !isPositionVisible(position));
+        return position >= 0 && position < TABS_COUNT ? position : -1;
+    }
+
     private boolean isPositionVisible(int position) {
         return LawxConfig.isMainTabVisible(getConfigTabByPosition(position));
     }
@@ -401,18 +409,21 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         }
         boolean[] visibleTabs = new boolean[tabs.length];
         int[] order = LawxConfig.getMainTabsOrder();
+        boolean orderChanged = false;
         for (int i = 0; i < order.length; i++) {
             int tab = order[i];
             int index = getTabIndex(tab);
             if (index >= 0 && LawxConfig.isMainTabVisible(tab)) {
-                tabsView.setPriority(tabs[index], i);
+                orderChanged |= tabsView.setPriority(tabs[index], i);
                 visibleTabs[index] = true;
             }
         }
         for (int i = 0; i < tabs.length; i++) {
             tabsView.setViewVisible(tabs[i], visibleTabs[i], animated);
         }
-        tabsView.requestLayout();
+        if (orderChanged) {
+            tabsView.requestLayout();
+        }
 
         if (viewPager != null && !isPositionVisible(viewPager.getCurrentPosition())) {
             int position = getFirstVisiblePosition();
@@ -704,6 +715,12 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     }
 
     @Override
+    protected int getNextScrollPosition(boolean forward) {
+        int position = getNextVisiblePosition(forward);
+        return position >= 0 ? position : super.getNextScrollPosition(forward);
+    }
+
+    @Override
     protected boolean canScrollForward(MotionEvent ev) {
         return canScrollInternal(ev, true);
     }
@@ -717,8 +734,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (LawxConfig.hideBottomNavigationBar) {
             return false;
         }
-        int nextPosition = viewPager.getCurrentPosition() + (forward ? 1 : -1);
-        if (nextPosition < 0 || nextPosition >= TABS_COUNT || !isPositionVisible(nextPosition)) {
+        if (getNextVisiblePosition(forward) < 0) {
             return false;
         }
         final BaseFragment fragment = getCurrentVisibleFragment();

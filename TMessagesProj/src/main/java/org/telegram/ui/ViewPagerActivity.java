@@ -93,6 +93,11 @@ public abstract class ViewPagerActivity extends BaseFragment {
             }
 
             @Override
+            protected int getNextScrollPosition(boolean forward) {
+                return ViewPagerActivity.this.getNextScrollPosition(forward);
+            }
+
+            @Override
             protected long getManualScrollDuration() {
                 return 320L;
             }
@@ -176,6 +181,10 @@ public abstract class ViewPagerActivity extends BaseFragment {
 
     protected boolean canScrollForward(MotionEvent ev) {
         return true;
+    }
+
+    protected int getNextScrollPosition(boolean forward) {
+        return viewPager.getCurrentPosition() + (forward ? 1 : -1);
     }
 
     @Override
