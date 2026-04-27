@@ -39,7 +39,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
@@ -257,10 +256,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
                 items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsTopics"), LiteMode.FLAG_CHAT_FORUM_TWOCOLUMN));
             }
             items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsSpoiler"), LiteMode.FLAG_CHAT_SPOILER));
-            if (SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE || BuildVars.DEBUG_PRIVATE_VERSION) {
+            if (SharedConfig.canBlurChat()) {
                 items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsBlur2"), LiteMode.FLAG_CHAT_BLUR));
             }
-            if (Build.VERSION.SDK_INT >= 33 && (SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE || BuildVars.DEBUG_PRIVATE_VERSION)) {
+            if (SharedConfig.canUseLiquidGlass()) {
                 items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsLiquidGlass"), LiteMode.FLAG_LIQUID_GLASS));
             }
             items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsScale"), LiteMode.FLAG_CHAT_SCALE));
@@ -620,10 +619,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
                 if ((flags & LiteMode.FLAG_ANIMATED_EMOJI_KEYBOARD_PREMIUM) > 0)
                     count--;
             }
-            if (SharedConfig.getDevicePerformanceClass() < SharedConfig.PERFORMANCE_CLASS_AVERAGE && (flags & LiteMode.FLAG_CHAT_BLUR) > 0) {
+            if (!SharedConfig.canBlurChat() && (flags & LiteMode.FLAG_CHAT_BLUR) > 0) {
                 count--;
             }
-            if (!(Build.VERSION.SDK_INT >= 33 && (SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE || BuildVars.DEBUG_PRIVATE_VERSION)) && (flags & LiteMode.FLAG_LIQUID_GLASS) > 0) {
+            if (!SharedConfig.canUseLiquidGlass() && (flags & LiteMode.FLAG_LIQUID_GLASS) > 0) {
                 count--;
             }
             if (!ThanosEffect.supports() && (flags & LiteMode.FLAG_CHAT_THANOS) > 0) {

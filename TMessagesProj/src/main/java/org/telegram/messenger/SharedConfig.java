@@ -21,6 +21,7 @@ import android.os.Environment;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.view.Choreographer;
 import android.webkit.WebView;
 
 import androidx.annotation.IntDef;
@@ -60,6 +61,9 @@ public class SharedConfig {
     public final static int PASSCODE_TYPE_PIN = 0,
             PASSCODE_TYPE_PASSWORD = 1;
     private static int legacyDevicePerformanceClass = -1;
+    private static final long CHAT_EFFECTS_AUTO_REDUCED_TTL = 7L * 24 * 60 * 60 * 1000;
+    private static boolean chatOpenPerformanceProbeRunning;
+    private static int chatEffectsBadProbeCount;
 
     public static boolean loopStickers() {
         return LiteMode.isEnabled(LiteMode.FLAG_ANIMATED_STICKERS_CHAT);
@@ -1694,7 +1698,8 @@ public class SharedConfig {
         int memoryClass = ((ActivityManager) ApplicationLoader.applicationContext.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryClass();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MODEL != null) {
-            int hash = Build.SOC_MODEL.toUpperCase().hashCode();
+            String socModel = Build.SOC_MODEL.toUpperCase(Locale.US);
+            int hash = socModel.hashCode();
             for (int i = 0; i < LOW_SOC.length; ++i) {
                 if (LOW_SOC[i] == hash) {
                     return PERFORMANCE_CLASS_LOW;
@@ -1738,7 +1743,7 @@ public class SharedConfig {
         } else if (
             cpuCount < 8 ||
             memoryClass <= 160 ||
-            maxCpuFreq != -1 && maxCpuFreq <= 2055 ||
+            maxCpuFreq != -1 && maxCpuFreq <= 2150 ||
             maxCpuFreq == -1 && cpuCount == 8 && androidVersion <= 23
         ) {
             performanceClass = PERFORMANCE_CLASS_AVERAGE;
@@ -1788,11 +1793,99 @@ public class SharedConfig {
     }
 
     public static boolean canBlurChat() {
-        return getDevicePerformanceClass() >= (Build.VERSION.SDK_INT >= 31 ? PERFORMANCE_CLASS_AVERAGE : PERFORMANCE_CLASS_HIGH) || BuildVars.DEBUG_PRIVATE_VERSION;
+        return !areChatEffectsAutoReduced() && (getDevicePerformanceClass() >= PERFORMANCE_CLASS_HIGH || BuildVars.DEBUG_PRIVATE_VERSION);
+    }
+
+    public static boolean areChatEffectsAutoReduced() {
+        SharedPreferences preferences = MessagesController.getGlobalMainSettings();
+        if (!preferences.getBoolean("chat_effects_auto_reduced", false)) {
+            return false;
+        }
+        long reducedAt = preferences.getLong("chat_effects_auto_reduced_at", 0);
+        if (reducedAt <= 0 || Math.abs(System.currentTimeMillis() - reducedAt) > CHAT_EFFECTS_AUTO_REDUCED_TTL) {
+            preferences.edit().remove("chat_effects_auto_reduced").remove("chat_effects_auto_reduced_at").apply();
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean shouldUseLiteChatOpen() {
+        return getDevicePerformanceClass() <= PERFORMANCE_CLASS_AVERAGE || areChatEffectsAutoReduced();
+    }
+
+    public static boolean canUseLiquidGlass() {
+        return Build.VERSION.SDK_INT >= 33 && getDevicePerformanceClass() >= PERFORMANCE_CLASS_HIGH && !areChatEffectsAutoReduced();
+    }
+
+    public static void startChatOpenPerformanceProbe() {
+        int performanceClass = getDevicePerformanceClass();
+        if (chatOpenPerformanceProbeRunning || performanceClass <= PERFORMANCE_CLASS_AVERAGE || areChatEffectsAutoReduced() || ApplicationLoader.mainInterfacePaused || !ApplicationLoader.isScreenOn) {
+            return;
+        }
+        chatOpenPerformanceProbeRunning = true;
+        final long frameBudgetNanos = (long) (1000000000f / Math.max(30f, AndroidUtilities.screenRefreshRate));
+        Choreographer.getInstance().postFrameCallback(new Choreographer.FrameCallback() {
+            private long startFrameTime;
+            private long lastFrameTime;
+            private int frames;
+            private int badFrames;
+            private int severeFrames;
+
+            @Override
+            public void doFrame(long frameTimeNanos) {
+                if (ApplicationLoader.mainInterfacePaused || !ApplicationLoader.isScreenOn) {
+                    chatOpenPerformanceProbeRunning = false;
+                    return;
+                }
+                if (startFrameTime == 0) {
+                    startFrameTime = frameTimeNanos;
+                    lastFrameTime = frameTimeNanos;
+                    Choreographer.getInstance().postFrameCallback(this);
+                    return;
+                }
+                long delta = frameTimeNanos - lastFrameTime;
+                lastFrameTime = frameTimeNanos;
+                frames++;
+                if (delta > frameBudgetNanos * 2) {
+                    badFrames++;
+                }
+                if (delta > 90000000L) {
+                    severeFrames++;
+                }
+                if (frameTimeNanos - startFrameTime < 2000000000L) {
+                    Choreographer.getInstance().postFrameCallback(this);
+                } else {
+                    chatOpenPerformanceProbeRunning = false;
+                    finishChatOpenPerformanceProbe(frames, badFrames, severeFrames);
+                }
+            }
+        });
+    }
+
+    private static void finishChatOpenPerformanceProbe(int frames, int badFrames, int severeFrames) {
+        boolean badRun = severeFrames > 0 || badFrames >= Math.max(4, frames / 5);
+        int performanceClass = getDevicePerformanceClass();
+        if (!badRun) {
+            chatEffectsBadProbeCount = 0;
+        } else if (performanceClass <= PERFORMANCE_CLASS_AVERAGE) {
+            setChatEffectsAutoReduced();
+        } else if (++chatEffectsBadProbeCount >= 2) {
+            setChatEffectsAutoReduced();
+        }
+        if (BuildVars.LOGS_ENABLED) {
+            FileLog.d("chat effects probe frames=" + frames + " bad=" + badFrames + " severe=" + severeFrames + " badRun=" + badRun + " perf=" + performanceClassName(performanceClass) + " reduced=" + areChatEffectsAutoReduced());
+        }
+    }
+
+    private static void setChatEffectsAutoReduced() {
+        MessagesController.getGlobalMainSettings().edit()
+            .putBoolean("chat_effects_auto_reduced", true)
+            .putLong("chat_effects_auto_reduced_at", System.currentTimeMillis())
+            .apply();
     }
 
     public static boolean chatBlurEnabled() {
-        return canBlurChat() && LiteMode.isEnabled(LiteMode.FLAG_CHAT_BLUR);
+        return LiteMode.isEnabled(LiteMode.FLAG_CHAT_BLUR);
     }
 
     public static class BackgroundActivityPrefs {

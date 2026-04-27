@@ -115,7 +115,11 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
                 @Override
                 public void renderNodeCalculateHash(IBlur3Hash hash) {
                     hash.add(getThemedColor(Theme.key_windowBackgroundWhite));
-                    hash.add(SharedConfig.chatBlurEnabled());
+                    final boolean chatBlurEnabled = SharedConfig.chatBlurEnabled();
+                    hash.add(chatBlurEnabled);
+                    if (!chatBlurEnabled) {
+                        return;
+                    }
 
                     for (int a = 0, N = fragmentsArr.size(); a < N; a++) {
                         final FragmentState state = fragmentsArr.valueAt(a);
@@ -148,6 +152,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
                     final int height = fragmentView.getMeasuredHeight();
 
                     canvas.drawColor(getThemedColor(Theme.key_windowBackgroundWhite));
+                    if (!SharedConfig.chatBlurEnabled()) {
+                        return;
+                    }
 
                     for (int a = 0, N = fragmentsArr.size(); a < N; a++) {
                         final FragmentState state = fragmentsArr.valueAt(a);

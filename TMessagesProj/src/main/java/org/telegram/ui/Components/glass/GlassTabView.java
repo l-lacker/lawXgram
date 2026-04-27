@@ -221,7 +221,13 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         usePremiumCounter = usePremiumBadge;
     }
 
+    private boolean selectedApplied;
+
     public void setSelected(boolean selected, boolean animated) {
+        if (selectedApplied && isSelectedAnimator.getValue() == selected) {
+            return;
+        }
+        selectedApplied = true;
         isSelectedAnimator.setValue(selected, animated);
         checkPlayAnimation(animated);
 

@@ -3780,8 +3780,9 @@ public class ChatActivity extends BaseFragment implements
         if (chatMessagesCache == null) {
             chatMessageCellsCache.put(currentAccount, chatMessagesCache = new ArrayList<>());
         }
-        if (chatMessagesCache.size() < 10) {
-            int n = 15 - chatMessagesCache.size();
+        int chatMessagesCacheTarget = SharedConfig.shouldUseLiteChatOpen() ? 6 : 15;
+        if (chatMessagesCache.size() < Math.min(10, chatMessagesCacheTarget)) {
+            int n = chatMessagesCacheTarget - chatMessagesCache.size();
             Timer.Task t2 = Timer.start(t, "create ChatMessageCell n=" + n);
             for (int a = 0; a < n; a++) {
                 chatMessagesCache.add(new ChatMessageCell(context, currentAccount,true, sharedResources, themeDelegate));
@@ -8824,7 +8825,15 @@ public class ChatActivity extends BaseFragment implements
             chatListView.setEmptyView(emptyViewContainer);
         }
 
-        checkBotKeyboard();
+        if (SharedConfig.shouldUseLiteChatOpen()) {
+            AndroidUtilities.runOnUIThread(() -> {
+                if (!isFinishing()) {
+                    checkBotKeyboard();
+                }
+            }, 300);
+        } else {
+            checkBotKeyboard();
+        }
         updateBottomOverlay();
         updateSecretStatus();
         updateTopPanel(false);
@@ -27056,6 +27065,7 @@ public class ChatActivity extends BaseFragment implements
             openAnimationEnded = false;
             if (!backward) {
                 openAnimationStartTime = SystemClock.elapsedRealtime();
+                SharedConfig.startChatOpenPerformanceProbe();
             }
         } else {
             if (UserObject.isUserSelf(currentUser)) {

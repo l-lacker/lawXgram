@@ -151,6 +151,12 @@ public class LiteMode {
             // always enabled for tablets
             return true;
         }
+        if (flag == FLAG_CHAT_BLUR && !SharedConfig.canBlurChat()) {
+            return false;
+        }
+        if (flag == FLAG_LIQUID_GLASS && !SharedConfig.canUseLiquidGlass()) {
+            return false;
+        }
         return (getValue() & preprocessFlag(flag)) > 0;
     }
 

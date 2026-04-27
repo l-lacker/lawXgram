@@ -8085,7 +8085,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             } else if (searchString != null) {
                 if (getMessagesController().checkCanOpenChat(args, DialogsActivity.this)) {
                     getNotificationCenter().postNotificationName(NotificationCenter.closeChats);
-                    presentFragment(highlightFoundQuote(new ChatActivity(args), msg));
+                    presentChatFragment(new ChatActivity(args), msg);
                 }
             } else {
                 slowedReloadAfterDialogClick = true;
@@ -8101,27 +8101,27 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
                             ChatActivity activity = new ChatActivity(args);
 //                            ForumUtilities.applyTopic(activity, MessagesStorage.TopicKey.of(-chat.id, getMessagesController().getForumLastTopicId(chat.id)));
-                            presentFragment(highlightFoundQuote(activity, msg));
+                            presentChatFragment(activity, msg);
                         } else if (ChatObject.areTabsEnabled(chat)) {
                             ChatActivity activity = new ChatActivity(args);
                             ForumUtilities.applyTopic(activity, MessagesStorage.TopicKey.of(-chat.id, getMessagesController().getForumLastTopicId(chat.id)));
-                            presentFragment(activity);
+                            presentChatFragment(activity, msg);
                         } else if (!LiteMode.isEnabled(LiteMode.FLAG_CHAT_FORUM_TWOCOLUMN) || TMP_DISABLE_TOPICS_TWO_COLUMNS) {
                             if (needOpenChatActivity) {
-                                presentFragment(highlightFoundQuote(new ChatActivity(args), msg));
+                                presentChatFragment(new ChatActivity(args), msg);
                             } else {
                                 presentFragment(new TopicsFragment(args));
                             }
                         } else {
                             if (!canOpenInRightSlidingView) {
                                 if (needOpenChatActivity) {
-                                    presentFragment(highlightFoundQuote(new ChatActivity(args), msg));
+                                    presentChatFragment(new ChatActivity(args), msg);
                                 } else {
                                     presentFragment(new TopicsFragment(args));
                                 }
                             } else if (!searching) {
                                 if (needOpenChatActivity) {
-                                    presentFragment(highlightFoundQuote(new ChatActivity(args), msg));
+                                    presentChatFragment(new ChatActivity(args), msg);
                                 } else {
                                     if (rightSlidingDialogContainer.currentFragment != null && ((TopicsFragment) rightSlidingDialogContainer.currentFragment).getDialogId() == dialogId) {
                                         rightSlidingDialogContainer.finishPreview();
@@ -8158,11 +8158,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                                 rightSlidingDialogContainer.finishPreview();
                             }
                         }
-                        presentFragment(highlightFoundQuote(chatActivity, msg));
+                        presentChatFragment(chatActivity, msg);
                     }
                 }
             }
         }
+    }
+
+    private void presentChatFragment(ChatActivity chatActivity, MessageObject msg) {
+        presentFragment(highlightFoundQuote(chatActivity, msg), false, SharedConfig.shouldUseLiteChatOpen());
     }
 
     public static ChatActivity highlightFoundQuote(ChatActivity chatActivity, MessageObject message) {
