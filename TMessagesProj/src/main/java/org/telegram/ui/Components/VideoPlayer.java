@@ -181,6 +181,7 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
     private boolean loopingMediaSource;
     private boolean looping;
     private int repeatCount;
+    private @C.WakeMode int wakeMode = C.WAKE_MODE_NONE;
 
     private boolean shouldPauseOther;
     MediaSource.Factory dashMediaSourceFactory;
@@ -267,7 +268,8 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
             factory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
             ExoPlayer.Builder builder = new ExoPlayer.Builder(ApplicationLoader.applicationContext).setRenderersFactory(factory)
                     .setTrackSelector(trackSelector)
-                    .setLoadControl(loadControl);
+                    .setLoadControl(loadControl)
+                    .setWakeMode(wakeMode);
             if (looper != null) {
                 builder.setLooper(looper);
             }
@@ -293,7 +295,9 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
             if (audioPlayer == null) {
                 audioPlayer = new ExoPlayer.Builder(ApplicationLoader.applicationContext)
                         .setTrackSelector(trackSelector)
-                        .setLoadControl(loadControl).buildSimpleExoPlayer();
+                        .setLoadControl(loadControl)
+                        .setWakeMode(wakeMode)
+                        .buildSimpleExoPlayer();
                 audioPlayer.addListener(new Player.Listener() {
 
                     @Override
@@ -1610,6 +1614,16 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
 
     public void setAudioVisualizerDelegate(AudioVisualizerDelegate audioVisualizerDelegate) {
         this.audioVisualizerDelegate = audioVisualizerDelegate;
+    }
+
+    public void setWakeMode(@C.WakeMode int wakeMode) {
+        this.wakeMode = wakeMode;
+        if (player != null) {
+            player.setWakeMode(wakeMode);
+        }
+        if (audioPlayer != null) {
+            audioPlayer.setWakeMode(wakeMode);
+        }
     }
 
     public int getBufferedPercentage() {

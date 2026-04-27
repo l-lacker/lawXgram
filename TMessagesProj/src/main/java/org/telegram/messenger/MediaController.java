@@ -3745,6 +3745,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 clearPlaylist();
             }
             videoPlayer = new VideoPlayer();
+            videoPlayer.setWakeMode(C.WAKE_MODE_LOCAL);
             videoPlayer.setLooping(silent);
             int tag = ++playerNum;
             videoPlayer.setDelegate(new VideoPlayer.VideoPlayerDelegate() {
@@ -3903,6 +3904,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             }
             try {
                 audioPlayer = new VideoPlayer();
+                audioPlayer.setWakeMode(C.WAKE_MODE_LOCAL);
                 int tag = ++playerNum;
                 audioPlayer.setDelegate(new VideoPlayer.VideoPlayerDelegate() {
                     @Override
@@ -4143,11 +4145,11 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         if (canStartMusicPlayerService()) {
             Intent intent = new Intent(ApplicationLoader.applicationContext, MusicPlayerService.class);
             try {
-                /*if (Build.VERSION.SDK_INT >= 26) {
+                if (Build.VERSION.SDK_INT >= 26) {
                     ApplicationLoader.applicationContext.startForegroundService(intent);
-                } else {*/
-                ApplicationLoader.applicationContext.startService(intent);
-                //}
+                } else {
+                    ApplicationLoader.applicationContext.startService(intent);
+                }
             } catch (Throwable e) {
                 FileLog.e(e);
             }
