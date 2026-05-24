@@ -97,6 +97,24 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
         void onContextClick(TLRPC.BotInlineResult result);
     }
 
+    private static final MentionsAdapterDelegate EMPTY_DELEGATE = new MentionsAdapterDelegate() {
+        @Override
+        public void needChangePanelVisibility(boolean show) {
+        }
+
+        @Override
+        public void onItemCountUpdate(int oldCount, int newCount) {
+        }
+
+        @Override
+        public void onContextSearch(boolean searching) {
+        }
+
+        @Override
+        public void onContextClick(TLRPC.BotInlineResult result) {
+        }
+    };
+
     private final boolean USE_DIVIDERS = false;
 
     private int currentAccount = UserConfig.selectedAccount;
@@ -470,9 +488,29 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
         if (locationProvider != null) {
             locationProvider.stop();
         }
+        if (cancelDelayRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(cancelDelayRunnable);
+            cancelDelayRunnable = null;
+        }
+        if (searchGlobalRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(searchGlobalRunnable);
+            searchGlobalRunnable = null;
+        }
+        if (checkAgainRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(checkAgainRunnable);
+            checkAgainRunnable = null;
+        }
         if (contextQueryRunnable != null) {
             AndroidUtilities.cancelRunOnUIThread(contextQueryRunnable);
             contextQueryRunnable = null;
+        }
+        if (lastReqId != 0) {
+            ConnectionsManager.getInstance(currentAccount).cancelRequest(lastReqId, true);
+            lastReqId = 0;
+        }
+        if (channelReqId != 0) {
+            ConnectionsManager.getInstance(currentAccount).cancelRequest(channelReqId, true);
+            channelReqId = 0;
         }
         if (contextUsernameReqid != 0) {
             ConnectionsManager.getInstance(currentAccount).cancelRequest(contextUsernameReqid, true);
@@ -495,6 +533,13 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.recentDocumentsDidLoad);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.stickersDidLoad);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.reloadInlineHints);
+        lastSticker = null;
+        stickers = null;
+        stickersMap = null;
+        stickersToLoad.clear();
+        visibleByStickersSearch = false;
+        delegate = EMPTY_DELEGATE;
+        parentFragment = null;
     }
 
     public void setParentFragment(ChatActivity fragment) {

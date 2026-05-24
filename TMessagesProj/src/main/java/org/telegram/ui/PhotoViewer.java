@@ -18395,6 +18395,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         } catch (Exception e) {
             FileLog.e(e);
         }
+        clearCompressPhotoHint();
         if (containerView != null) {
             AndroidUtilities.cancelRunOnUIThread(updateContainerFlagsRunnable);
             updateContainerFlags(true);
@@ -18918,6 +18919,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (parentActivity == null || windowView == null) {
             return;
         }
+        clearCompressPhotoHint();
         if (PipVideoOverlay.isVisible()) {
             PipVideoOverlay.dismiss();
         }
@@ -18950,6 +18952,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     }
 
     private void onPhotoClosed(PlaceProviderObject object) {
+        clearCompressPhotoHint();
         if (doneButtonPressed) {
             releasePlayer(true);
         }
@@ -23932,10 +23935,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     }
 
     private void showPhotoQualityHint(boolean highQuality) {
-        if (compressPhotoHint != null) {
-            compressPhotoHint.hide();
-            compressPhotoHint = null;
-        }
+        clearCompressPhotoHint();
         if (activityContext == null) {
             return;
         }
@@ -23946,10 +23946,23 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         containerView.addView(compressPhotoHint, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 100, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL, 0, 0, 0, 48));
         compressPhotoHint.setTranslationY(pickerView.getTranslationY());
         compressPhotoHint.setJointPx(0, itemsLayout.getX() + compressItem.getX() + compressItem.getWidth() / 2.0f);
-        View currentHint = compressPhotoHint;
-        compressPhotoHint.setOnHiddenListener(() -> AndroidUtilities.removeFromParent(currentHint));
+        HintView2 currentHint = compressPhotoHint;
+        compressPhotoHint.setOnHiddenListener(() -> {
+            AndroidUtilities.removeFromParent(currentHint);
+            if (compressPhotoHint == currentHint) {
+                compressPhotoHint = null;
+            }
+        });
         compressPhotoHint.setDuration(3500);
         compressPhotoHint.show();
+    }
+
+    private void clearCompressPhotoHint() {
+        if (compressPhotoHint != null) {
+            HintView2 hint = compressPhotoHint;
+            compressPhotoHint = null;
+            hint.hide();
+        }
     }
 
 }

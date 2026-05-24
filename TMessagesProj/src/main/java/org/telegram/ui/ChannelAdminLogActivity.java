@@ -416,6 +416,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     @Override
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
+        closeMenu();
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.messagePlayingDidStart);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
@@ -1621,7 +1622,8 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     private int scrimPopupX, scrimPopupY;
     private void closeMenu() {
         if (scrimPopupWindow != null) {
-            scrimPopupWindow.dismiss();
+            ActionBarPopupWindow popupWindow = scrimPopupWindow;
+            popupWindow.dismiss();
         }
     }
 
@@ -2765,6 +2767,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     @Override
     public void onPause() {
         super.onPause();
+        closeMenu();
         if (contentView != null) {
             contentView.onPause();
         }
