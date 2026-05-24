@@ -98,6 +98,14 @@ public class VideoCompressButton extends View {
         invalidate();
     }
 
+    public void setPhotoState(boolean highQuality) {
+        this.disabled = false;
+        textDrawable.setText(highQuality ? "HD" : "SD");
+        sizeTextDrawable.setText("", false);
+        setClickable(true);
+        invalidate();
+    }
+
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);

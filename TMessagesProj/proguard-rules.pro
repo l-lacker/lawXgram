@@ -1,3 +1,4 @@
+-keep public class com.google.android.gms.* { public *; }
 -keepnames @com.google.android.gms.common.annotation.KeepName class *
 -keepclassmembernames class * {
     @com.google.android.gms.common.annotation.KeepName *;
@@ -104,6 +105,12 @@
   @com.google.gson.annotations.SerializedName <fields>;
 }
 
+# Markwon/JLatexMath load parser and formula classes reflectively.
+-keep class io.nano.tex.** { *; }
+-keep class org.scilab.forge.jlatexmath.** { *; }
+-keep class ru.noties.jlatexmath.** { *; }
+-dontwarn org.scilab.forge.jlatexmath.**
+
 # Gson uses generic type information stored in a class file when working with fields. Proguard
 # removes such information by default, so configure it to keep all of it.
 -keepattributes Signature,InnerClasses,EnclosingMethod
@@ -155,3 +162,5 @@
 
 -dontwarn android.support.annotation.*
 -dontwarn androidx.compose.**
+-dontwarn org.checkerframework.**
+-dontwarn javax.annotation.**

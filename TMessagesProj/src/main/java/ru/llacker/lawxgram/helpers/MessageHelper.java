@@ -375,11 +375,15 @@ public class MessageHelper extends BaseController {
                 } else {
                     var image = BitmapFactory.decodeFile(path);
                     if (image != null) {
-                        var file = new File(path.endsWith(".webp") ? path.replace(".webp", ".png") : path + ".png");
-                        try (var stream = new FileOutputStream(file)) {
-                            image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        try {
+                            var file = new File(path.endsWith(".webp") ? path.replace(".webp", ".png") : path + ".png");
+                            try (var stream = new FileOutputStream(file)) {
+                                image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                            }
+                            MediaController.saveFile(file.toString(), activity, 0, null, null, callback);
+                        } finally {
+                            AndroidUtilities.recycleBitmap(image);
                         }
-                        MediaController.saveFile(file.toString(), activity, 0, null, null, callback);
                     }
                 }
             } catch (Exception e) {

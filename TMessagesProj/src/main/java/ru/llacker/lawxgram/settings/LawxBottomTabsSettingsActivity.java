@@ -148,7 +148,7 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
             box.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(28), getThemedColor(Theme.key_windowBackgroundWhite)));
             addView(box, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS + 20, Gravity.CENTER, 16, 0, 16, 0));
 
-            tabsLayout = new MainTabsLayout(context);
+            tabsLayout = new MainTabsLayout(context, resourceProvider);
             tabsLayout.setPadding(AndroidUtilities.dp(DialogsActivity.MAIN_TABS_MARGIN + 4), AndroidUtilities.dp(DialogsActivity.MAIN_TABS_MARGIN), AndroidUtilities.dp(DialogsActivity.MAIN_TABS_MARGIN + 4), AndroidUtilities.dp(DialogsActivity.MAIN_TABS_MARGIN));
             tabsLayout.setBackground(createTabsBackground());
             box.addView(tabsLayout, LayoutHelper.createFrame(328 + DialogsActivity.MAIN_TABS_MARGIN * 2, DialogsActivity.MAIN_TABS_HEIGHT_WITH_MARGINS, Gravity.CENTER));
