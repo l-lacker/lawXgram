@@ -40,6 +40,7 @@ import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.Components.UniversalRecyclerView;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -62,10 +63,10 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
 
     private final int emojiStartRow = 100;
 
-    private ChatAttachAlert chatAttachAlert;
+    private volatile ChatAttachAlert chatAttachAlert;
     private NumberTextView selectedCountTextView;
-    private AlertDialog progressDialog;
-    private boolean destroyed;
+    private volatile AlertDialog progressDialog;
+    private volatile boolean destroyed;
 
     @Override
     public View createView(Context context) {
@@ -339,14 +340,22 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
     }
 
     private File copyFileToCache(Uri uri) {
+        if (uri == null) {
+            return null;
+        }
         try (InputStream is = ApplicationLoader.applicationContext.getContentResolver().openInputStream(uri)) {
+            if (is == null) {
+                return null;
+            }
             String fileName = MediaController.getFileName(uri);
             File sharingDirectory = AndroidUtilities.getSharingDirectory();
             if (!sharingDirectory.exists() && !sharingDirectory.mkdirs()) {
                 return null;
             }
             File dest = new File(sharingDirectory, fileName == null ? "Emoji.ttf" : fileName);
-            AndroidUtilities.copyFile(is, dest);
+            try (FileOutputStream os = new FileOutputStream(dest)) {
+                AndroidUtilities.copyFile(is, os);
+            }
             return dest;
         } catch (IOException e) {
             FileLog.e(e);
@@ -361,26 +370,32 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
                 return;
             }
 
-            if (chatAttachAlert != null) {
+            ChatAttachAlert currentAttachAlert = chatAttachAlert;
+            if (currentAttachAlert != null) {
+                ChatAttachAlertDocumentLayout documentLayout = currentAttachAlert.getDocumentLayout();
+                if (documentLayout == null) {
+                    return;
+                }
                 progressDialog = new AlertDialog(getParentActivity(), 3);
                 progressDialog.setCanCancel(false);
                 progressDialog.showDelayed(300);
+                AlertDialog currentProgressDialog = progressDialog;
 
                 Utilities.globalQueue.postRunnable(() -> {
-                    if (destroyed || chatAttachAlert == null || progressDialog == null) {
+                    if (destroyed || currentAttachAlert != chatAttachAlert || currentProgressDialog != progressDialog) {
                         return;
                     }
                     ArrayList<File> files = new ArrayList<>();
                     if (data.getData() != null) {
                         File file = copyFileToCache(data.getData());
-                        if (chatAttachAlert.getDocumentLayout().isEmojiFont(file)) {
+                        if (file != null && documentLayout.isEmojiFont(file)) {
                             files.add(file);
                         }
                     } else if (data.getClipData() != null) {
                         ClipData clipData = data.getClipData();
                         for (int i = 0; i < clipData.getItemCount(); i++) {
                             File file = copyFileToCache(clipData.getItemAt(i).getUri());
-                            if (chatAttachAlert.getDocumentLayout().isEmojiFont(file)) {
+                            if (file != null && documentLayout.isEmojiFont(file)) {
                                 files.add(file);
                             } else {
                                 files.clear();
@@ -389,16 +404,22 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
                         }
                     }
                     AndroidUtilities.runOnUIThread(() -> {
-                        if (destroyed || getParentActivity() == null) {
+                        if (destroyed || getParentActivity() == null || currentAttachAlert != chatAttachAlert) {
+                            if (currentProgressDialog == progressDialog) {
+                                currentProgressDialog.dismiss();
+                                progressDialog = null;
+                            }
                             return;
                         }
                         if (!files.isEmpty()) {
-                            chatAttachAlert.dismiss();
+                            currentAttachAlert.dismiss();
                             chatAttachAlert = null;
                             processFiles(files);
                         } else {
-                            progressDialog.dismiss();
-                            progressDialog = null;
+                            if (currentProgressDialog == progressDialog) {
+                                currentProgressDialog.dismiss();
+                                progressDialog = null;
+                            }
                         }
                     });
                 });
