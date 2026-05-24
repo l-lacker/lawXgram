@@ -59,15 +59,16 @@ import org.telegram.ui.Components.TranscribeButton;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -76,6 +77,9 @@ public class MessageHelper extends BaseController {
     private static final MessageHelper[] Instance = new MessageHelper[UserConfig.MAX_ACCOUNT_COUNT];
     private static final CharsetDecoder utf8Decoder = StandardCharsets.UTF_8.newDecoder();
     private static final SpannableStringBuilder[] spannedStrings = new SpannableStringBuilder[5];
+
+    private final ArrayDeque<DeleteHistoryJob> deleteHistoryQueue = new ArrayDeque<>();
+    private boolean deleteHistoryRunning;
 
     public MessageHelper(int num) {
         super(num);
@@ -542,7 +546,7 @@ public class MessageHelper extends BaseController {
             if (cell != null && cell.isChecked()) {
                 showDeleteHistoryBulletin(fragment, 0, false, () -> getMessagesController().deleteUserChannelHistory(chat, getUserConfig().getCurrentUser(), null, 0), resourcesProvider);
             } else {
-                deleteUserHistoryWithSearch(fragment, -chat.id, forumTopic != null ? forumTopic.id : 0, mergeDialogId, before == -1 ? getConnectionsManager().getCurrentTime() : before, (count, deleteAction) -> showDeleteHistoryBulletin(fragment, count, true, deleteAction, resourcesProvider));
+                deleteUserHistoryWithSearch(fragment, -chat.id, forumTopic != null ? forumTopic.id : 0, mergeDialogId, before == -1 ? getConnectionsManager().getCurrentTime() : before, (currentFragment, count, deleteAction) -> showDeleteHistoryBulletin(currentFragment, count, true, deleteAction, resourcesProvider));
             }
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
@@ -663,18 +667,51 @@ public class MessageHelper extends BaseController {
     }
 
     private void deleteUserHistoryWithSearch(BaseFragment fragment, final long dialogId, int replyMessageId, final long mergeDialogId, int before, SearchMessagesResultCallback callback) {
-        Utilities.globalQueue.postRunnable(() -> {
-            ArrayList<Integer> messageIds = new ArrayList<>();
-            var latch = new CountDownLatch(1);
-            var peer = getMessagesController().getInputPeer(dialogId);
-            var fromId = MessagesController.getInputPeer(getUserConfig().getCurrentUser());
-            doSearchMessages(fragment, latch, messageIds, peer, replyMessageId, fromId, before, Integer.MAX_VALUE, 0);
-            try {
-                latch.await();
-            } catch (Exception e) {
-                FileLog.e(e);
+        WeakReference<BaseFragment> fragmentRef = new WeakReference<>(fragment);
+        enqueueDeleteHistoryJob(new DeleteHistoryJob(fragmentRef, dialogId, replyMessageId, mergeDialogId, before, callback));
+    }
+
+    private void enqueueDeleteHistoryJob(DeleteHistoryJob job) {
+        Utilities.stageQueue.postRunnable(() -> {
+            deleteHistoryQueue.add(job);
+            if (!deleteHistoryRunning) {
+                deleteHistoryRunning = true;
+                runNextDeleteHistoryJob();
             }
-            if (!messageIds.isEmpty()) {
+        });
+    }
+
+    private void runNextDeleteHistoryJob() {
+        Utilities.stageQueue.postRunnable(() -> {
+            DeleteHistoryJob job = deleteHistoryQueue.poll();
+            if (job == null) {
+                deleteHistoryRunning = false;
+                return;
+            }
+            searchDialogMessages(job, job.dialogId, job.replyMessageId, job.callback, success -> {
+                if (success && job.mergeDialogId != 0) {
+                    searchDialogMessages(job, job.mergeDialogId, 0, null, ignored -> runNextDeleteHistoryJob());
+                } else {
+                    runNextDeleteHistoryJob();
+                }
+            });
+        });
+    }
+
+    private void searchDialogMessages(DeleteHistoryJob job, final long dialogId, int replyMessageId, SearchMessagesResultCallback callback, SearchMessagesFinishCallback finishCallback) {
+        ArrayList<Integer> messageIds = new ArrayList<>();
+        TLRPC.InputPeer peer;
+        TLRPC.InputPeer fromId;
+        try {
+            peer = getMessagesController().getInputPeer(dialogId);
+            fromId = MessagesController.getInputPeer(getUserConfig().getCurrentUser());
+        } catch (Exception e) {
+            FileLog.e(e);
+            finishCallback.run(false);
+            return;
+        }
+        doSearchMessages(job.fragmentRef, messageIds, peer, replyMessageId, fromId, job.before, Integer.MAX_VALUE, 0, success -> {
+            if (success && !messageIds.isEmpty()) {
                 ArrayList<ArrayList<Integer>> lists = new ArrayList<>();
                 final int N = messageIds.size();
                 for (int i = 0; i < N; i += 100) {
@@ -685,19 +722,46 @@ public class MessageHelper extends BaseController {
                         getMessagesController().deleteMessages(list, null, null, dialogId, replyMessageId, true, 0);
                     }
                 };
-                AndroidUtilities.runOnUIThread(callback != null ? () -> callback.run(messageIds.size(), deleteAction) : deleteAction);
+                AndroidUtilities.runOnUIThread(() -> {
+                    BaseFragment currentFragment = job.fragmentRef.get();
+                    if (callback != null && currentFragment != null && !currentFragment.isFinished && currentFragment.getParentActivity() != null) {
+                        callback.run(currentFragment, messageIds.size(), deleteAction);
+                    } else {
+                        deleteAction.run();
+                    }
+                });
             }
-            if (mergeDialogId != 0) {
-                deleteUserHistoryWithSearch(fragment, mergeDialogId, 0, 0, before, null);
-            }
+            finishCallback.run(success);
         });
     }
 
     private interface SearchMessagesResultCallback {
-        void run(int count, Runnable deleteAction);
+        void run(BaseFragment fragment, int count, Runnable deleteAction);
     }
 
-    private void doSearchMessages(BaseFragment fragment, CountDownLatch latch, ArrayList<Integer> messageIds, TLRPC.InputPeer peer, int replyMessageId, TLRPC.InputPeer fromId, int before, int offsetId, long hash) {
+    private interface SearchMessagesFinishCallback {
+        void run(boolean success);
+    }
+
+    private static class DeleteHistoryJob {
+        private final WeakReference<BaseFragment> fragmentRef;
+        private final long dialogId;
+        private final int replyMessageId;
+        private final long mergeDialogId;
+        private final int before;
+        private final SearchMessagesResultCallback callback;
+
+        private DeleteHistoryJob(WeakReference<BaseFragment> fragmentRef, long dialogId, int replyMessageId, long mergeDialogId, int before, SearchMessagesResultCallback callback) {
+            this.fragmentRef = fragmentRef;
+            this.dialogId = dialogId;
+            this.replyMessageId = replyMessageId;
+            this.mergeDialogId = mergeDialogId;
+            this.before = before;
+            this.callback = callback;
+        }
+    }
+
+    private void doSearchMessages(WeakReference<BaseFragment> fragmentRef, ArrayList<Integer> messageIds, TLRPC.InputPeer peer, int replyMessageId, TLRPC.InputPeer fromId, int before, int offsetId, long hash, SearchMessagesFinishCallback finishCallback) {
         var req = new TLRPC.TL_messages_search();
         req.peer = peer;
         req.limit = 100;
@@ -714,7 +778,7 @@ public class MessageHelper extends BaseController {
         getConnectionsManager().sendRequest(req, (response, error) -> {
             if (response instanceof TLRPC.messages_Messages res) {
                 if (response instanceof TLRPC.TL_messages_messagesNotModified || res.messages.isEmpty()) {
-                    latch.countDown();
+                    finishCallback.run(true);
                     return;
                 }
                 var newOffsetId = offsetId;
@@ -725,12 +789,17 @@ public class MessageHelper extends BaseController {
                     }
                     messageIds.add(message.id);
                 }
-                doSearchMessages(fragment, latch, messageIds, peer, replyMessageId, fromId, before, newOffsetId, calcMessagesHash(res.messages));
+                doSearchMessages(fragmentRef, messageIds, peer, replyMessageId, fromId, before, newOffsetId, calcMessagesHash(res.messages), finishCallback);
             } else {
                 if (error != null) {
-                    AndroidUtilities.runOnUIThread(() -> AlertsCreator.showSimpleAlert(fragment, LocaleController.getString(R.string.ErrorOccurred) + "\n" + error.text));
+                    AndroidUtilities.runOnUIThread(() -> {
+                        BaseFragment currentFragment = fragmentRef.get();
+                        if (currentFragment != null && !currentFragment.isFinished && currentFragment.getParentActivity() != null) {
+                            AlertsCreator.showSimpleAlert(currentFragment, LocaleController.getString(R.string.ErrorOccurred) + "\n" + error.text);
+                        }
+                    });
                 }
-                latch.countDown();
+                finishCallback.run(false);
             }
         }, ConnectionsManager.RequestFlagFailOnServerErrors);
     }
