@@ -252,6 +252,9 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
 
     public static class QRCodeBottomSheet extends BottomSheet {
 
+        private ImageView qrImageView;
+        private Bitmap qrBitmap;
+
         private QRCodeBottomSheet(Context context, ConfigHelper.Crypto crypto, Theme.ResourcesProvider resourcesProvider) {
             super(context, false, resourcesProvider);
 
@@ -276,17 +279,19 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
             imageContainer.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(16), Theme.getColor(Theme.key_windowBackgroundWhite)));
             linearLayout.addView(imageContainer, LayoutHelper.createLinear(220 + 16, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 18, 0, 18, 0));
 
-            var imageView = new ImageView(context);
-            imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-            imageView.setOutlineProvider(new ViewOutlineProvider() {
+            qrImageView = new ImageView(context);
+            qrImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+            qrImageView.setOutlineProvider(new ViewOutlineProvider() {
                 @Override
                 public void getOutline(View view, Outline outline) {
                     outline.setRoundRect(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight(), AndroidUtilities.dp(12));
                 }
             });
-            imageView.setClipToOutline(true);
-            imageView.setImageBitmap(createQR(crypto.address));
-            imageContainer.addView(imageView, LayoutHelper.createLinear(220, 220));
+            qrImageView.setClipToOutline(true);
+            qrBitmap = createQR(crypto.address);
+            qrImageView.setImageBitmap(qrBitmap);
+            imageContainer.addView(qrImageView, LayoutHelper.createLinear(220, 220));
+            super.setOnDismissListener(dialog -> recycleQrBitmap());
 
             View.OnClickListener copy = (v) -> {
                 AndroidUtilities.addToClipboard(crypto.address);
@@ -321,6 +326,17 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
                 FileLog.e(e);
             }
             return null;
+        }
+
+        private void recycleQrBitmap() {
+            if (qrImageView != null) {
+                qrImageView.setImageDrawable(null);
+                qrImageView = null;
+            }
+            if (qrBitmap != null) {
+                AndroidUtilities.recycleBitmap(qrBitmap);
+                qrBitmap = null;
+            }
         }
 
         public static void showForCrypto(BaseFragment fragment, ConfigHelper.Crypto crypto) {

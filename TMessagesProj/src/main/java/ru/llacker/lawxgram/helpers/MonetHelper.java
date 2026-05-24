@@ -88,6 +88,7 @@ public class MonetHelper {
     }};
     private static final String ACTION_OVERLAY_CHANGED = "android.intent.action.OVERLAY_CHANGED";
     private static final OverlayChangeReceiver overlayChangeReceiver = new OverlayChangeReceiver();
+    private static int overlayReceiverReferences;
 
     public static int getColor(String color) {
         return getColor(color, false);
@@ -149,11 +150,11 @@ public class MonetHelper {
             IntentFilter packageFilter = new IntentFilter(ACTION_OVERLAY_CHANGED);
             packageFilter.addDataScheme("package");
             packageFilter.addDataSchemeSpecificPart("android", PatternMatcher.PATTERN_LITERAL);
-            context.registerReceiver(this, packageFilter);
+            context.getApplicationContext().registerReceiver(this, packageFilter);
         }
 
         public void unregister(Context context) {
-            context.unregisterReceiver(this);
+            context.getApplicationContext().unregisterReceiver(this);
         }
 
         @Override
@@ -166,15 +167,33 @@ public class MonetHelper {
         }
     }
 
-    public static void registerReceiver(Context context) {
-        overlayChangeReceiver.register(context);
+    public static synchronized boolean registerReceiver(Context context) {
+        if (context == null) {
+            return false;
+        }
+        if (overlayReceiverReferences == 0) {
+            try {
+                overlayChangeReceiver.register(ApplicationLoader.applicationContext != null ? ApplicationLoader.applicationContext : context);
+            } catch (Exception e) {
+                FileLog.e(e);
+                return false;
+            }
+        }
+        overlayReceiverReferences++;
+        return true;
     }
 
-    public static void unregisterReceiver(Context context) {
-        try {
-            overlayChangeReceiver.unregister(context);
-        } catch (IllegalArgumentException e) {
-            FileLog.e(e);
+    public static synchronized void unregisterReceiver(Context context) {
+        if (context == null || overlayReceiverReferences <= 0) {
+            return;
+        }
+        overlayReceiverReferences--;
+        if (overlayReceiverReferences == 0) {
+            try {
+                overlayChangeReceiver.unregister(ApplicationLoader.applicationContext != null ? ApplicationLoader.applicationContext : context);
+            } catch (IllegalArgumentException e) {
+                FileLog.e(e);
+            }
         }
     }
 }

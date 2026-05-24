@@ -244,20 +244,30 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
                 builder.setTitle(LocaleController.formatString(R.string.DeleteStickerSetsAlertTitle, LocaleController.formatString(R.string.DeleteEmojiSets, count)));
                 builder.setMessage(LocaleController.getString(R.string.DeleteEmojiSetsMessage));
                 builder.setPositiveButton(LocaleController.getString(R.string.Delete), (dialog, which1) -> {
-                    AlertDialog progressDialog = new AlertDialog(getParentActivity(), 3);
+                    if (destroyed || getParentActivity() == null) {
+                        return;
+                    }
+                    progressDialog = new AlertDialog(getParentActivity(), 3);
+                    progressDialog.setCanCancel(false);
+                    progressDialog.showDelayed(300);
+                    AlertDialog currentProgressDialog = progressDialog;
                     Utilities.globalQueue.postRunnable(() -> {
                         for (int i = 0, size = stickerSetList.size(); i < size; i++) {
                             EmojiHelper.getInstance().deleteEmojiPack(stickerSetList.get(i));
                         }
                         AndroidUtilities.runOnUIThread(() -> {
-                            progressDialog.dismiss();
+                            if (currentProgressDialog == progressDialog) {
+                                currentProgressDialog.dismiss();
+                                progressDialog = null;
+                            }
+                            EmojiHelper.reloadEmoji();
+                            if (destroyed || getParentActivity() == null || listView == null || listView.adapter == null) {
+                                return;
+                            }
                             clearSelected();
                             listView.adapter.update(true);
-                            EmojiHelper.reloadEmoji();
                         });
                     });
-                    progressDialog.setCanCancel(false);
-                    progressDialog.showDelayed(300);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                 AlertDialog dialog = builder.create();
