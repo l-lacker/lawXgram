@@ -212,7 +212,7 @@ public final class ApkInstaller {
         private final Runnable onSuccess;
         private final CountDownLatch latch = new CountDownLatch(1);
         private Intent intent = null;
-        private boolean unregistered;
+        private volatile boolean unregistered;
 
         private InstallReceiver(Context context, Context uiContext, String packageName, Runnable onSuccess) {
             this.context = context;
@@ -280,7 +280,7 @@ public final class ApkInstaller {
             return intent;
         }
 
-        private void unregister() {
+        private synchronized void unregister() {
             if (unregistered) {
                 return;
             }

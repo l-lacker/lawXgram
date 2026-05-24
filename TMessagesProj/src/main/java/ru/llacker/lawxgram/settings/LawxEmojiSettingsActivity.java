@@ -65,9 +65,11 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
     private ChatAttachAlert chatAttachAlert;
     private NumberTextView selectedCountTextView;
     private AlertDialog progressDialog;
+    private boolean destroyed;
 
     @Override
     public View createView(Context context) {
+        destroyed = false;
         View view = super.createView(context);
         actionBar.setBackButtonDrawable(new BackDrawable(false));
         ActionBarMenu actionMode = actionBar.createActionMode();
@@ -337,7 +339,7 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
     }
 
     private File copyFileToCache(Uri uri) {
-        try (InputStream is = getParentActivity().getContentResolver().openInputStream(uri)) {
+        try (InputStream is = ApplicationLoader.applicationContext.getContentResolver().openInputStream(uri)) {
             String fileName = MediaController.getFileName(uri);
             File sharingDirectory = AndroidUtilities.getSharingDirectory();
             if (!sharingDirectory.exists() && !sharingDirectory.mkdirs()) {
@@ -355,7 +357,7 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
     @Override
     public void onActivityResultFragment(int requestCode, int resultCode, Intent data) {
         if (requestCode == 21) {
-            if (data == null) {
+            if (data == null || destroyed || getParentActivity() == null) {
                 return;
             }
 
@@ -365,7 +367,7 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
                 progressDialog.showDelayed(300);
 
                 Utilities.globalQueue.postRunnable(() -> {
-                    if (chatAttachAlert == null || progressDialog == null) {
+                    if (destroyed || chatAttachAlert == null || progressDialog == null) {
                         return;
                     }
                     ArrayList<File> files = new ArrayList<>();
@@ -387,8 +389,12 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
                         }
                     }
                     AndroidUtilities.runOnUIThread(() -> {
+                        if (destroyed || getParentActivity() == null) {
+                            return;
+                        }
                         if (!files.isEmpty()) {
                             chatAttachAlert.dismiss();
+                            chatAttachAlert = null;
                             processFiles(files);
                         } else {
                             progressDialog.dismiss();
@@ -401,7 +407,7 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
     }
 
     public void processFiles(ArrayList<File> files) {
-        if (files == null || files.isEmpty()) {
+        if (files == null || files.isEmpty() || destroyed || getParentActivity() == null) {
             return;
         }
         if (progressDialog == null) {
@@ -422,6 +428,9 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
             }
             int finalCount = count;
             AndroidUtilities.runOnUIThread(() -> {
+                if (destroyed || getParentActivity() == null) {
+                    return;
+                }
                 if (progressDialog != null) {
                     progressDialog.dismiss();
                     progressDialog = null;
@@ -430,6 +439,20 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
                 updateRows();
             });
         });
+    }
+
+    @Override
+    public void onFragmentDestroy() {
+        destroyed = true;
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+            progressDialog = null;
+        }
+        if (chatAttachAlert != null) {
+            chatAttachAlert.dismiss();
+            chatAttachAlert = null;
+        }
+        super.onFragmentDestroy();
     }
 
     @Override

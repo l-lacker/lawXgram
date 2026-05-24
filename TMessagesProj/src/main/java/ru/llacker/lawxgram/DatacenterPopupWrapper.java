@@ -2,6 +2,7 @@ package ru.llacker.lawxgram;
 
 import android.os.SystemClock;
 import android.util.TypedValue;
+import android.view.View;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
@@ -31,11 +32,23 @@ public class DatacenterPopupWrapper {
     }};
 
     public ActionBarPopupWindow.ActionBarPopupWindowLayout windowLayout;
+    private boolean disposed;
 
     public DatacenterPopupWrapper(BaseFragment fragment, PopupSwipeBackLayout swipeBackLayout, Theme.ResourcesProvider resourcesProvider) {
         var context = fragment.getParentActivity();
         windowLayout = new ActionBarPopupWindow.ActionBarPopupWindowLayout(context, swipeBackLayout != null ? 0 : R.drawable.popup_fixed_alert4, resourcesProvider, ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK);
         windowLayout.setFitItems(true);
+        windowLayout.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                disposed = false;
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                disposed = true;
+            }
+        });
 
         if (swipeBackLayout != null) {
             var backItem = ActionBarMenuItem.addItem(windowLayout, R.drawable.msg_arrow_back, LocaleController.getString(R.string.Back), false, resourcesProvider);
@@ -88,6 +101,9 @@ public class DatacenterPopupWrapper {
             } else {
                 datacenterInfo.ping = time;
                 datacenterInfo.available = true;
+            }
+            if (disposed) {
+                return;
             }
             updateStatus(item, resourcesProvider, true);
         }));

@@ -39,10 +39,16 @@ public class LocationSharingService extends Service implements NotificationCente
         super.onCreate();
         handler = new Handler();
         runnable = () -> {
+            boolean[] activeAccounts = new boolean[UserConfig.MAX_ACCOUNT_COUNT];
+            for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+                activeAccounts[a] = !LocationController.getInstance(a).sharingLocationsUI.isEmpty();
+            }
             handler.postDelayed(runnable, 1000);
             Utilities.stageQueue.postRunnable(() -> {
                 for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                    LocationController.getInstance(a).update();
+                    if (activeAccounts[a]) {
+                        LocationController.getInstance(a).update();
+                    }
                 }
             });
         };

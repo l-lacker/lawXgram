@@ -53,20 +53,24 @@ public class CloudSettingsHelper {
 
     private final SharedPreferences preferences = PreferencesMigrationHelper.getSharedPreferences(ApplicationLoader.applicationContext, PREFS_NAME, LEGACY_PREFS_NAME);
     private final long[] cloudSyncedDate = new long[UserConfig.MAX_ACCOUNT_COUNT];
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Runnable cloudSyncRunnable = () -> CloudSettingsHelper.getInstance().syncToCloud((success, error) -> {
-        if (!success) {
-            var global = BulletinFactory.global();
-            if (error == null) {
-                global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed)).show();
-            } else {
-                global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed), error).show();
-            }
-        }
-    });
-
     private long localSyncedDate = preferences.getLong("updated_at", -1);
     private boolean autoSync = preferences.getBoolean("auto_sync", false);
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable cloudSyncRunnable = () -> {
+        if (!autoSync) {
+            return;
+        }
+        CloudSettingsHelper.getInstance().syncToCloud((success, error) -> {
+            if (!success) {
+                var global = BulletinFactory.global();
+                if (error == null) {
+                    global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed)).show();
+                } else {
+                    global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed), error).show();
+                }
+            }
+        });
+    };
 
     private static final class InstanceHolder {
         private static final CloudSettingsHelper instance = new CloudSettingsHelper();
@@ -164,10 +168,10 @@ public class CloudSettingsHelper {
     }
 
     public void doAutoSync() {
+        handler.removeCallbacks(cloudSyncRunnable);
         if (!autoSync) {
             return;
         }
-        handler.removeCallbacks(cloudSyncRunnable);
         handler.postDelayed(cloudSyncRunnable, 1200);
     }
 

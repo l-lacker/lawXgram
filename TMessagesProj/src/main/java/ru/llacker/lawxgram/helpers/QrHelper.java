@@ -176,41 +176,46 @@ public class QrHelper {
         if (bitmap == null || bitmap.isRecycled() || bitmap.getWidth() == 0 || bitmap.getHeight() == 0) {
             return new ArrayList<>();
         }
-        ArrayList<String> results = new ArrayList<>(readQrInternal(bitmap));
+        BarcodeDetector detector = null;
+        try {
+            detector = new BarcodeDetector.Builder(ApplicationLoader.applicationContext).setBarcodeFormats(Barcode.QR_CODE).build();
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
+        ArrayList<String> results = new ArrayList<>(readQrInternal(bitmap, detector));
         Bitmap inverted = null;
+        Bitmap monochrome = null;
         try {
             if (results.isEmpty()) {
                 inverted = invert(bitmap);
-                results.addAll(readQrInternal(inverted));
+                results.addAll(readQrInternal(inverted, detector));
             }
         } catch (Throwable ignored) {
         }
-        Bitmap monochrome = null;
         try {
             if (inverted != null && results.isEmpty()) {
                 monochrome = monochrome(inverted);
-                results.addAll(readQrInternal(monochrome));
+                results.addAll(readQrInternal(monochrome, detector));
             }
         } catch (Throwable ignored) {
         } finally {
             AndroidUtilities.recycleBitmap(monochrome);
             AndroidUtilities.recycleBitmap(inverted);
+            if (detector != null) {
+                detector.release();
+            }
         }
         return results;
     }
 
     private static QRCodeMultiReader qrReader;
-    private static BarcodeDetector visionQrReader;
 
-    private static ArrayList<String> readQrInternal(Bitmap bitmap) {
+    private static ArrayList<String> readQrInternal(Bitmap bitmap, BarcodeDetector detector) {
         ArrayList<String> results = new ArrayList<>();
         try {
-            if (visionQrReader == null) {
-                visionQrReader = new BarcodeDetector.Builder(ApplicationLoader.applicationContext).setBarcodeFormats(Barcode.QR_CODE).build();
-            }
-            if (visionQrReader.isOperational()) {
+            if (detector != null && detector.isOperational()) {
                 Frame frame = new Frame.Builder().setBitmap(bitmap).build();
-                SparseArray<Barcode> codes = visionQrReader.detect(frame);
+                SparseArray<Barcode> codes = detector.detect(frame);
                 for (int i = 0; i < codes.size(); i++) {
                     Barcode code = codes.valueAt(i);
                     results.add(code.rawValue);
