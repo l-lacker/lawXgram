@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Build;
-import android.os.SystemClock;
 import android.text.TextPaint;
 
 import androidx.annotation.NonNull;
@@ -65,7 +64,8 @@ public class EmojiHelper {
 
     private String emojiPack;
     private Bitmap systemEmojiPreview;
-    private String pendingDeleteEmojiPackId;
+    private volatile String pendingDeleteEmojiPackId;
+    private final Object pendingDeleteLock = new Object();
     private Bulletin emojiPackBulletin;
 
     static {
@@ -400,17 +400,24 @@ public class EmojiHelper {
     }
 
     public void cancelableDelete(BaseFragment fragment, EmojiPack emojiPack, OnBulletinAction onUndoBulletinAction) {
-        if (emojiPackBulletin != null && pendingDeleteEmojiPackId != null) {
+        if (pendingDeleteEmojiPackId != null) {
+            if (fragment.isFinished || fragment.getParentActivity() == null) {
+                return;
+            }
             AlertDialog progressDialog = new AlertDialog(fragment.getParentActivity(), 3);
-            emojiPackBulletin.hide(false, 0);
+            Bulletin currentBulletin = emojiPackBulletin;
+            if (currentBulletin != null) {
+                currentBulletin.hide(false, 0);
+            }
             new Thread() {
                 @Override
                 public void run() {
-                    do {
-                        SystemClock.sleep(50);
-                    } while (pendingDeleteEmojiPackId != null);
+                    boolean pendingDeleteFinished = waitForPendingDelete();
                     AndroidUtilities.runOnUIThread(() -> {
                         progressDialog.dismiss();
+                        if (!pendingDeleteFinished || fragment.isFinished || fragment.getParentActivity() == null) {
+                            return;
+                        }
                         cancelableDelete(fragment, emojiPack, onUndoBulletinAction);
                     });
                 }
@@ -419,7 +426,8 @@ public class EmojiHelper {
             progressDialog.showDelayed(150);
             return;
         }
-        pendingDeleteEmojiPackId = emojiPack.getPackId();
+        String pendingPackId = emojiPack.getPackId();
+        setPendingDeleteEmojiPackId(pendingPackId);
         onUndoBulletinAction.onPreStart();
         boolean wasSelected = emojiPack.getPackId().equals(this.emojiPack);
         if (wasSelected) {
@@ -434,20 +442,59 @@ public class EmojiHelper {
         );
         Bulletin.UndoButton undoButton = new Bulletin.UndoButton(fragment.getParentActivity(), false).setUndoAction(() -> {
             if (wasSelected) {
-                EmojiHelper.getInstance().setEmojiPack(pendingDeleteEmojiPackId, false);
+                EmojiHelper.getInstance().setEmojiPack(pendingPackId, false);
             }
-            pendingDeleteEmojiPackId = null;
+            clearPendingDeleteEmojiPackId(pendingPackId);
             onUndoBulletinAction.onUndo();
         }).setDelayedAction(() -> new Thread() {
             @Override
             public void run() {
-                deleteEmojiPack(emojiPack);
-                reloadEmoji();
-                pendingDeleteEmojiPackId = null;
+                try {
+                    deleteEmojiPack(emojiPack);
+                    reloadEmoji();
+                } finally {
+                    clearPendingDeleteEmojiPackId(pendingPackId);
+                }
             }
         }.start());
         bulletinLayout.setButton(undoButton);
-        emojiPackBulletin = Bulletin.make(fragment, bulletinLayout, Bulletin.DURATION_LONG).show();
+        final Bulletin[] currentBulletin = new Bulletin[1];
+        currentBulletin[0] = Bulletin.make(fragment, bulletinLayout, Bulletin.DURATION_LONG)
+                .setOnHideListener(() -> {
+                    if (emojiPackBulletin == currentBulletin[0]) {
+                        emojiPackBulletin = null;
+                    }
+                }).show();
+        emojiPackBulletin = currentBulletin[0];
+    }
+
+    private void setPendingDeleteEmojiPackId(String packId) {
+        synchronized (pendingDeleteLock) {
+            pendingDeleteEmojiPackId = packId;
+        }
+    }
+
+    private void clearPendingDeleteEmojiPackId(String packId) {
+        synchronized (pendingDeleteLock) {
+            if (Objects.equals(pendingDeleteEmojiPackId, packId)) {
+                pendingDeleteEmojiPackId = null;
+                pendingDeleteLock.notifyAll();
+            }
+        }
+    }
+
+    private boolean waitForPendingDelete() {
+        synchronized (pendingDeleteLock) {
+            while (pendingDeleteEmojiPackId != null) {
+                try {
+                    pendingDeleteLock.wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public void deleteEmojiPack(EmojiPack emojiPack) {
