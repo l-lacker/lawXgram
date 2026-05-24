@@ -167,7 +167,8 @@ public class LawxExperimentalSettingsActivity extends BaseLawxSettingsActivity {
                 button.setTextColor(getThemedColor(Theme.key_text_RedBold));
                 button.setEnabled(false);
                 var buttonText = button.getText();
-                deleteAccountTimer[0] = new CountDownTimer(60000, 100) {
+                button.setText(String.format(Locale.getDefault(), "%s (%d)", buttonText, 60));
+                deleteAccountTimer[0] = new CountDownTimer(60000, 1000) {
                     @Override
                     public void onTick(long millisUntilFinished) {
                         button.setText(String.format(Locale.getDefault(), "%s (%d)", buttonText, millisUntilFinished / 1000 + 1));

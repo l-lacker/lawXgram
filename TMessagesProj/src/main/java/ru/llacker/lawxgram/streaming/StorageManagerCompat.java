@@ -52,13 +52,12 @@ public final class StorageManagerCompat {
                     byte[] buffer = new byte[4 * 1024];
                     while (true) {
                         int size = callback.onRead(offset, buffer.length, buffer);
-                        if (size == 0) {
+                        if (size <= 0) {
                             break;
                         }
                         offset += size;
                         os.write(buffer, 0, size);
                     }
-                    callback.onRelease();
                 } catch (IOException | ErrnoException e) {
                     Log.e(TAG, "Failed to read file.", e);
 
@@ -66,6 +65,12 @@ public final class StorageManagerCompat {
                         pipe[1].closeWithError(e.getMessage());
                     } catch (IOException exc) {
                         Log.e(TAG, "Can't even close PFD with error.", exc);
+                    }
+                } finally {
+                    try {
+                        callback.onRelease();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to release callback.", e);
                     }
                 }
             });

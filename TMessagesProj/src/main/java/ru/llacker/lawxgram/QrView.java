@@ -29,21 +29,23 @@ import java.util.HashMap;
 
 public class QrView extends View {
 
+    private static final int CROSSFADE_WIDTH_DP = 140;
+
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final AnimatedFloat contentBitmapAlpha = new AnimatedFloat(1f, this, 0, 2000, CubicBezierInterpolator.EASE_OUT_QUINT);
     private final Paint crossfadeFromPaint = new Paint(Paint.ANTI_ALIAS_FLAG) {{
-        setShader(new LinearGradient(0, 0, 0, AndroidUtilities.dp(crossfadeWidthDp), new int[]{0xffffffff, 0}, new float[]{0f, 1f}, Shader.TileMode.CLAMP));
+        setShader(new LinearGradient(0, 0, 0, AndroidUtilities.dp(CROSSFADE_WIDTH_DP), new int[]{0xffffffff, 0}, new float[]{0f, 1f}, Shader.TileMode.CLAMP));
         setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
     }};
     private final Paint crossfadeToPaint = new Paint(Paint.ANTI_ALIAS_FLAG) {{
-        setShader(new LinearGradient(0, 0, 0, AndroidUtilities.dp(crossfadeWidthDp), new int[]{0, 0xffffffff}, new float[]{0f, 1f}, Shader.TileMode.CLAMP));
+        setShader(new LinearGradient(0, 0, 0, AndroidUtilities.dp(CROSSFADE_WIDTH_DP), new int[]{0, 0xffffffff}, new float[]{0f, 1f}, Shader.TileMode.CLAMP));
         setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
     }};
-    private final int crossfadeWidthDp = 140;
     private RLottieDrawable loadingMatrix;
     private Bitmap contentBitmap, oldContentBitmap, qrLogo;
     private String link;
     private final float[] radii = new float[8];
+    private int prepareGeneration;
 
     public QrView(Context context) {
         super(context);
@@ -53,11 +55,9 @@ public class QrView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         if (w != oldw || h != oldh) {
-            if (qrLogo != null) {
-                qrLogo.recycle();
-                qrLogo = null;
-            }
-            Utilities.themeQueue.postRunnable(() -> prepareContent(w, h));
+            recycleQrLogo();
+            final int generation = ++prepareGeneration;
+            Utilities.themeQueue.postRunnable(() -> prepareContent(w, h, generation));
         }
     }
 
@@ -105,6 +105,10 @@ public class QrView extends View {
 
         float crossfadeAlpha = contentBitmapAlpha.set(1f);
         boolean crossfading = crossfadeAlpha > 0 && crossfadeAlpha < 1;
+        if (!crossfading && crossfadeAlpha >= 1f && oldContentBitmap != null) {
+            AndroidUtilities.recycleBitmap(oldContentBitmap);
+            oldContentBitmap = null;
+        }
 
         if (crossfadeAlpha < 1f) {
             if (crossfading) {
@@ -120,7 +124,7 @@ public class QrView extends View {
                 drawLoading(canvas, multiple, size, scale);
             }
             if (crossfading) {
-                float h = AndroidUtilities.dp(crossfadeWidthDp);
+                float h = AndroidUtilities.dp(CROSSFADE_WIDTH_DP);
                 canvas.save();
                 canvas.translate(0, -h + (size + h) * (1f - crossfadeAlpha));
                 canvas.drawRect(0, 0, size, size + h, crossfadeToPaint);
@@ -142,7 +146,7 @@ public class QrView extends View {
                 drawLoading(canvas, multiple, size, scale);
             }
             if (crossfading) {
-                float h = AndroidUtilities.dp(crossfadeWidthDp);
+                float h = AndroidUtilities.dp(CROSSFADE_WIDTH_DP);
                 canvas.save();
                 canvas.translate(0, -h + (getHeight() + h) * (1f - crossfadeAlpha));
                 canvas.drawRect(0, -h - getHeight(), getWidth(), getHeight() + h, crossfadeFromPaint);
@@ -153,14 +157,18 @@ public class QrView extends View {
     }
 
     public void clear() {
-        link = hadLink = null;
-        contentBitmap = oldContentBitmap = null;
+        prepareGeneration++;
+        link = null;
+        resetPreparedState();
+        recycleContentBitmaps();
+        invalidate();
     }
 
     public void setData(String link) {
         this.link = link;
         final int w = getWidth(), h = getHeight();
-        Utilities.themeQueue.postRunnable(() -> prepareContent(w, h));
+        final int generation = ++prepareGeneration;
+        Utilities.themeQueue.postRunnable(() -> prepareContent(w, h, generation));
         invalidate();
     }
 
@@ -168,28 +176,35 @@ public class QrView extends View {
     private String hadLink;
     private boolean firstPrepare = true;
 
-    private void prepareContent(int w, int h) {
+    private void prepareContent(int w, int h, int generation) {
         if (w == 0 || h == 0) {
             return;
         }
-        if (TextUtils.isEmpty(link)) {
+        final String currentLink = link;
+        if (TextUtils.isEmpty(currentLink)) {
             AndroidUtilities.runOnUIThread(() -> {
+                if (generation != prepareGeneration) {
+                    return;
+                }
                 firstPrepare = false;
                 if (contentBitmap != null) {
                     Bitmap oldBitmap = contentBitmap;
                     contentBitmap = null;
                     contentBitmapAlpha.set(0, true);
                     if (oldContentBitmap != null) {
-                        oldContentBitmap.recycle();
+                        AndroidUtilities.recycleBitmap(oldContentBitmap);
                     }
                     oldContentBitmap = oldBitmap;
                     this.invalidate();
+                } else if (oldContentBitmap != null) {
+                    AndroidUtilities.recycleBitmap(oldContentBitmap);
+                    oldContentBitmap = null;
                 }
             });
             return;
         }
 
-        if (TextUtils.equals(link, hadLink) && hadWidth != null && hadHeight != null && hadWidth == w && hadHeight == h) {
+        if (TextUtils.equals(currentLink, hadLink) && hadWidth != null && hadHeight != null && hadWidth == w && hadHeight == h) {
             return;
         }
 
@@ -199,7 +214,7 @@ public class QrView extends View {
         hints.put(EncodeHintType.MARGIN, 0);
         QRCodeWriter writer = new QRCodeWriter();
         try {
-            qrBitmap = writer.encode(link, w, h, hints, null, 0.75f, 0, Color.BLACK);
+            qrBitmap = writer.encode(currentLink, w, h, hints, null, 0.75f, 0, Color.BLACK);
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -209,11 +224,14 @@ public class QrView extends View {
 
         Bitmap bitmap = qrBitmap;
 
-        hadWidth = w;
-        hadHeight = h;
-        hadLink = link;
-
         AndroidUtilities.runOnUIThread(() -> {
+            if (generation != prepareGeneration) {
+                AndroidUtilities.recycleBitmap(bitmap);
+                return;
+            }
+            hadWidth = w;
+            hadHeight = h;
+            hadLink = currentLink;
             Bitmap oldBitmap = contentBitmap;
             contentBitmap = bitmap;
             if (!firstPrepare) {
@@ -221,7 +239,7 @@ public class QrView extends View {
             }
             firstPrepare = false;
             if (oldContentBitmap != null) {
-                oldContentBitmap.recycle();
+                AndroidUtilities.recycleBitmap(oldContentBitmap);
             }
             oldContentBitmap = oldBitmap;
 
@@ -229,17 +247,42 @@ public class QrView extends View {
         });
     }
 
+    private void recycleContentBitmaps() {
+        if (contentBitmap != null) {
+            AndroidUtilities.recycleBitmap(contentBitmap);
+            contentBitmap = null;
+        }
+        if (oldContentBitmap != null) {
+            AndroidUtilities.recycleBitmap(oldContentBitmap);
+            oldContentBitmap = null;
+        }
+    }
+
+    private void resetPreparedState() {
+        hadWidth = null;
+        hadHeight = null;
+        hadLink = null;
+        firstPrepare = true;
+    }
+
+    private void recycleQrLogo() {
+        if (qrLogo != null) {
+            AndroidUtilities.recycleBitmap(qrLogo);
+            qrLogo = null;
+        }
+    }
+
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        prepareGeneration++;
         if (loadingMatrix != null) {
             loadingMatrix.stop();
             loadingMatrix.recycle(false);
             loadingMatrix = null;
         }
-        if (qrLogo != null) {
-            qrLogo.recycle();
-            qrLogo = null;
-        }
+        recycleQrLogo();
+        recycleContentBitmaps();
+        resetPreparedState();
     }
 }

@@ -182,17 +182,19 @@ public class QrHelper {
             if (results.isEmpty()) {
                 inverted = invert(bitmap);
                 results.addAll(readQrInternal(inverted));
-                AndroidUtilities.recycleBitmap(inverted);
             }
         } catch (Throwable ignored) {
         }
+        Bitmap monochrome = null;
         try {
             if (inverted != null && results.isEmpty()) {
-                Bitmap monochrome = monochrome(inverted);
+                monochrome = monochrome(inverted);
                 results.addAll(readQrInternal(monochrome));
-                AndroidUtilities.recycleBitmap(monochrome);
             }
         } catch (Throwable ignored) {
+        } finally {
+            AndroidUtilities.recycleBitmap(monochrome);
+            AndroidUtilities.recycleBitmap(inverted);
         }
         return results;
     }

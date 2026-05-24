@@ -34,9 +34,9 @@ import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -235,13 +235,11 @@ public class CloudSettingsHelper {
     }
 
     public static String encodeConfig(String string) {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(string.length());
-            GZIPOutputStream gzip = new GZIPOutputStream(bos);
-            gzip.write(string.getBytes());
-            gzip.close();
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(string.length());
+             GZIPOutputStream gzip = new GZIPOutputStream(bos)) {
+            gzip.write(string.getBytes(StandardCharsets.UTF_8));
+            gzip.finish();
             byte[] compressed = bos.toByteArray();
-            bos.close();
             return CONFIG_VERSION + Base64.encodeToString(compressed, Base64.NO_PADDING | Base64.NO_WRAP);
         } catch (Exception e) {
             FileLog.e(e);
@@ -253,16 +251,15 @@ public class CloudSettingsHelper {
         if (string.startsWith("{")) {
             return string;
         } else if (string.startsWith(String.valueOf(CONFIG_VERSION))) {
-            try {
-                ByteArrayInputStream bis = new ByteArrayInputStream(Base64.decode(string.substring(1), Base64.DEFAULT));
-                GZIPInputStream gis = new GZIPInputStream(bis);
-                //noinspection CharsetObjectCanBeUsed
-                String config = new Scanner(gis, "UTF-8")
-                        .useDelimiter("\\A")
-                        .next();
-                gis.close();
-                bis.close();
-                return config;
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(Base64.decode(string.substring(1), Base64.DEFAULT));
+                 GZIPInputStream gis = new GZIPInputStream(bis);
+                 ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = gis.read(buffer)) != -1) {
+                    bos.write(buffer, 0, read);
+                }
+                return bos.toString(StandardCharsets.UTF_8.name());
             } catch (Exception e) {
                 FileLog.e(e);
                 return null;

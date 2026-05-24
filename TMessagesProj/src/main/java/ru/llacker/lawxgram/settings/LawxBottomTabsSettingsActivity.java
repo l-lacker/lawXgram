@@ -237,6 +237,14 @@ public class LawxBottomTabsSettingsActivity extends BaseLawxSettingsActivity {
             }
         }
 
+        @Override
+        protected void onDetachedFromWindow() {
+            cancelPreviewLongPress();
+            touchTab = -1;
+            dragTab = -1;
+            super.onDetachedFromWindow();
+        }
+
         private int getVisibleTabsCount() {
             int count = 0;
             for (int tab = 0; tab < LawxConfig.MAIN_TABS_COUNT; tab++) {

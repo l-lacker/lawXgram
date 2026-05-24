@@ -339,8 +339,12 @@ public class EmojiHelper {
         Typeface typeface = Typeface.createFromFile(emojiFont);
         Bitmap bitmap = drawPreviewBitmap(typeface);
         File emojiPreview = new File(emojiDir, "preview.png");
-        try (FileOutputStream outputStream = new FileOutputStream(emojiPreview)) {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+        try {
+            try (FileOutputStream outputStream = new FileOutputStream(emojiPreview)) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+            }
+        } finally {
+            AndroidUtilities.recycleBitmap(bitmap);
         }
         EmojiPack emojiPack = new EmojiPack();
         emojiPack.loadFromFile(emojiDir);
