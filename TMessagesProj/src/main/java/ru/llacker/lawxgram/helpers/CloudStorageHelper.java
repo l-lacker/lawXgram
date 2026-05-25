@@ -76,10 +76,28 @@ public class CloudStorageHelper extends AccountInstance {
     }
 
     public void setItem(String key, String value, Utilities.Callback2<String, String> callback) {
+        invokeWebViewCustomMethod("saveStorageValue", createSetItemData(key, value), callback);
+    }
+
+    void setItemAsync(String key, String value, Utilities.Callback2<String, String> callback) {
+        Utilities.globalQueue.postRunnable(() -> {
+            String data;
+            try {
+                data = createSetItemData(key, value);
+            } catch (Exception e) {
+                FileLog.e(e);
+                runCallback(callback, null, "ENCODE_FAILED");
+                return;
+            }
+            AndroidUtilities.runOnUIThread(() -> invokeWebViewCustomMethod("saveStorageValue", data, callback));
+        });
+    }
+
+    private String createSetItemData(String key, String value) {
         HashMap<String, String> map = new HashMap<>();
         map.put("key", key);
         map.put("value", value);
-        invokeWebViewCustomMethod("saveStorageValue", gson.toJson(map), callback);
+        return gson.toJson(map);
     }
 
     public void getItem(String key, Utilities.Callback2<String, String> callback) {

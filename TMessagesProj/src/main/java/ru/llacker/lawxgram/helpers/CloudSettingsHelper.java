@@ -187,7 +187,7 @@ public class CloudSettingsHelper {
             String rawConfig = LawxConfig.exportConfigs();
             String compressed = encodeConfig(rawConfig);
             String config = rawConfig.length() >= compressed.length() ? compressed : rawConfig;
-            AndroidUtilities.runOnUIThread(() -> getCloudStorageHelper(account).setItem(CLOUD_SETTINGS_KEY, config, (res, error) -> {
+            getCloudStorageHelper(account).setItemAsync(CLOUD_SETTINGS_KEY, config, (res, error) -> {
                 if (error == null) {
                     localSyncedDate = cloudSyncedDate[account] = System.currentTimeMillis();
                     getCloudStorageHelper(account).setItem(CLOUD_SETTINGS_UPDATED_AT_KEY, String.valueOf(localSyncedDate), null);
@@ -196,7 +196,7 @@ public class CloudSettingsHelper {
                 } else {
                     callback.run(false, error);
                 }
-            }));
+            });
         });
     }
 
