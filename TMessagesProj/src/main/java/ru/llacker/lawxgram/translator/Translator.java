@@ -13,6 +13,7 @@ import androidx.core.util.Pair;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -292,26 +293,44 @@ public class Translator {
         return TextWithEntitiesTranslator.of(type);
     }
 
-    public static void translate(String text, ArrayList<TLRPC.MessageEntity> entities, TranslateController.PollText poll, String fl, String tl, TranslateCallBack translateCallBack) {
-        translate(textWithEntities(text, entities), poll, fl, tl, translateCallBack);
+    public static ListenableFuture<?> translate(String text, ArrayList<TLRPC.MessageEntity> entities, TranslateController.PollText poll, String fl, String tl, TranslateCallBack translateCallBack) {
+        return translate(textWithEntities(text, entities), poll, fl, tl, translateCallBack);
     }
 
-    public static void translate(TLRPC.TL_textWithEntities query, TranslateController.PollText poll, String fl, String tl, TranslateCallBack translateCallBack) {
+    public static ListenableFuture<?> translate(TLRPC.TL_textWithEntities query, TranslateController.PollText poll, String fl, String tl, TranslateCallBack translateCallBack) {
         var translator = getCurrentTranslator();
 
         var language = tl == null ? getCurrentTargetLanguage() : tl;
 
         if (!translator.supportLanguage(language)) {
-            translateCallBack.onError(new UnsupportedTargetLanguageException());
+            return failTranslation(translateCallBack, new UnsupportedTargetLanguageException());
         } else if (poll != null) {
             var task = PollTranslateTask.obtain(translator, poll, fl, language, translateCallBack);
             var future = getExecutorService().submit(task);
             Futures.addCallback(future, task, ContextCompat.getMainExecutor(ApplicationLoader.applicationContext));
+            return future;
         } else {
             var task = TranslateTask.obtain(translator, query, fl, language, translateCallBack);
             var future = getExecutorService().submit(task);
             Futures.addCallback(future, task, ContextCompat.getMainExecutor(ApplicationLoader.applicationContext));
+            return future;
         }
+    }
+
+    private static ListenableFuture<?> failTranslation(TranslateCallBack translateCallBack, Throwable error) {
+        ListenableFuture<Object> future = Futures.immediateFailedFuture(error);
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Object result) {
+
+            }
+
+            @Override
+            public void onFailure(@NonNull Throwable t) {
+                translateCallBack.onError(t);
+            }
+        }, ContextCompat.getMainExecutor(ApplicationLoader.applicationContext));
+        return future;
     }
 
     public interface TranslateCallBack {
