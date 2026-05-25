@@ -417,7 +417,10 @@ public class MessageHelper extends BaseController {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && config == Bitmap.Config.HARDWARE) {
                                 config = Bitmap.Config.ARGB_8888;
                             }
-                            bitmaps.add(bitmap.copy(config, false));
+                            Bitmap copy = bitmap.copy(config, false);
+                            if (copy != null) {
+                                bitmaps.add(copy);
+                            }
                         } catch (Throwable e) {
                             FileLog.e(e);
                         }
@@ -425,6 +428,12 @@ public class MessageHelper extends BaseController {
                 }
             }
         }
+        Runnable finishQrDetectionRunnable = () -> {
+            Runnable onDone = onQrDetectionDone.getAndSet(null);
+            if (onDone != null) {
+                onDone.run();
+            }
+        };
         Utilities.globalQueue.postRunnable(() -> {
             ArrayList<String> qrResults = new ArrayList<>();
             for (Bitmap bitmap : bitmaps) {
@@ -435,19 +444,16 @@ public class MessageHelper extends BaseController {
                 }
             }
             AndroidUtilities.runOnUIThread(() -> {
-                callback.run(qrResults);
-                waitForQr.set(false);
-                if (onQrDetectionDone.get() != null) {
-                    onQrDetectionDone.get().run();
-                    onQrDetectionDone.set(null);
+                try {
+                    callback.run(qrResults);
+                } finally {
+                    waitForQr.set(false);
+                    parent.removeCallbacks(finishQrDetectionRunnable);
+                    finishQrDetectionRunnable.run();
                 }
             });
         });
-        parent.postDelayed(() -> {
-            if (onQrDetectionDone.get() != null) {
-                onQrDetectionDone.getAndSet(null).run();
-            }
-        }, 250);
+        parent.postDelayed(finishQrDetectionRunnable, 250);
     }
 
     public static MessageHelper getInstance(int num) {
