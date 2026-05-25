@@ -26,6 +26,7 @@ import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.RLottieDrawable;
 
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class QrView extends View {
 
@@ -43,9 +44,9 @@ public class QrView extends View {
     }};
     private RLottieDrawable loadingMatrix;
     private Bitmap contentBitmap, oldContentBitmap, qrLogo;
-    private String link;
+    private volatile String link;
     private final float[] radii = new float[8];
-    private int prepareGeneration;
+    private final AtomicInteger prepareGeneration = new AtomicInteger();
 
     public QrView(Context context) {
         super(context);
@@ -56,7 +57,7 @@ public class QrView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         if (w != oldw || h != oldh) {
             recycleQrLogo();
-            final int generation = ++prepareGeneration;
+            final int generation = prepareGeneration.incrementAndGet();
             Utilities.themeQueue.postRunnable(() -> prepareContent(w, h, generation));
         }
     }
@@ -157,7 +158,7 @@ public class QrView extends View {
     }
 
     public void clear() {
-        prepareGeneration++;
+        prepareGeneration.incrementAndGet();
         link = null;
         resetPreparedState();
         recycleContentBitmaps();
@@ -167,23 +168,26 @@ public class QrView extends View {
     public void setData(String link) {
         this.link = link;
         final int w = getWidth(), h = getHeight();
-        final int generation = ++prepareGeneration;
+        final int generation = prepareGeneration.incrementAndGet();
         Utilities.themeQueue.postRunnable(() -> prepareContent(w, h, generation));
         invalidate();
     }
 
-    private Integer hadWidth, hadHeight;
-    private String hadLink;
+    private volatile int hadWidth = -1, hadHeight = -1;
+    private volatile String hadLink;
     private boolean firstPrepare = true;
 
     private void prepareContent(int w, int h, int generation) {
+        if (!isCurrentGeneration(generation)) {
+            return;
+        }
         if (w == 0 || h == 0) {
             return;
         }
         final String currentLink = link;
         if (TextUtils.isEmpty(currentLink)) {
             AndroidUtilities.runOnUIThread(() -> {
-                if (generation != prepareGeneration) {
+                if (!isCurrentGeneration(generation)) {
                     return;
                 }
                 firstPrepare = false;
@@ -204,10 +208,16 @@ public class QrView extends View {
             return;
         }
 
-        if (TextUtils.equals(currentLink, hadLink) && hadWidth != null && hadHeight != null && hadWidth == w && hadHeight == h) {
+        final int currentHadWidth = hadWidth;
+        final int currentHadHeight = hadHeight;
+        final String currentHadLink = hadLink;
+        if (TextUtils.equals(currentLink, currentHadLink) && currentHadWidth == w && currentHadHeight == h) {
             return;
         }
 
+        if (!isCurrentGeneration(generation)) {
+            return;
+        }
         Bitmap qrBitmap = null;
         HashMap<EncodeHintType, Object> hints = new HashMap<>();
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
@@ -225,7 +235,7 @@ public class QrView extends View {
         Bitmap bitmap = qrBitmap;
 
         AndroidUtilities.runOnUIThread(() -> {
-            if (generation != prepareGeneration) {
+            if (!isCurrentGeneration(generation)) {
                 AndroidUtilities.recycleBitmap(bitmap);
                 return;
             }
@@ -247,6 +257,10 @@ public class QrView extends View {
         });
     }
 
+    private boolean isCurrentGeneration(int generation) {
+        return generation == prepareGeneration.get();
+    }
+
     private void recycleContentBitmaps() {
         if (contentBitmap != null) {
             AndroidUtilities.recycleBitmap(contentBitmap);
@@ -259,8 +273,8 @@ public class QrView extends View {
     }
 
     private void resetPreparedState() {
-        hadWidth = null;
-        hadHeight = null;
+        hadWidth = -1;
+        hadHeight = -1;
         hadLink = null;
         firstPrepare = true;
     }
@@ -275,7 +289,7 @@ public class QrView extends View {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        prepareGeneration++;
+        prepareGeneration.incrementAndGet();
         if (loadingMatrix != null) {
             loadingMatrix.stop();
             loadingMatrix.recycle(false);
