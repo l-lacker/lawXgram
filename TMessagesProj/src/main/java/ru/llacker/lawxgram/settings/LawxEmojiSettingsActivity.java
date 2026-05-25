@@ -288,22 +288,7 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
                 getParentActivity().startActivity(Intent.createChooser(intent, LocaleController.getString(R.string.ShareFile)));
                 clearSelected();
             } else {
-                EmojiHelper.getInstance().cancelableDelete(this, pack, new EmojiHelper.OnBulletinAction() {
-                    @Override
-                    public void onPreStart() {
-                        notifyItemRemoved(emojiStartRow + emojiPacks.indexOf(pack));
-                        updateRows();
-                        updateEmojiSets();
-                        clearSelected();
-                    }
-
-                    @Override
-                    public void onUndo() {
-                        updateRows();
-                        notifyItemInserted(emojiStartRow + EmojiHelper.getInstance().getEmojiPacksInfo().indexOf(pack));
-                        updateEmojiSets();
-                    }
-                });
+                EmojiHelper.getInstance().cancelableDelete(this, pack, new DeleteEmojiPackBulletinAction(this, pack));
             }
         }
     }
@@ -544,6 +529,25 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
         ).show();
     }
 
+    private void onDeleteEmojiPackPreStart(EmojiHelper.EmojiPack pack) {
+        if (destroyed || listView == null || listView.adapter == null) {
+            return;
+        }
+        notifyItemRemoved(emojiStartRow + emojiPacks.indexOf(pack));
+        updateRows();
+        updateEmojiSets();
+        clearSelected();
+    }
+
+    private void onDeleteEmojiPackUndo(EmojiHelper.EmojiPack pack) {
+        if (destroyed || listView == null || listView.adapter == null) {
+            return;
+        }
+        updateRows();
+        notifyItemInserted(emojiStartRow + EmojiHelper.getInstance().getEmojiPacksInfo().indexOf(pack));
+        updateEmojiSets();
+    }
+
     @Override
     public void onFragmentDestroy() {
         destroyed = true;
@@ -556,6 +560,7 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
             chatAttachAlert.dismiss();
             chatAttachAlert = null;
         }
+        EmojiHelper.getInstance().dismissEmojiPackBulletin();
         super.onFragmentDestroy();
     }
 
@@ -566,6 +571,32 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
             return false;
         }
         return super.onBackPressed(invoked);
+    }
+
+    private static class DeleteEmojiPackBulletinAction implements EmojiHelper.OnBulletinAction {
+        private final WeakReference<LawxEmojiSettingsActivity> activityRef;
+        private final EmojiHelper.EmojiPack pack;
+
+        private DeleteEmojiPackBulletinAction(LawxEmojiSettingsActivity activity, EmojiHelper.EmojiPack pack) {
+            activityRef = new WeakReference<>(activity);
+            this.pack = pack;
+        }
+
+        @Override
+        public void onPreStart() {
+            LawxEmojiSettingsActivity activity = activityRef.get();
+            if (activity != null) {
+                activity.onDeleteEmojiPackPreStart(pack);
+            }
+        }
+
+        @Override
+        public void onUndo() {
+            LawxEmojiSettingsActivity activity = activityRef.get();
+            if (activity != null) {
+                activity.onDeleteEmojiPackUndo(pack);
+            }
+        }
     }
 
     private static class EmojiSetCellFactory extends UItem.UItemFactory<EmojiSetCell> {
