@@ -62,7 +62,7 @@ public class UserHelper extends BaseController {
         private AlertDialog progressDialog;
         private final AtomicBoolean progressCompleted = new AtomicBoolean();
         private final AtomicBoolean completed = new AtomicBoolean();
-        private final Runnable timeoutRunnable = this::finishProgress;
+        private final Runnable timeoutRunnable = this::completeByTimeout;
 
         private OpenPeerOperation(Activity activity, Browser.Progress progress) {
             activityRef = new WeakReference<>(activity);
@@ -95,6 +95,12 @@ public class UserHelper extends BaseController {
             BaseFragment fragment = createFragment(peer);
             if (fragment != null) {
                 presentFragment(activity, fragment);
+            }
+        }
+
+        private void completeByTimeout() {
+            if (completed.compareAndSet(false, true)) {
+                finishProgress();
             }
         }
 
