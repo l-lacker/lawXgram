@@ -8,6 +8,7 @@ import android.util.Base64;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
@@ -22,6 +23,7 @@ import org.telegram.ui.bots.BotWebViewSheet;
 import org.telegram.ui.bots.WebViewRequestProps;
 import org.telegram.ui.web.BotWebViewContainer;
 
+import java.lang.ref.WeakReference;
 import java.util.function.Consumer;
 
 import ru.llacker.lawxgram.LawxConfig;
@@ -71,7 +73,19 @@ public class WebAppHelper {
         }
     }
 
+    private static Activity getRunningActivity(BaseFragment fragment) {
+        if (fragment == null || fragment.isFinished) {
+            return null;
+        }
+        var activity = fragment.getParentActivity();
+        return AndroidUtilities.isActivityRunning(activity) ? activity : null;
+    }
+
     private static void openInternalWebApp(BaseFragment fragment, String url, int type, boolean searchUser) {
+        var context = getRunningActivity(fragment);
+        if (context == null) {
+            return;
+        }
         var botInfo = LawxEnvironment.getHelperBot();
         if (botInfo == null) {
             return;
@@ -79,7 +93,14 @@ public class WebAppHelper {
         var bot = fragment.getMessagesController().getUser(botInfo.getId());
         if (bot == null) {
             if (searchUser) {
-                fragment.getUserHelper().resolveUser(botInfo.getUsername(), botInfo.getId(), user -> openInternalWebApp(fragment, url, type, false));
+                var fragmentRef = new WeakReference<>(fragment);
+                fragment.getUserHelper().resolveUser(botInfo.getUsername(), botInfo.getId(), user -> {
+                    var currentFragment = fragmentRef.get();
+                    if (getRunningActivity(currentFragment) == null) {
+                        return;
+                    }
+                    openInternalWebApp(currentFragment, url, type, false);
+                });
             }
             return;
         }
@@ -92,10 +113,6 @@ public class WebAppHelper {
                 BotWebViewAttachedSheet.TYPE_WEB_VIEW_BUTTON,
                 0, 0, false, null, false, null, null, 0, false, false);
         props.internalType = type;
-        var context = fragment.getParentActivity();
-        if (context == null) {
-            return;
-        }
         if (context instanceof LaunchActivity activity) {
             if (activity.getBottomSheetTabs() != null && activity.getBottomSheetTabs().tryReopenTab(props) != null) {
                 return;
