@@ -630,10 +630,18 @@ public class TranscribeButton {
         return Objects.hash(messageObject.currentAccount, messageObject.getDialogId(), messageObject.getId());
     }
 
-    private static HashMap<Long, MessageObject> transcribeOperationsById;
-    private static HashMap<Integer, MessageObject> transcribeOperationsByDialogPosition;
-    private static HashMap<Integer, Long> transcribeOperationTokensByDialogPosition;
-    private static HashMap<Long, Long> transcribeOperationTokensById;
+    private static final class TranscribeSession {
+        private final MessageObject messageObject;
+        private final long operationToken;
+
+        private TranscribeSession(MessageObject messageObject, long operationToken) {
+            this.messageObject = messageObject;
+            this.operationToken = operationToken;
+        }
+    }
+
+    private static HashMap<Integer, TranscribeSession> sessionsByDialogPosition;
+    private static HashMap<Long, TranscribeSession> sessionsById;
     private static ArrayList<Integer> videoTranscriptionsOpen;
 
     public static void openVideoTranscription(MessageObject messageObject) {
@@ -658,62 +666,77 @@ public class TranscribeButton {
 
     public static boolean isTranscribing(MessageObject messageObject) {
         return (
-            (transcribeOperationsByDialogPosition != null && (transcribeOperationsByDialogPosition.containsValue(messageObject) || transcribeOperationsByDialogPosition.containsKey((Integer) reqInfoHash(messageObject)))) ||
-            (transcribeOperationsById != null && messageObject != null && messageObject.messageOwner != null && transcribeOperationsById.containsKey(messageObject.messageOwner.voiceTranscriptionId))
+            hasTranscribeSession(messageObject) ||
+            (sessionsById != null && messageObject != null && messageObject.messageOwner != null && sessionsById.containsKey(messageObject.messageOwner.voiceTranscriptionId))
         );
     }
 
     private static void removeTranscribeOperation(Integer operationKey) {
-        if (transcribeOperationsByDialogPosition != null) {
-            transcribeOperationsByDialogPosition.remove(operationKey);
-        }
-        if (transcribeOperationTokensByDialogPosition != null) {
-            transcribeOperationTokensByDialogPosition.remove(operationKey);
+        if (sessionsByDialogPosition != null) {
+            sessionsByDialogPosition.remove(operationKey);
         }
     }
 
+    private static boolean hasTranscribeSession(MessageObject messageObject) {
+        if (sessionsByDialogPosition == null) {
+            return false;
+        }
+        if (sessionsByDialogPosition.containsKey((Integer) reqInfoHash(messageObject))) {
+            return true;
+        }
+        for (TranscribeSession session : sessionsByDialogPosition.values()) {
+            if (session != null && Objects.equals(session.messageObject, messageObject)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void putTranscribeOperation(Integer operationKey, MessageObject messageObject, long operationToken) {
+        if (sessionsByDialogPosition == null) {
+            sessionsByDialogPosition = new HashMap<>();
+        }
+        sessionsByDialogPosition.put(operationKey, new TranscribeSession(messageObject, operationToken));
+    }
+
     private static void putTranscriptionOperationId(long transcriptionId, long operationToken, MessageObject messageObject) {
-        if (transcribeOperationsById == null) {
-            transcribeOperationsById = new HashMap<>();
+        if (sessionsById == null) {
+            sessionsById = new HashMap<>();
         }
-        if (transcribeOperationTokensById == null) {
-            transcribeOperationTokensById = new HashMap<>();
-        }
-        transcribeOperationsById.put(transcriptionId, messageObject);
-        transcribeOperationTokensById.put(transcriptionId, operationToken);
+        sessionsById.put(transcriptionId, new TranscribeSession(messageObject, operationToken));
         messageObject.messageOwner.voiceTranscriptionId = transcriptionId;
     }
 
     private static void removeTranscriptionOperationId(long transcriptionId, long operationToken) {
-        if (transcribeOperationTokensById != null && Objects.equals(transcribeOperationTokensById.get(transcriptionId), operationToken)) {
-            transcribeOperationTokensById.remove(transcriptionId);
-            if (transcribeOperationsById != null) {
-                transcribeOperationsById.remove(transcriptionId);
-            }
+        if (sessionsById == null) {
+            return;
+        }
+        TranscribeSession session = sessionsById.get(transcriptionId);
+        if (session != null && session.operationToken == operationToken) {
+            sessionsById.remove(transcriptionId);
         }
     }
 
     private static void removeTranscriptionOperationId(long transcriptionId, MessageObject messageObject) {
-        if (transcribeOperationsById != null && transcribeOperationsById.get(transcriptionId) == messageObject) {
-            transcribeOperationsById.remove(transcriptionId);
-            if (transcribeOperationTokensById != null) {
-                transcribeOperationTokensById.remove(transcriptionId);
-            }
+        if (sessionsById == null) {
+            return;
+        }
+        TranscribeSession session = sessionsById.get(transcriptionId);
+        if (session != null && session.messageObject == messageObject) {
+            sessionsById.remove(transcriptionId);
         }
     }
 
     private static void removeTranscribeOperation(MessageObject messageObject) {
-        if (messageObject != null && messageObject.messageOwner != null && transcribeOperationsById != null) {
+        if (messageObject != null && messageObject.messageOwner != null && sessionsById != null) {
             removeTranscriptionOperationId(messageObject.messageOwner.voiceTranscriptionId, messageObject);
         }
         removeTranscribeOperation(reqInfoHash(messageObject));
     }
 
     private static boolean isTranscribeOperationActive(Integer operationKey, long operationToken, MessageObject messageObject) {
-        return transcribeOperationsByDialogPosition != null
-                && transcribeOperationsByDialogPosition.get(operationKey) == messageObject
-                && transcribeOperationTokensByDialogPosition != null
-                && Objects.equals(transcribeOperationTokensByDialogPosition.get(operationKey), operationToken);
+        TranscribeSession session = sessionsByDialogPosition != null ? sessionsByDialogPosition.get(operationKey) : null;
+        return session != null && session.messageObject == messageObject && session.operationToken == operationToken;
     }
 
     private static void finishTranscriptionIfActive(Integer operationKey, long operationToken, MessageObject messageObject, long transcriptionId, String text) {
@@ -754,15 +777,8 @@ public class TranscribeButton {
                         return;
                     }
                     long id = Utilities.random.nextLong();
-                    if (transcribeOperationsByDialogPosition == null) {
-                        transcribeOperationsByDialogPosition = new HashMap<>();
-                    }
-                    if (transcribeOperationTokensByDialogPosition == null) {
-                        transcribeOperationTokensByDialogPosition = new HashMap<>();
-                    }
                     Integer operationKey = reqInfoHash(messageObject);
-                    transcribeOperationsByDialogPosition.put(operationKey, messageObject);
-                    transcribeOperationTokensByDialogPosition.put(operationKey, id);
+                    putTranscribeOperation(operationKey, messageObject, id);
                     WhisperHelper.requestWorkersAi(path, messageObject.isRoundVideo(), (text, exception) -> {
                         if (!isTranscribeOperationActive(operationKey, id, messageObject)) {
                             return;
@@ -798,16 +814,9 @@ public class TranscribeButton {
                 TLRPC.TL_messages_transcribeAudio req = new TLRPC.TL_messages_transcribeAudio();
                 req.peer = peer;
                 req.msg_id = messageId;
-                if (transcribeOperationsByDialogPosition == null) {
-                    transcribeOperationsByDialogPosition = new HashMap<>();
-                }
-                if (transcribeOperationTokensByDialogPosition == null) {
-                    transcribeOperationTokensByDialogPosition = new HashMap<>();
-                }
                 Integer operationKey = reqInfoHash(messageObject);
                 long operationToken = Utilities.random.nextLong();
-                transcribeOperationsByDialogPosition.put(operationKey, messageObject);
-                transcribeOperationTokensByDialogPosition.put(operationKey, operationToken);
+                putTranscribeOperation(operationKey, messageObject, operationToken);
                 int flags = 0;
                 if (!UserConfig.getInstance(account).isPremium()) {
                     flags |= ConnectionsManager.RequestFlagDoNotWaitFloodWait;
@@ -896,10 +905,10 @@ public class TranscribeButton {
     public static boolean finishTranscription(MessageObject messageObject, long transcription_id, String text) {
         try {
             MessageObject messageObjectByTranscriptionId = null;
-            if (transcribeOperationsById != null && transcribeOperationsById.containsKey(transcription_id)) {
-                messageObjectByTranscriptionId = transcribeOperationsById.remove(transcription_id);
-                if (transcribeOperationTokensById != null) {
-                    transcribeOperationTokensById.remove(transcription_id);
+            if (sessionsById != null) {
+                TranscribeSession session = sessionsById.remove(transcription_id);
+                if (session != null) {
+                    messageObjectByTranscriptionId = session.messageObject;
                 }
             }
             if (messageObject == null) {
