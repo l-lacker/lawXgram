@@ -31,6 +31,7 @@ import org.telegram.ui.Cells.CreationTextCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Components.ChatAttachAlert;
 import org.telegram.ui.Components.ChatAttachAlertDocumentLayout;
+import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.CombinedDrawable;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.NumberTextView;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import ru.llacker.lawxgram.LawxConfig;
@@ -67,6 +69,7 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
     private NumberTextView selectedCountTextView;
     private volatile AlertDialog progressDialog;
     private volatile boolean destroyed;
+    private volatile int fileOperationId;
 
     @Override
     public View createView(Context context) {
@@ -349,7 +352,7 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
         }
     }
 
-    private File copyFileToCache(Uri uri) {
+    private static File copyFileToCache(Uri uri) {
         if (uri == null) {
             return null;
         }
@@ -382,53 +385,74 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
 
             ChatAttachAlert currentAttachAlert = chatAttachAlert;
             if (currentAttachAlert != null) {
-                ChatAttachAlertDocumentLayout documentLayout = currentAttachAlert.getDocumentLayout();
-                if (documentLayout == null) {
+                if (currentAttachAlert.getDocumentLayout() == null) {
                     return;
                 }
-                progressDialog = new AlertDialog(getParentActivity(), 3);
-                progressDialog.setCanCancel(false);
-                progressDialog.showDelayed(300);
-                AlertDialog currentProgressDialog = progressDialog;
+                int operationId = startFileOperation();
+                if (operationId == 0) {
+                    return;
+                }
+                WeakReference<LawxEmojiSettingsActivity> activityRef = new WeakReference<>(this);
+                WeakReference<ChatAttachAlert> attachAlertRef = new WeakReference<>(currentAttachAlert);
+                Uri dataUri = data.getData();
+                ClipData clipData = data.getClipData();
 
                 Utilities.globalQueue.postRunnable(() -> {
-                    if (destroyed || currentAttachAlert != chatAttachAlert || currentProgressDialog != progressDialog) {
+                    ArrayList<File> files = new ArrayList<>();
+                    boolean hasInvalidFile = false;
+                    LawxEmojiSettingsActivity activity = activityRef.get();
+                    if (activity == null || !activity.isFileOperationActive(operationId)) {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            LawxEmojiSettingsActivity currentActivity = activityRef.get();
+                            if (currentActivity != null) {
+                                currentActivity.finishFileOperation(operationId);
+                            }
+                        });
                         return;
                     }
-                    ArrayList<File> files = new ArrayList<>();
-                    if (data.getData() != null) {
-                        File file = copyFileToCache(data.getData());
-                        if (file != null && documentLayout.isEmojiFont(file)) {
+                    if (dataUri != null) {
+                        File file = copyFileToCache(dataUri);
+                        if (file != null && EmojiHelper.isValidEmojiPack(file)) {
                             files.add(file);
+                        } else if (file != null) {
+                            hasInvalidFile = true;
                         }
-                    } else if (data.getClipData() != null) {
-                        ClipData clipData = data.getClipData();
+                    } else if (clipData != null) {
                         for (int i = 0; i < clipData.getItemCount(); i++) {
+                            activity = activityRef.get();
+                            if (activity == null || !activity.isFileOperationActive(operationId)) {
+                                files.clear();
+                                break;
+                            }
                             File file = copyFileToCache(clipData.getItemAt(i).getUri());
-                            if (file != null && documentLayout.isEmojiFont(file)) {
+                            if (file != null && EmojiHelper.isValidEmojiPack(file)) {
                                 files.add(file);
                             } else {
+                                hasInvalidFile = file != null;
                                 files.clear();
                                 break;
                             }
                         }
                     }
+                    boolean finalHasInvalidFile = hasInvalidFile;
                     AndroidUtilities.runOnUIThread(() -> {
-                        if (destroyed || getParentActivity() == null || currentAttachAlert != chatAttachAlert) {
-                            if (currentProgressDialog == progressDialog) {
-                                currentProgressDialog.dismiss();
-                                progressDialog = null;
-                            }
+                        LawxEmojiSettingsActivity currentActivity = activityRef.get();
+                        if (currentActivity == null) {
+                            return;
+                        }
+                        ChatAttachAlert attachAlert = attachAlertRef.get();
+                        if (!currentActivity.isFileOperationActive(operationId) || currentActivity.getParentActivity() == null || attachAlert == null || attachAlert != currentActivity.chatAttachAlert) {
+                            currentActivity.finishFileOperation(operationId);
                             return;
                         }
                         if (!files.isEmpty()) {
-                            currentAttachAlert.dismiss();
-                            chatAttachAlert = null;
-                            processFiles(files);
+                            attachAlert.dismiss();
+                            currentActivity.chatAttachAlert = null;
+                            currentActivity.processFiles(files, operationId);
                         } else {
-                            if (currentProgressDialog == progressDialog) {
-                                currentProgressDialog.dismiss();
-                                progressDialog = null;
+                            currentActivity.finishFileOperation(operationId);
+                            if (finalHasInvalidFile) {
+                                currentActivity.showInvalidEmojiFontBulletin(attachAlert);
                             }
                         }
                     });
@@ -441,14 +465,23 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
         if (files == null || files.isEmpty() || destroyed || getParentActivity() == null) {
             return;
         }
-        if (progressDialog == null) {
-            progressDialog = new AlertDialog(getParentActivity(), 3);
-            progressDialog.setCanCancel(false);
-            progressDialog.showDelayed(300);
+        int operationId = startFileOperation();
+        if (operationId == 0) {
+            return;
         }
+        processFiles(files, operationId);
+    }
+
+    private void processFiles(ArrayList<File> files, int operationId) {
+        ArrayList<File> filesToInstall = new ArrayList<>(files);
+        WeakReference<LawxEmojiSettingsActivity> activityRef = new WeakReference<>(this);
         Utilities.globalQueue.postRunnable(() -> {
             int count = 0;
-            for (var file : files) {
+            for (var file : filesToInstall) {
+                LawxEmojiSettingsActivity activity = activityRef.get();
+                if (activity == null || !activity.isFileOperationActive(operationId)) {
+                    break;
+                }
                 try {
                     if (EmojiHelper.getInstance().installEmoji(file) != null) {
                         count++;
@@ -459,22 +492,62 @@ public class LawxEmojiSettingsActivity extends BaseLawxSettingsActivity implemen
             }
             int finalCount = count;
             AndroidUtilities.runOnUIThread(() -> {
-                if (destroyed || getParentActivity() == null) {
+                LawxEmojiSettingsActivity activity = activityRef.get();
+                if (activity == null) {
                     return;
                 }
-                if (progressDialog != null) {
-                    progressDialog.dismiss();
-                    progressDialog = null;
+                boolean canUpdate = activity.isFileOperationActive(operationId) && !activity.destroyed && activity.getParentActivity() != null;
+                activity.finishFileOperation(operationId);
+                if (!canUpdate) {
+                    return;
                 }
-                notifyItemRangeInserted(emojiStartRow + emojiPacks.size(), finalCount);
-                updateRows();
+                if (activity.listView != null && activity.listView.adapter != null) {
+                    activity.listView.adapter.update(true);
+                }
             });
         });
+    }
+
+    private int startFileOperation() {
+        if (destroyed || getParentActivity() == null) {
+            return 0;
+        }
+        int operationId = ++fileOperationId;
+        if (progressDialog == null) {
+            progressDialog = new AlertDialog(getParentActivity(), 3);
+            progressDialog.setCanCancel(false);
+            progressDialog.showDelayed(300);
+        }
+        return operationId;
+    }
+
+    private boolean isFileOperationActive(int operationId) {
+        return operationId != 0 && !destroyed && fileOperationId == operationId;
+    }
+
+    private void finishFileOperation(int operationId) {
+        if (operationId != fileOperationId) {
+            return;
+        }
+        fileOperationId++;
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+            progressDialog = null;
+        }
+    }
+
+    private void showInvalidEmojiFontBulletin(ChatAttachAlert attachAlert) {
+        BulletinFactory.of(attachAlert.getContainer(), null).createErrorBulletinSubtitle(
+                LocaleController.formatString("InvalidFormatError", R.string.InvalidFormatError),
+                LocaleController.formatString("InvalidCustomEmojiTypeface", R.string.InvalidCustomEmojiTypeface),
+                resourcesProvider
+        ).show();
     }
 
     @Override
     public void onFragmentDestroy() {
         destroyed = true;
+        fileOperationId++;
         if (progressDialog != null) {
             progressDialog.dismiss();
             progressDialog = null;
