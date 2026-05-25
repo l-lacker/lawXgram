@@ -41,6 +41,8 @@ import java.util.Comparator;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import ru.llacker.lawxgram.LawxConfig;
 
@@ -67,8 +69,7 @@ public class EmojiHelper {
     private String emojiPack;
     private Bitmap systemEmojiPreview;
     private final Object emojiFilesLock = new Object();
-    private volatile String pendingDeleteEmojiPackId;
-    private final Object pendingDeleteLock = new Object();
+    private final AtomicReference<PendingDeleteSession> pendingDeleteSession = new AtomicReference<>();
     private Bulletin emojiPackBulletin;
 
     static {
@@ -275,7 +276,8 @@ public class EmojiHelper {
 
     public ArrayList<EmojiPack> getEmojiPacksInfo() {
         synchronized (emojiFilesLock) {
-            String pendingPackId = pendingDeleteEmojiPackId;
+            PendingDeleteSession pendingSession = pendingDeleteSession.get();
+            String pendingPackId = pendingSession != null ? pendingSession.packId : null;
             ArrayList<EmojiPack> packs = new ArrayList<>(emojiPacksInfo.size());
             for (EmojiPack emojiPack : emojiPacksInfo) {
                 if (!emojiPack.getPackId().equals(pendingPackId)) {
@@ -428,7 +430,7 @@ public class EmojiHelper {
         if (fragment == null || fragment.isFinished || fragment.getParentActivity() == null) {
             return;
         }
-        if (pendingDeleteEmojiPackId != null) {
+        if (pendingDeleteSession.get() != null) {
             AlertDialog progressDialog = new AlertDialog(fragment.getParentActivity(), 3);
             Bulletin currentBulletin = emojiPackBulletin;
             if (currentBulletin != null) {
@@ -455,7 +457,11 @@ public class EmojiHelper {
             return;
         }
         String pendingPackId = emojiPack.getPackId();
-        setPendingDeleteEmojiPackId(pendingPackId);
+        PendingDeleteSession deleteSession = setPendingDeleteEmojiPackId(pendingPackId);
+        if (deleteSession == null) {
+            cancelableDelete(fragment, emojiPack, onUndoBulletinAction);
+            return;
+        }
         onUndoBulletinAction.onPreStart();
         boolean wasSelected = emojiPack.getPackId().equals(this.emojiPack);
         if (wasSelected) {
@@ -472,14 +478,14 @@ public class EmojiHelper {
             if (wasSelected) {
                 EmojiHelper.getInstance().setEmojiPack(pendingPackId, false);
             }
-            clearPendingDeleteEmojiPackId(pendingPackId);
+            clearPendingDeleteSession(deleteSession);
             onUndoBulletinAction.onUndo();
         }).setDelayedAction(() -> deleteQueue.postRunnable(() -> {
             try {
                 deleteEmojiPack(emojiPack);
                 reloadEmoji();
             } finally {
-                clearPendingDeleteEmojiPackId(pendingPackId);
+                clearPendingDeleteSession(deleteSession);
             }
         }));
         bulletinLayout.setButton(undoButton);
@@ -503,33 +509,29 @@ public class EmojiHelper {
         });
     }
 
-    private void setPendingDeleteEmojiPackId(String packId) {
-        synchronized (pendingDeleteLock) {
-            pendingDeleteEmojiPackId = packId;
-        }
+    private PendingDeleteSession setPendingDeleteEmojiPackId(String packId) {
+        PendingDeleteSession session = new PendingDeleteSession(packId);
+        return pendingDeleteSession.compareAndSet(null, session) ? session : null;
     }
 
-    private void clearPendingDeleteEmojiPackId(String packId) {
-        synchronized (pendingDeleteLock) {
-            if (Objects.equals(pendingDeleteEmojiPackId, packId)) {
-                pendingDeleteEmojiPackId = null;
-                pendingDeleteLock.notifyAll();
-            }
+    private void clearPendingDeleteSession(PendingDeleteSession session) {
+        if (session != null && pendingDeleteSession.compareAndSet(session, null)) {
+            session.finish();
         }
     }
 
     private boolean waitForPendingDelete() {
-        synchronized (pendingDeleteLock) {
-            while (pendingDeleteEmojiPackId != null) {
-                try {
-                    pendingDeleteLock.wait();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return false;
-                }
-            }
+        PendingDeleteSession session = pendingDeleteSession.get();
+        if (session == null) {
+            return true;
         }
-        return true;
+        try {
+            session.await();
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     public void deleteEmojiPack(EmojiPack emojiPack) {
@@ -564,6 +566,23 @@ public class EmojiHelper {
         void onPreStart();
 
         void onUndo();
+    }
+
+    private static final class PendingDeleteSession {
+        private final String packId;
+        private final CountDownLatch completionLatch = new CountDownLatch(1);
+
+        private PendingDeleteSession(String packId) {
+            this.packId = packId;
+        }
+
+        private void await() throws InterruptedException {
+            completionLatch.await();
+        }
+
+        private void finish() {
+            completionLatch.countDown();
+        }
     }
 
     public static class EmojiPack {
