@@ -19,6 +19,7 @@ import java.io.IOException;
 public final class StorageManagerCompat {
 
     private final static String TAG = "StorageManagerCompat";
+    private static final int PIPE_BUFFER_SIZE = 64 * 1024;
 
     @NonNull
     public static StorageManagerCompat from(@NonNull Context context) {
@@ -49,7 +50,7 @@ public final class StorageManagerCompat {
                 try (final ParcelFileDescriptor.AutoCloseOutputStream os =
                              new ParcelFileDescriptor.AutoCloseOutputStream(pipe[1])) {
                     long offset = 0;
-                    byte[] buffer = new byte[4 * 1024];
+                    byte[] buffer = new byte[PIPE_BUFFER_SIZE];
                     while (true) {
                         int size = callback.onRead(offset, buffer.length, buffer);
                         if (size <= 0) {
