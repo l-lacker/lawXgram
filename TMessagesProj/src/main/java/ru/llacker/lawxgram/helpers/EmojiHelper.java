@@ -39,6 +39,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import ru.llacker.lawxgram.LawxConfig;
@@ -58,12 +59,13 @@ public class EmojiHelper {
     };
     private static TextPaint textPaint;
 
-    private final HashMap<String, Typeface> typefaceCache = new HashMap<>();
+    private final ConcurrentHashMap<String, Typeface> typefaceCache = new ConcurrentHashMap<>();
     private final ArrayList<EmojiPack> emojiPacksInfo = new ArrayList<>();
     private final SharedPreferences preferences = PreferencesMigrationHelper.getSharedPreferences(ApplicationLoader.applicationContext, PREFS_NAME, LEGACY_PREFS_NAME);
 
     private String emojiPack;
     private Bitmap systemEmojiPreview;
+    private final Object emojiFilesLock = new Object();
     private volatile String pendingDeleteEmojiPackId;
     private final Object pendingDeleteLock = new Object();
     private Bulletin emojiPackBulletin;
@@ -318,38 +320,48 @@ public class EmojiHelper {
         } catch (IOException e) {
             FileLog.e(e);
         }
-        File emojiDir = new File(EMOJI_PACKS_FILE_DIR + fontName + "_v" + sb);
-        boolean isAlreadyInstalled = getAllEmojis().stream()
-                .filter(EmojiHelper::isValidPack)
-                .anyMatch(file -> file.getName().endsWith(sb.toString()));
-        if (isAlreadyInstalled) {
-            if (checkInstallation) {
-                return null;
-            } else {
+        synchronized (emojiFilesLock) {
+            File emojiDir = new File(EMOJI_PACKS_FILE_DIR + fontName + "_v" + sb);
+            boolean isAlreadyInstalled = getAllEmojis().stream()
+                    .filter(EmojiHelper::isValidPack)
+                    .anyMatch(file -> file.getName().endsWith(sb.toString()));
+            if (isAlreadyInstalled) {
+                if (checkInstallation) {
+                    return null;
+                } else {
+                    EmojiPack emojiPack = new EmojiPack();
+                    emojiPack.loadFromFile(emojiDir);
+                    return emojiPack;
+                }
+            }
+            boolean installed = false;
+            try {
+                emojiDir.mkdirs();
+                File emojiFont = new File(emojiDir, fontName + ".ttf");
+                try (FileInputStream inputStream = new FileInputStream(emojiFile)) {
+                    AndroidUtilities.copyFile(inputStream, emojiFont);
+                }
+                Typeface typeface = Typeface.createFromFile(emojiFont);
+                Bitmap bitmap = drawPreviewBitmap(typeface);
+                File emojiPreview = new File(emojiDir, "preview.png");
+                try {
+                    try (FileOutputStream outputStream = new FileOutputStream(emojiPreview)) {
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                    }
+                } finally {
+                    AndroidUtilities.recycleBitmap(bitmap);
+                }
                 EmojiPack emojiPack = new EmojiPack();
                 emojiPack.loadFromFile(emojiDir);
+                emojiPacksInfo.add(emojiPack);
+                installed = true;
                 return emojiPack;
+            } finally {
+                if (!installed) {
+                    deleteFolder(emojiDir);
+                }
             }
         }
-        emojiDir.mkdirs();
-        File emojiFont = new File(emojiDir, fontName + ".ttf");
-        try (FileInputStream inputStream = new FileInputStream(emojiFile)) {
-            AndroidUtilities.copyFile(inputStream, emojiFont);
-        }
-        Typeface typeface = Typeface.createFromFile(emojiFont);
-        Bitmap bitmap = drawPreviewBitmap(typeface);
-        File emojiPreview = new File(emojiDir, "preview.png");
-        try {
-            try (FileOutputStream outputStream = new FileOutputStream(emojiPreview)) {
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-            }
-        } finally {
-            AndroidUtilities.recycleBitmap(bitmap);
-        }
-        EmojiPack emojiPack = new EmojiPack();
-        emojiPack.loadFromFile(emojiDir);
-        emojiPacksInfo.add(emojiPack);
-        return emojiPack;
     }
 
     private Bitmap drawPreviewBitmap(Typeface typeface) {
@@ -498,19 +510,24 @@ public class EmojiHelper {
     }
 
     public void deleteEmojiPack(EmojiPack emojiPack) {
-        File emojiDir = new File(emojiPack.getFileLocation()).getParentFile();
-        if (emojiDir != null && emojiDir.exists()) {
-            File[] files = emojiDir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
+        synchronized (emojiFilesLock) {
+            String packId = emojiPack.getPackId();
+            typefaceCache.remove(packId);
+            File emojiDir = new File(emojiPack.getFileLocation()).getParentFile();
+            if (emojiDir != null && emojiDir.exists()) {
+                File[] files = emojiDir.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        file.delete();
+                    }
                 }
+                emojiDir.delete();
             }
-            emojiDir.delete();
-        }
-        emojiPacksInfo.remove(emojiPack);
-        if (emojiPack.getPackId().equals(this.emojiPack)) {
-            EmojiHelper.getInstance().setEmojiPack("default", false);
+            emojiPacksInfo.remove(emojiPack);
+            typefaceCache.remove(packId);
+            if (packId.equals(this.emojiPack)) {
+                EmojiHelper.getInstance().setEmojiPack("default", false);
+            }
         }
     }
 
