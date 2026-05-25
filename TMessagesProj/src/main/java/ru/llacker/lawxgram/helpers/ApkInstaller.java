@@ -220,8 +220,8 @@ public final class ApkInstaller {
         }
     }
 
-    private static InstallReceiver register(WeakReference<Activity> context, int sessionId, Runnable onSuccess) {
-        var receiver = new InstallReceiver(ApplicationLoader.applicationContext, context, ApplicationLoader.getApplicationId(), sessionId, onSuccess);
+    private static InstallReceiver register(WeakReference<Activity> context, int sessionId, Runnable onFinish) {
+        var receiver = new InstallReceiver(ApplicationLoader.applicationContext, context, ApplicationLoader.getApplicationId(), sessionId, onFinish);
         ContextCompat.registerReceiver(ApplicationLoader.applicationContext, receiver, new IntentFilter(ApkInstaller.class.getName()), ContextCompat.RECEIVER_NOT_EXPORTED);
         return receiver;
     }
@@ -230,26 +230,28 @@ public final class ApkInstaller {
         private final Context context;
         private final WeakReference<Activity> uiContext;
         private final String packageName;
-        private final Runnable onSuccess;
+        private final Runnable onFinish;
         private final int sessionId;
+        private Runnable fallbackFinishRunnable;
+        private Runnable fallbackCleanupRunnable;
         private volatile boolean unregistered;
 
-        private InstallReceiver(Context context, WeakReference<Activity> uiContext, String packageName, int sessionId, Runnable onSuccess) {
+        private InstallReceiver(Context context, WeakReference<Activity> uiContext, String packageName, int sessionId, Runnable onFinish) {
             this.context = context;
             this.uiContext = uiContext;
             this.packageName = packageName;
             this.sessionId = sessionId;
-            this.onSuccess = onSuccess;
+            this.onFinish = onFinish;
         }
 
         @Override
         public void onReceive(Context c, Intent i) {
             if (Intent.ACTION_PACKAGE_ADDED.equals(i.getAction())) {
                 Uri data = i.getData();
-                if (data == null || onSuccess == null) return;
+                if (data == null || onFinish == null) return;
                 String pkg = data.getSchemeSpecificPart();
                 if (pkg.equals(packageName)) {
-                    onSuccess.run();
+                    onFinish.run();
                     unregister();
                 }
                 return;
@@ -261,33 +263,29 @@ public final class ApkInstaller {
             switch (status) {
                 case PackageInstaller.STATUS_PENDING_USER_ACTION:
                     Intent intent = i.getParcelableExtra(Intent.EXTRA_INTENT);
-                    unregister();
                     startPendingUserAction(intent);
-                    break;
+                    return;
                 case PackageInstaller.STATUS_FAILURE:
                 case PackageInstaller.STATUS_FAILURE_BLOCKED:
                 case PackageInstaller.STATUS_FAILURE_CONFLICT:
                 case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
                 case PackageInstaller.STATUS_FAILURE_INVALID:
                 case PackageInstaller.STATUS_FAILURE_STORAGE:
-                    int id = i.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, 0);
-                    if (id > 0) {
-                        var installer = context.getPackageManager().getPackageInstaller();
-                        var info = installer.getSessionInfo(id);
-                        if (info != null) {
-                            installer.abandonSession(info.getSessionId());
-                        }
-                    }
-                    if (context instanceof LaunchActivity) {
-                        ((LaunchActivity) context).showBulletin(factory -> factory.createErrorBulletin(LocaleController.formatString(R.string.UpdateFailedToInstall, status)));
-                    } else if (uiContext.get() instanceof LaunchActivity launchActivity) {
-                        launchActivity.showBulletin(factory -> factory.createErrorBulletin(LocaleController.formatString(R.string.UpdateFailedToInstall, status)));
-                    }
+                case PackageInstaller.STATUS_FAILURE_TIMEOUT:
+                    abandonSession(i);
+                    showFailureBulletin(status);
+                    finishAndUnregister();
+                    return;
                 case PackageInstaller.STATUS_FAILURE_ABORTED:
+                    finishAndUnregister();
+                    return;
                 case PackageInstaller.STATUS_SUCCESS:
+                    finishAndUnregister();
+                    return;
                 default:
-                    if (onSuccess != null) onSuccess.run();
-                    unregister();
+                    abandonSession(i);
+                    showFailureBulletin(status);
+                    finishAndUnregister();
             }
         }
 
@@ -296,23 +294,46 @@ public final class ApkInstaller {
             return sessionId == intentSessionId;
         }
 
+        private void abandonSession(Intent intent) {
+            int id = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, 0);
+            if (id <= 0) {
+                return;
+            }
+            var installer = context.getPackageManager().getPackageInstaller();
+            var info = installer.getSessionInfo(id);
+            if (info != null) {
+                installer.abandonSession(info.getSessionId());
+            }
+        }
+
+        private void showFailureBulletin(int status) {
+            if (context instanceof LaunchActivity) {
+                ((LaunchActivity) context).showBulletin(factory -> factory.createErrorBulletin(LocaleController.formatString(R.string.UpdateFailedToInstall, status)));
+            } else if (uiContext.get() instanceof LaunchActivity launchActivity) {
+                launchActivity.showBulletin(factory -> factory.createErrorBulletin(LocaleController.formatString(R.string.UpdateFailedToInstall, status)));
+            }
+        }
+
+        private void finishAndUnregister() {
+            if (onFinish != null) {
+                onFinish.run();
+            }
+            unregister();
+        }
+
         private void startPendingUserAction(Intent intent) {
             if (intent == null) {
-                if (onSuccess != null) {
-                    onSuccess.run();
-                }
+                finishAndUnregister();
                 return;
             }
             Activity activity = uiContext.get();
             if (activity == null) {
-                if (onSuccess != null) {
-                    onSuccess.run();
-                }
+                finishAndUnregister();
                 return;
             }
             AndroidUtilities.runOnUIThread(() -> {
-                if (onSuccess != null) {
-                    onSuccess.run();
+                if (onFinish != null) {
+                    onFinish.run();
                 }
                 try {
                     activity.startActivity(intent);
@@ -323,22 +344,38 @@ public final class ApkInstaller {
         }
 
         private void scheduleFallbackTimeouts() {
-            installQueue.postRunnable(() -> {
-                if (!unregistered && onSuccess != null) {
-                    onSuccess.run();
+            fallbackFinishRunnable = () -> {
+                if (!unregistered && onFinish != null) {
+                    onFinish.run();
                 }
-            }, 5000);
-            installQueue.postRunnable(() -> {
-                if (unregister() && onSuccess != null) {
-                    onSuccess.run();
+            };
+            fallbackCleanupRunnable = () -> {
+                if (unregister() && onFinish != null) {
+                    onFinish.run();
                 }
-            }, 60000);
+            };
+            installQueue.postRunnable(fallbackFinishRunnable, 5000);
+            installQueue.postRunnable(fallbackCleanupRunnable, 60000);
+        }
+
+        private void cancelFallbackTimeouts() {
+            Runnable currentFallbackFinishRunnable = fallbackFinishRunnable;
+            fallbackFinishRunnable = null;
+            if (currentFallbackFinishRunnable != null) {
+                installQueue.cancelRunnable(currentFallbackFinishRunnable);
+            }
+            Runnable currentFallbackCleanupRunnable = fallbackCleanupRunnable;
+            fallbackCleanupRunnable = null;
+            if (currentFallbackCleanupRunnable != null) {
+                installQueue.cancelRunnable(currentFallbackCleanupRunnable);
+            }
         }
 
         private synchronized boolean unregister() {
             if (unregistered) {
                 return false;
             }
+            cancelFallbackTimeouts();
             try {
                 context.unregisterReceiver(this);
             } catch (IllegalArgumentException e) {
