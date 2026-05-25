@@ -133,6 +133,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import ru.llacker.lawxgram.SaveToDownloadReceiver;
 import ru.llacker.lawxgram.LawxConfig;
@@ -5152,7 +5153,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         public void start(Context context) {
             AndroidUtilities.runOnUIThread(() -> {
                 if (!finished) {
-                    SaveToDownloadReceiver.showNotification(context, notificationId, messageObjects.size(), this::cancel);
+                    SaveToDownloadReceiver.showNotification(notificationId, messageObjects.size(), this::cancel);
                 }
             }, 250);
 
@@ -5580,7 +5581,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         }
 
         final File sourceFile = file;
-        final boolean[] cancelled = new boolean[]{false};
+        final AtomicBoolean cancelled = new AtomicBoolean();
         if (sourceFile.exists()) {
 
             var notificationId = SaveToDownloadReceiver.createNotificationId();
@@ -5589,7 +5590,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 try {
                     AndroidUtilities.runOnUIThread(() -> {
                         if (!finished[0]) {
-                            SaveToDownloadReceiver.showNotification(context, notificationId, 1, () -> cancelled[0] = true);
+                            SaveToDownloadReceiver.showNotification(notificationId, 1, () -> cancelled.set(true));
                         }
                     }, 250);
                 } catch (Exception e) {
@@ -5657,7 +5658,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                                 FileLog.e(e);
                             }
                             for (long a = 0; a < size; a += 4096) {
-                                if (cancelled[0]) {
+                                if (cancelled.get()) {
                                     break;
                                 }
                                 destination.transferFrom(source, a, Math.min(4096, size - a));
@@ -5673,7 +5674,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                             FileLog.e(e);
                             result = false;
                         }
-                        if (cancelled[0]) {
+                        if (cancelled.get()) {
                             destFile.delete();
                             result = false;
                         }
