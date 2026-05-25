@@ -9,6 +9,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.text.SpannableStringBuilder;
@@ -26,12 +29,15 @@ import android.widget.TextView;
 import androidx.core.content.FileProvider;
 import androidx.core.text.HtmlCompat;
 
+import com.google.android.gms.vision.barcode.BarcodeDetector;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BaseController;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MediaDataController;
@@ -78,6 +84,7 @@ public class MessageHelper extends BaseController {
     private static final CharsetDecoder utf8Decoder = StandardCharsets.UTF_8.newDecoder();
     private static final SpannableStringBuilder[] spannedStrings = new SpannableStringBuilder[5];
     private static final long DELETE_HISTORY_SEARCH_TIMEOUT = 60_000L;
+    private static final int QR_SCAN_MAX_BITMAP_SIDE = 2048;
 
     private final ArrayDeque<DeleteHistoryJob> deleteHistoryQueue = new ArrayDeque<>();
     private boolean deleteHistoryRunning;
@@ -397,9 +404,9 @@ public class MessageHelper extends BaseController {
         });
     }
 
-    public static void readQrFromMessage(View parent, MessageObject selectedObject, MessageObject.GroupedMessages selectedObjectGroup, ViewGroup viewGroup, Utilities.Callback<ArrayList<String>> callback, AtomicBoolean waitForQr, AtomicReference<Runnable> onQrDetectionDone) {
+    public static void readQrFromMessage(MessageObject selectedObject, MessageObject.GroupedMessages selectedObjectGroup, ViewGroup viewGroup, Utilities.Callback<ArrayList<String>> callback, AtomicBoolean waitForQr, AtomicReference<Runnable> onQrDetectionDone) {
         waitForQr.set(true);
-        ArrayList<Bitmap> bitmaps = new ArrayList<>();
+        ArrayList<ImageReceiver.BitmapHolder> bitmapHolders = new ArrayList<>();
         ArrayList<MessageObject> messageObjects = new ArrayList<>();
         if (selectedObjectGroup != null) {
             messageObjects.addAll(selectedObjectGroup.messages);
@@ -410,25 +417,21 @@ public class MessageHelper extends BaseController {
             View child = viewGroup.getChildAt(i);
             if (child instanceof ChatMessageCell cell) {
                 if (messageObjects.contains(cell.getMessageObject())) {
-                    Bitmap bitmap = cell.getPhotoImage().getBitmap();
-                    if (bitmap != null && !bitmap.isRecycled()) {
-                        try {
-                            Bitmap.Config config = bitmap.getConfig() != null ? bitmap.getConfig() : Bitmap.Config.ARGB_8888;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && config == Bitmap.Config.HARDWARE) {
-                                config = Bitmap.Config.ARGB_8888;
-                            }
-                            Bitmap copy = bitmap.copy(config, false);
-                            if (copy != null) {
-                                bitmaps.add(copy);
-                            }
-                        } catch (Throwable e) {
-                            FileLog.e(e);
-                        }
+                    ImageReceiver.BitmapHolder bitmapHolder = cell.getPhotoImage().getBitmapSafe();
+                    if (bitmapHolder != null && !bitmapHolder.isRecycled()) {
+                        bitmapHolders.add(bitmapHolder);
+                    } else if (bitmapHolder != null) {
+                        bitmapHolder.release();
                     }
                 }
             }
         }
+        AtomicBoolean qrDetectionReleased = new AtomicBoolean(false);
         Runnable finishQrDetectionRunnable = () -> {
+            if (!qrDetectionReleased.compareAndSet(false, true)) {
+                return;
+            }
+            waitForQr.set(false);
             Runnable onDone = onQrDetectionDone.getAndSet(null);
             if (onDone != null) {
                 onDone.run();
@@ -436,24 +439,105 @@ public class MessageHelper extends BaseController {
         };
         Utilities.globalQueue.postRunnable(() -> {
             ArrayList<String> qrResults = new ArrayList<>();
-            for (Bitmap bitmap : bitmaps) {
-                try {
-                    qrResults.addAll(QrHelper.readQr(bitmap));
-                } finally {
-                    AndroidUtilities.recycleBitmap(bitmap);
+            BarcodeDetector detector = QrHelper.createQrDetector();
+            try {
+                for (ImageReceiver.BitmapHolder bitmapHolder : bitmapHolders) {
+                    Bitmap bitmap = null;
+                    try {
+                        if (bitmapHolder != null && !bitmapHolder.isRecycled()) {
+                            bitmap = copyBitmapForQr(bitmapHolder.bitmap);
+                            if (bitmap != null) {
+                                qrResults.addAll(QrHelper.readQr(bitmap, detector));
+                            }
+                        }
+                    } catch (Throwable e) {
+                        FileLog.e(e);
+                    } finally {
+                        AndroidUtilities.recycleBitmap(bitmap);
+                        if (bitmapHolder != null) {
+                            releaseBitmapHolder(bitmapHolder);
+                        }
+                    }
                 }
+            } finally {
+                QrHelper.releaseQrDetector(detector);
             }
             AndroidUtilities.runOnUIThread(() -> {
                 try {
                     callback.run(qrResults);
                 } finally {
-                    waitForQr.set(false);
-                    parent.removeCallbacks(finishQrDetectionRunnable);
+                    AndroidUtilities.cancelRunOnUIThread(finishQrDetectionRunnable);
                     finishQrDetectionRunnable.run();
                 }
             });
         });
-        parent.postDelayed(finishQrDetectionRunnable, 250);
+        AndroidUtilities.runOnUIThread(finishQrDetectionRunnable, 250);
+    }
+
+    private static Bitmap copyBitmapForQr(Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled() || bitmap.getWidth() == 0 || bitmap.getHeight() == 0) {
+            return null;
+        }
+        try {
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            Bitmap.Config config = getQrBitmapConfig(bitmap);
+            int maxSide = Math.max(width, height);
+            if (maxSide <= QR_SCAN_MAX_BITMAP_SIDE) {
+                return bitmap.copy(config, false);
+            }
+
+            float scale = QR_SCAN_MAX_BITMAP_SIDE / (float) maxSide;
+            int scaledWidth = Math.max(1, Math.round(width * scale));
+            int scaledHeight = Math.max(1, Math.round(height * scale));
+            if (isHardwareBitmap(bitmap)) {
+                Bitmap copy = null;
+                try {
+                    copy = bitmap.copy(config, false);
+                    if (copy == null) {
+                        return null;
+                    }
+                    Bitmap scaled = Bitmap.createScaledBitmap(copy, scaledWidth, scaledHeight, true);
+                    if (scaled != copy) {
+                        AndroidUtilities.recycleBitmap(copy);
+                    }
+                    return scaled;
+                } catch (Throwable e) {
+                    AndroidUtilities.recycleBitmap(copy);
+                    throw e;
+                }
+            }
+
+            Bitmap scaled = Bitmap.createBitmap(scaledWidth, scaledHeight, config);
+            Canvas canvas = new Canvas(scaled);
+            Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
+            canvas.drawBitmap(bitmap, null, new Rect(0, 0, scaledWidth, scaledHeight), paint);
+            return scaled;
+        } catch (Throwable e) {
+            FileLog.e(e);
+            return null;
+        }
+    }
+
+    private static Bitmap.Config getQrBitmapConfig(Bitmap bitmap) {
+        Bitmap.Config config = bitmap.getConfig();
+        if (config == Bitmap.Config.RGB_565) {
+            return Bitmap.Config.RGB_565;
+        }
+        return Bitmap.Config.ARGB_8888;
+    }
+
+    private static boolean isHardwareBitmap(Bitmap bitmap) {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && bitmap.getConfig() == Bitmap.Config.HARDWARE;
+    }
+
+    private static void releaseBitmapHolder(ImageReceiver.BitmapHolder bitmapHolder) {
+        AndroidUtilities.runOnUIThread(() -> {
+            if (bitmapHolder.getKey() == null && bitmapHolder.orientation != 0) {
+                AndroidUtilities.recycleBitmap(bitmapHolder.bitmap);
+            }
+            bitmapHolder.release();
+        });
     }
 
     public static MessageHelper getInstance(int num) {

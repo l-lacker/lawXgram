@@ -789,6 +789,7 @@ public class ChatActivity extends BaseFragment implements
     private int runningAnimationIndex = -1;
 
     private ArrayList<String> qrResults;
+    private int qrDetectionGeneration;
     private MessageObject selectedObjectToEditCaption;
     private MessageObject selectedObject;
     private MessageObject.GroupedMessages selectedObjectGroup;
@@ -31734,8 +31735,12 @@ public class ChatActivity extends BaseFragment implements
                     });
                     if (option == OPTION_QR) {
                         cell.setVisibility(View.GONE);
+                        final int qrDetectionId = ++qrDetectionGeneration;
                         this.qrResults = null;
-                        MessageHelper.readQrFromMessage(cell, selectedObject, selectedObjectGroup, chatListView, results -> {
+                        MessageHelper.readQrFromMessage(selectedObject, selectedObjectGroup, chatListView, results -> {
+                            if (qrDetectionId != qrDetectionGeneration) {
+                                return;
+                            }
                             this.qrResults = results;
                             if (qrResults.size() == 1) {
                                 var text = qrResults.get(0);
@@ -32215,7 +32220,11 @@ public class ChatActivity extends BaseFragment implements
             final int finalPopupY = scrimPopupY = popupY;
             scrimPopupContainerLayout.setMaxHeight(maxY + height - popupY);
             ReactionsContainerLayout finalReactionsLayout = reactionsLayout;
+            final int popupDetectionGeneration = qrDetectionGeneration;
             Runnable showMenu = () -> {
+                if (popupDetectionGeneration != qrDetectionGeneration) {
+                    return;
+                }
                 if (scrimPopupWindow == null || fragmentView == null || scrimPopupWindow.isShowing() || !AndroidUtilities.isActivityRunning(getParentActivity())) {
                     return;
                 }
@@ -32515,6 +32524,8 @@ public class ChatActivity extends BaseFragment implements
     private ValueAnimator scrimViewAlphaAnimator;
 
     private void closeMenu(boolean hideDim) {
+        qrDetectionGeneration++;
+        qrResults = null;
         scrimPopupWindowHideDimOnDismiss = hideDim;
         if (scrimPopupWindow != null) {
             scrimPopupWindow.dismiss();

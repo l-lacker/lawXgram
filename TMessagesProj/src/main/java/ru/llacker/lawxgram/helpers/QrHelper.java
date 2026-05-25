@@ -52,7 +52,7 @@ public class QrHelper {
     }
 
     public static void showQrDialog(BaseFragment fragment, Theme.ResourcesProvider resourcesProvider, ArrayList<String> qrResults, boolean dark) {
-        if (fragment == null || qrResults.isEmpty()) {
+        if (fragment == null || qrResults == null || qrResults.isEmpty()) {
             return;
         }
         if (qrResults.size() == 1) {
@@ -173,14 +173,32 @@ public class QrHelper {
     }
 
     public static ArrayList<String> readQr(Bitmap bitmap) {
-        if (bitmap == null || bitmap.isRecycled() || bitmap.getWidth() == 0 || bitmap.getHeight() == 0) {
-            return new ArrayList<>();
-        }
-        BarcodeDetector detector = null;
+        BarcodeDetector detector = createQrDetector();
         try {
-            detector = new BarcodeDetector.Builder(ApplicationLoader.applicationContext).setBarcodeFormats(Barcode.QR_CODE).build();
+            return readQr(bitmap, detector);
+        } finally {
+            releaseQrDetector(detector);
+        }
+    }
+
+    public static BarcodeDetector createQrDetector() {
+        try {
+            return new BarcodeDetector.Builder(ApplicationLoader.applicationContext).setBarcodeFormats(Barcode.QR_CODE).build();
         } catch (Throwable t) {
             FileLog.e(t);
+        }
+        return null;
+    }
+
+    public static void releaseQrDetector(BarcodeDetector detector) {
+        if (detector != null) {
+            detector.release();
+        }
+    }
+
+    public static ArrayList<String> readQr(Bitmap bitmap, BarcodeDetector detector) {
+        if (bitmap == null || bitmap.isRecycled() || bitmap.getWidth() == 0 || bitmap.getHeight() == 0) {
+            return new ArrayList<>();
         }
         ArrayList<String> results = new ArrayList<>(readQrInternal(bitmap, detector));
         Bitmap inverted = null;
@@ -201,9 +219,6 @@ public class QrHelper {
         } finally {
             AndroidUtilities.recycleBitmap(monochrome);
             AndroidUtilities.recycleBitmap(inverted);
-            if (detector != null) {
-                detector.release();
-            }
         }
         return results;
     }
