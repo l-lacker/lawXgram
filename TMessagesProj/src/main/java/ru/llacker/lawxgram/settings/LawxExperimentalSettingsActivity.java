@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
@@ -16,6 +17,7 @@ import org.telegram.messenger.Utilities;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_account;
+import org.telegram.tgnet.RequestDelegate;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
@@ -25,6 +27,7 @@ import org.telegram.ui.LaunchActivity;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.lang.ref.WeakReference;
 
 import ru.llacker.lawxgram.LawxEnvironment;
 import ru.llacker.lawxgram.LawxConfig;
@@ -50,6 +53,8 @@ public class LawxExperimentalSettingsActivity extends BaseLawxSettingsActivity {
     private final int copyReportIdRow = rowId++;
 
     private final int deleteAccountRow = rowId++;
+    private DeleteAccountOperation deleteAccountOperation;
+    private CountDownTimer deleteAccountTimer;
 
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
@@ -133,42 +138,21 @@ public class LawxExperimentalSettingsActivity extends BaseLawxSettingsActivity {
                     }
                 }
 
-                Utilities.globalQueue.postRunnable(() -> {
-                    TL_account.deleteAccount req = new TL_account.deleteAccount();
-                    req.reason = "Meow";
-                    getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-                        try {
-                            progressDialog.dismiss();
-                        } catch (Exception e) {
-                            FileLog.e(e);
-                        }
-                        if (response instanceof TLRPC.TL_boolTrue) {
-                            getMessagesController().performLogout(0);
-                        } else if (error == null || error.code != -1000) {
-                            String errorText = LocaleController.getString(R.string.ErrorOccurred);
-                            if (error != null) {
-                                errorText += "\n" + error.text;
-                            }
-                            AlertDialog.Builder builder1 = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
-                            builder1.setTitle(LocaleController.getString(R.string.AppName));
-                            builder1.setMessage(errorText);
-                            builder1.setPositiveButton(LocaleController.getString(R.string.OK), null);
-                            builder1.show();
-                        }
-                    }));
-                }, 20000);
+                DeleteAccountOperation operation = new DeleteAccountOperation(this, progressDialog, currentAccount);
+                deleteAccountOperation = operation;
+                Utilities.globalQueue.postRunnable(operation, 20000);
                 progressDialog.show();
             });
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
             AlertDialog dialog = builder.create();
-            final CountDownTimer[] deleteAccountTimer = new CountDownTimer[1];
             dialog.setOnShowListener(dialog1 -> {
                 var button = (TextView) dialog.getButton(AlertDialog.BUTTON_POSITIVE);
                 button.setTextColor(getThemedColor(Theme.key_text_RedBold));
                 button.setEnabled(false);
                 var buttonText = button.getText();
                 button.setText(String.format(Locale.getDefault(), "%s (%d)", buttonText, 60));
-                deleteAccountTimer[0] = new CountDownTimer(60000, 1000) {
+                cancelDeleteAccountTimer();
+                deleteAccountTimer = new CountDownTimer(60000, 1000) {
                     @Override
                     public void onTick(long millisUntilFinished) {
                         button.setText(String.format(Locale.getDefault(), "%s (%d)", buttonText, millisUntilFinished / 1000 + 1));
@@ -181,13 +165,7 @@ public class LawxExperimentalSettingsActivity extends BaseLawxSettingsActivity {
                     }
                 }.start();
             });
-            dialog.setOnDismissListener(dialog1 -> {
-                if (deleteAccountTimer[0] != null) {
-                    deleteAccountTimer[0].cancel();
-                    deleteAccountTimer[0] = null;
-                }
-            });
-            showDialog(dialog);
+            showDialog(dialog, dialog1 -> cancelDeleteAccountTimer());
         } else if (id == mapDriftingFixRow) {
             LawxConfig.toggleMapDriftingFix();
             if (view instanceof TextCheckCell) {
@@ -275,6 +253,98 @@ public class LawxExperimentalSettingsActivity extends BaseLawxSettingsActivity {
                 });
                 item.subtext = LocaleController.getString(R.string.CheckingUpdate);
                 listView.adapter.notifyItemChanged(position);
+            }
+        }
+    }
+
+    @Override
+    public void onFragmentDestroy() {
+        cancelDeleteAccountTimer();
+        DeleteAccountOperation operation = deleteAccountOperation;
+        if (operation != null) {
+            operation.detachUi();
+            deleteAccountOperation = null;
+        }
+        super.onFragmentDestroy();
+    }
+
+    private void cancelDeleteAccountTimer() {
+        CountDownTimer currentTimer = deleteAccountTimer;
+        deleteAccountTimer = null;
+        if (currentTimer != null) {
+            currentTimer.cancel();
+        }
+    }
+
+    private void onDeleteAccountOperationFinished(DeleteAccountOperation operation) {
+        if (deleteAccountOperation == operation) {
+            deleteAccountOperation = null;
+        }
+    }
+
+    private static class DeleteAccountOperation implements Runnable {
+        private final WeakReference<LawxExperimentalSettingsActivity> fragmentRef;
+        private final int account;
+        private AlertDialog progressDialog;
+
+        private DeleteAccountOperation(LawxExperimentalSettingsActivity fragment, AlertDialog progressDialog, int account) {
+            fragmentRef = new WeakReference<>(fragment);
+            this.progressDialog = progressDialog;
+            this.account = account;
+        }
+
+        @Override
+        public void run() {
+            TL_account.deleteAccount req = new TL_account.deleteAccount();
+            req.reason = "Meow";
+            AccountInstance.getInstance(account).getConnectionsManager().sendRequest(req, createCallback());
+        }
+
+        private RequestDelegate createCallback() {
+            return (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+                dismissProgressDialog();
+                try {
+                    AccountInstance accountInstance = AccountInstance.getInstance(account);
+                    if (response instanceof TLRPC.TL_boolTrue) {
+                        accountInstance.getMessagesController().performLogout(0);
+                    } else if (error == null || error.code != -1000) {
+                        LawxExperimentalSettingsActivity fragment = fragmentRef.get();
+                        if (fragment == null || fragment.isFinished || fragment.getParentActivity() == null) {
+                            return;
+                        }
+                        String errorText = LocaleController.getString(R.string.ErrorOccurred);
+                        if (error != null) {
+                            errorText += "\n" + error.text;
+                        }
+                        AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getParentActivity(), fragment.resourcesProvider);
+                        builder.setTitle(LocaleController.getString(R.string.AppName));
+                        builder.setMessage(errorText);
+                        builder.setPositiveButton(LocaleController.getString(R.string.OK), null);
+                        builder.show();
+                    }
+                } finally {
+                    LawxExperimentalSettingsActivity fragment = fragmentRef.get();
+                    if (fragment != null) {
+                        fragment.onDeleteAccountOperationFinished(this);
+                    }
+                }
+            });
+        }
+
+        private void detachUi() {
+            dismissProgressDialog();
+        }
+
+        private void dismissProgressDialog() {
+            AlertDialog currentProgressDialog = progressDialog;
+            progressDialog = null;
+            if (currentProgressDialog == null) {
+                return;
+            }
+            try {
+                currentProgressDialog.dismiss();
+            } catch (Exception e) {
+                FileLog.e(e);
             }
         }
     }
