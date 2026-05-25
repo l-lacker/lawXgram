@@ -58,6 +58,10 @@ public class LawxLocationSource implements LocationSource {
         activityRef = context instanceof Activity ? new WeakReference<>((Activity) context) : null;
     }
 
+    private boolean hasLocationPermission(String permission) {
+        return Build.VERSION.SDK_INT < 23 || context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
     public static void transform(Location location) {
         final double latitude = location.getLatitude();
         final double longitude = location.getLongitude();
@@ -88,7 +92,10 @@ public class LawxLocationSource implements LocationSource {
             }
         }
         this.onLocationChangedListener = onLocationChangedListener;
-        LocationRequest.Builder builder = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_INTERVAL_MS)
+        int priority = hasLocationPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                ? Priority.PRIORITY_HIGH_ACCURACY
+                : Priority.PRIORITY_BALANCED_POWER_ACCURACY;
+        LocationRequest.Builder builder = new LocationRequest.Builder(priority, LOCATION_INTERVAL_MS)
                 .setMinUpdateIntervalMillis(LOCATION_FASTEST_INTERVAL_MS);
         LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(callback);
         LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(builder.build(), callback, Looper.getMainLooper());
