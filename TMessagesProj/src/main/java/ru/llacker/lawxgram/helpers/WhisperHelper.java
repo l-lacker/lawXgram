@@ -175,6 +175,7 @@ public class WhisperHelper {
     private static OkHttpClient getOkHttpClient() {
         if (okHttpClient == null) {
             var builder = new OkHttpClient.Builder();
+            builder.callTimeout(300, TimeUnit.SECONDS);
             builder.connectTimeout(120, TimeUnit.SECONDS);
             builder.readTimeout(120, TimeUnit.SECONDS);
             builder.writeTimeout(120, TimeUnit.SECONDS);
