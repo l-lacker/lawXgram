@@ -9,6 +9,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.text.SpannableStringBuilder;
@@ -26,12 +29,15 @@ import android.widget.TextView;
 import androidx.core.content.FileProvider;
 import androidx.core.text.HtmlCompat;
 
+import com.google.android.gms.vision.barcode.BarcodeDetector;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BaseController;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MediaDataController;
@@ -59,15 +65,16 @@ import org.telegram.ui.Components.TranscribeButton;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -76,6 +83,11 @@ public class MessageHelper extends BaseController {
     private static final MessageHelper[] Instance = new MessageHelper[UserConfig.MAX_ACCOUNT_COUNT];
     private static final CharsetDecoder utf8Decoder = StandardCharsets.UTF_8.newDecoder();
     private static final SpannableStringBuilder[] spannedStrings = new SpannableStringBuilder[5];
+    private static final long DELETE_HISTORY_SEARCH_TIMEOUT = 60_000L;
+    private static final int QR_SCAN_MAX_BITMAP_SIDE = 2048;
+
+    private final ArrayDeque<DeleteHistoryJob> deleteHistoryQueue = new ArrayDeque<>();
+    private boolean deleteHistoryRunning;
 
     public MessageHelper(int num) {
         super(num);
@@ -367,11 +379,20 @@ public class MessageHelper extends BaseController {
 
     private static void saveStickerToGallery(Activity activity, String path, boolean video, boolean animated, Utilities.Callback<Uri> callback) {
         if (path == null) return;
+        var activityRef = new WeakReference<>(activity);
+        Context saveContext = ApplicationLoader.applicationContext;
+        Utilities.Callback<Uri> safeCallback = callback == null ? null : uri -> {
+            Activity callbackActivity = activityRef.get();
+            if (callbackActivity == null || callbackActivity.isFinishing() || Build.VERSION.SDK_INT >= 17 && callbackActivity.isDestroyed()) {
+                return;
+            }
+            callback.run(uri);
+        };
         Utilities.globalQueue.postRunnable(() -> {
             try {
                 if (video || animated) {
                     StickerHelper.convertStickerFormat(path, animated, path1 -> Utilities.globalQueue.postRunnable(() ->
-                            MediaController.saveFile(path1, activity, 0, null, null, callback)));
+                            MediaController.saveFile(path1, saveContext, 0, null, null, safeCallback)));
                 } else {
                     var image = BitmapFactory.decodeFile(path);
                     if (image != null) {
@@ -380,7 +401,7 @@ public class MessageHelper extends BaseController {
                             try (var stream = new FileOutputStream(file)) {
                                 image.compress(Bitmap.CompressFormat.PNG, 100, stream);
                             }
-                            MediaController.saveFile(file.toString(), activity, 0, null, null, callback);
+                            MediaController.saveFile(file.toString(), saveContext, 0, null, null, safeCallback);
                         } finally {
                             AndroidUtilities.recycleBitmap(image);
                         }
@@ -392,9 +413,9 @@ public class MessageHelper extends BaseController {
         });
     }
 
-    public static void readQrFromMessage(View parent, MessageObject selectedObject, MessageObject.GroupedMessages selectedObjectGroup, ViewGroup viewGroup, Utilities.Callback<ArrayList<String>> callback, AtomicBoolean waitForQr, AtomicReference<Runnable> onQrDetectionDone) {
+    public static void readQrFromMessage(MessageObject selectedObject, MessageObject.GroupedMessages selectedObjectGroup, ViewGroup viewGroup, Utilities.Callback<ArrayList<String>> callback, AtomicBoolean waitForQr, AtomicReference<Runnable> onQrDetectionDone) {
         waitForQr.set(true);
-        ArrayList<Bitmap> bitmaps = new ArrayList<>();
+        ArrayList<ImageReceiver.BitmapHolder> bitmapHolders = new ArrayList<>();
         ArrayList<MessageObject> messageObjects = new ArrayList<>();
         if (selectedObjectGroup != null) {
             messageObjects.addAll(selectedObjectGroup.messages);
@@ -405,44 +426,127 @@ public class MessageHelper extends BaseController {
             View child = viewGroup.getChildAt(i);
             if (child instanceof ChatMessageCell cell) {
                 if (messageObjects.contains(cell.getMessageObject())) {
-                    Bitmap bitmap = cell.getPhotoImage().getBitmap();
-                    if (bitmap != null && !bitmap.isRecycled()) {
-                        try {
-                            Bitmap.Config config = bitmap.getConfig() != null ? bitmap.getConfig() : Bitmap.Config.ARGB_8888;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && config == Bitmap.Config.HARDWARE) {
-                                config = Bitmap.Config.ARGB_8888;
-                            }
-                            bitmaps.add(bitmap.copy(config, false));
-                        } catch (Throwable e) {
-                            FileLog.e(e);
-                        }
+                    ImageReceiver.BitmapHolder bitmapHolder = cell.getPhotoImage().getBitmapSafe();
+                    if (bitmapHolder != null && !bitmapHolder.isRecycled()) {
+                        bitmapHolders.add(bitmapHolder);
+                    } else if (bitmapHolder != null) {
+                        bitmapHolder.release();
                     }
                 }
             }
         }
+        AtomicBoolean qrDetectionReleased = new AtomicBoolean(false);
+        Runnable finishQrDetectionRunnable = () -> {
+            if (!qrDetectionReleased.compareAndSet(false, true)) {
+                return;
+            }
+            waitForQr.set(false);
+            Runnable onDone = onQrDetectionDone.getAndSet(null);
+            if (onDone != null) {
+                onDone.run();
+            }
+        };
         Utilities.globalQueue.postRunnable(() -> {
             ArrayList<String> qrResults = new ArrayList<>();
-            for (Bitmap bitmap : bitmaps) {
-                try {
-                    qrResults.addAll(QrHelper.readQr(bitmap));
-                } finally {
-                    AndroidUtilities.recycleBitmap(bitmap);
+            BarcodeDetector detector = QrHelper.createQrDetector();
+            try {
+                for (ImageReceiver.BitmapHolder bitmapHolder : bitmapHolders) {
+                    Bitmap bitmap = null;
+                    try {
+                        if (bitmapHolder != null && !bitmapHolder.isRecycled()) {
+                            bitmap = copyBitmapForQr(bitmapHolder.bitmap);
+                            if (bitmap != null) {
+                                qrResults.addAll(QrHelper.readQr(bitmap, detector));
+                            }
+                        }
+                    } catch (Throwable e) {
+                        FileLog.e(e);
+                    } finally {
+                        AndroidUtilities.recycleBitmap(bitmap);
+                        if (bitmapHolder != null) {
+                            releaseBitmapHolder(bitmapHolder);
+                        }
+                    }
                 }
+            } finally {
+                QrHelper.releaseQrDetector(detector);
             }
             AndroidUtilities.runOnUIThread(() -> {
-                callback.run(qrResults);
-                waitForQr.set(false);
-                if (onQrDetectionDone.get() != null) {
-                    onQrDetectionDone.get().run();
-                    onQrDetectionDone.set(null);
+                try {
+                    callback.run(qrResults);
+                } finally {
+                    AndroidUtilities.cancelRunOnUIThread(finishQrDetectionRunnable);
+                    finishQrDetectionRunnable.run();
                 }
             });
         });
-        parent.postDelayed(() -> {
-            if (onQrDetectionDone.get() != null) {
-                onQrDetectionDone.getAndSet(null).run();
+        AndroidUtilities.runOnUIThread(finishQrDetectionRunnable, 250);
+    }
+
+    private static Bitmap copyBitmapForQr(Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled() || bitmap.getWidth() == 0 || bitmap.getHeight() == 0) {
+            return null;
+        }
+        try {
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            Bitmap.Config config = getQrBitmapConfig(bitmap);
+            int maxSide = Math.max(width, height);
+            if (maxSide <= QR_SCAN_MAX_BITMAP_SIDE) {
+                return bitmap.copy(config, false);
             }
-        }, 250);
+
+            float scale = QR_SCAN_MAX_BITMAP_SIDE / (float) maxSide;
+            int scaledWidth = Math.max(1, Math.round(width * scale));
+            int scaledHeight = Math.max(1, Math.round(height * scale));
+            if (isHardwareBitmap(bitmap)) {
+                Bitmap copy = null;
+                try {
+                    copy = bitmap.copy(config, false);
+                    if (copy == null) {
+                        return null;
+                    }
+                    Bitmap scaled = Bitmap.createScaledBitmap(copy, scaledWidth, scaledHeight, true);
+                    if (scaled != copy) {
+                        AndroidUtilities.recycleBitmap(copy);
+                    }
+                    return scaled;
+                } catch (Throwable e) {
+                    AndroidUtilities.recycleBitmap(copy);
+                    throw e;
+                }
+            }
+
+            Bitmap scaled = Bitmap.createBitmap(scaledWidth, scaledHeight, config);
+            Canvas canvas = new Canvas(scaled);
+            Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
+            canvas.drawBitmap(bitmap, null, new Rect(0, 0, scaledWidth, scaledHeight), paint);
+            return scaled;
+        } catch (Throwable e) {
+            FileLog.e(e);
+            return null;
+        }
+    }
+
+    private static Bitmap.Config getQrBitmapConfig(Bitmap bitmap) {
+        Bitmap.Config config = bitmap.getConfig();
+        if (config == Bitmap.Config.RGB_565) {
+            return Bitmap.Config.RGB_565;
+        }
+        return Bitmap.Config.ARGB_8888;
+    }
+
+    private static boolean isHardwareBitmap(Bitmap bitmap) {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && bitmap.getConfig() == Bitmap.Config.HARDWARE;
+    }
+
+    private static void releaseBitmapHolder(ImageReceiver.BitmapHolder bitmapHolder) {
+        AndroidUtilities.runOnUIThread(() -> {
+            if (bitmapHolder.getKey() == null && bitmapHolder.orientation != 0) {
+                AndroidUtilities.recycleBitmap(bitmapHolder.bitmap);
+            }
+            bitmapHolder.release();
+        });
     }
 
     public static MessageHelper getInstance(int num) {
@@ -542,7 +646,7 @@ public class MessageHelper extends BaseController {
             if (cell != null && cell.isChecked()) {
                 showDeleteHistoryBulletin(fragment, 0, false, () -> getMessagesController().deleteUserChannelHistory(chat, getUserConfig().getCurrentUser(), null, 0), resourcesProvider);
             } else {
-                deleteUserHistoryWithSearch(fragment, -chat.id, forumTopic != null ? forumTopic.id : 0, mergeDialogId, before == -1 ? getConnectionsManager().getCurrentTime() : before, (count, deleteAction) -> showDeleteHistoryBulletin(fragment, count, true, deleteAction, resourcesProvider));
+                deleteUserHistoryWithSearch(fragment, -chat.id, forumTopic != null ? forumTopic.id : 0, mergeDialogId, before == -1 ? getConnectionsManager().getCurrentTime() : before, (currentFragment, count, deleteAction) -> showDeleteHistoryBulletin(currentFragment, count, true, deleteAction, resourcesProvider));
             }
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
@@ -663,18 +767,51 @@ public class MessageHelper extends BaseController {
     }
 
     private void deleteUserHistoryWithSearch(BaseFragment fragment, final long dialogId, int replyMessageId, final long mergeDialogId, int before, SearchMessagesResultCallback callback) {
-        Utilities.globalQueue.postRunnable(() -> {
-            ArrayList<Integer> messageIds = new ArrayList<>();
-            var latch = new CountDownLatch(1);
-            var peer = getMessagesController().getInputPeer(dialogId);
-            var fromId = MessagesController.getInputPeer(getUserConfig().getCurrentUser());
-            doSearchMessages(fragment, latch, messageIds, peer, replyMessageId, fromId, before, Integer.MAX_VALUE, 0);
-            try {
-                latch.await();
-            } catch (Exception e) {
-                FileLog.e(e);
+        WeakReference<BaseFragment> fragmentRef = new WeakReference<>(fragment);
+        enqueueDeleteHistoryJob(new DeleteHistoryJob(fragmentRef, dialogId, replyMessageId, mergeDialogId, before, callback));
+    }
+
+    private void enqueueDeleteHistoryJob(DeleteHistoryJob job) {
+        Utilities.stageQueue.postRunnable(() -> {
+            deleteHistoryQueue.add(job);
+            if (!deleteHistoryRunning) {
+                deleteHistoryRunning = true;
+                runNextDeleteHistoryJob();
             }
-            if (!messageIds.isEmpty()) {
+        });
+    }
+
+    private void runNextDeleteHistoryJob() {
+        Utilities.stageQueue.postRunnable(() -> {
+            DeleteHistoryJob job = deleteHistoryQueue.poll();
+            if (job == null) {
+                deleteHistoryRunning = false;
+                return;
+            }
+            searchDialogMessages(job, job.dialogId, job.replyMessageId, job.callback, success -> {
+                if (success && job.mergeDialogId != 0) {
+                    searchDialogMessages(job, job.mergeDialogId, 0, null, ignored -> runNextDeleteHistoryJob());
+                } else {
+                    runNextDeleteHistoryJob();
+                }
+            });
+        });
+    }
+
+    private void searchDialogMessages(DeleteHistoryJob job, final long dialogId, int replyMessageId, SearchMessagesResultCallback callback, SearchMessagesFinishCallback finishCallback) {
+        ArrayList<Integer> messageIds = new ArrayList<>();
+        TLRPC.InputPeer peer;
+        TLRPC.InputPeer fromId;
+        try {
+            peer = getMessagesController().getInputPeer(dialogId);
+            fromId = MessagesController.getInputPeer(getUserConfig().getCurrentUser());
+        } catch (Exception e) {
+            FileLog.e(e);
+            finishCallback.run(false);
+            return;
+        }
+        doSearchMessages(job.fragmentRef, messageIds, peer, replyMessageId, fromId, job.before, Integer.MAX_VALUE, 0, success -> {
+            if (success && !messageIds.isEmpty()) {
                 ArrayList<ArrayList<Integer>> lists = new ArrayList<>();
                 final int N = messageIds.size();
                 for (int i = 0; i < N; i += 100) {
@@ -685,19 +822,46 @@ public class MessageHelper extends BaseController {
                         getMessagesController().deleteMessages(list, null, null, dialogId, replyMessageId, true, 0);
                     }
                 };
-                AndroidUtilities.runOnUIThread(callback != null ? () -> callback.run(messageIds.size(), deleteAction) : deleteAction);
+                AndroidUtilities.runOnUIThread(() -> {
+                    BaseFragment currentFragment = job.fragmentRef.get();
+                    if (callback != null && currentFragment != null && !currentFragment.isFinished && currentFragment.getParentActivity() != null) {
+                        callback.run(currentFragment, messageIds.size(), deleteAction);
+                    } else {
+                        deleteAction.run();
+                    }
+                });
             }
-            if (mergeDialogId != 0) {
-                deleteUserHistoryWithSearch(fragment, mergeDialogId, 0, 0, before, null);
-            }
+            finishCallback.run(success);
         });
     }
 
     private interface SearchMessagesResultCallback {
-        void run(int count, Runnable deleteAction);
+        void run(BaseFragment fragment, int count, Runnable deleteAction);
     }
 
-    private void doSearchMessages(BaseFragment fragment, CountDownLatch latch, ArrayList<Integer> messageIds, TLRPC.InputPeer peer, int replyMessageId, TLRPC.InputPeer fromId, int before, int offsetId, long hash) {
+    private interface SearchMessagesFinishCallback {
+        void run(boolean success);
+    }
+
+    private static class DeleteHistoryJob {
+        private final WeakReference<BaseFragment> fragmentRef;
+        private final long dialogId;
+        private final int replyMessageId;
+        private final long mergeDialogId;
+        private final int before;
+        private final SearchMessagesResultCallback callback;
+
+        private DeleteHistoryJob(WeakReference<BaseFragment> fragmentRef, long dialogId, int replyMessageId, long mergeDialogId, int before, SearchMessagesResultCallback callback) {
+            this.fragmentRef = fragmentRef;
+            this.dialogId = dialogId;
+            this.replyMessageId = replyMessageId;
+            this.mergeDialogId = mergeDialogId;
+            this.before = before;
+            this.callback = callback;
+        }
+    }
+
+    private void doSearchMessages(WeakReference<BaseFragment> fragmentRef, ArrayList<Integer> messageIds, TLRPC.InputPeer peer, int replyMessageId, TLRPC.InputPeer fromId, int before, int offsetId, long hash, SearchMessagesFinishCallback finishCallback) {
         var req = new TLRPC.TL_messages_search();
         req.peer = peer;
         req.limit = 100;
@@ -711,10 +875,24 @@ public class MessageHelper extends BaseController {
             req.flags |= 2;
         }
         req.hash = hash;
-        getConnectionsManager().sendRequest(req, (response, error) -> {
+        SearchRequestState requestState = new SearchRequestState();
+        Runnable timeoutRunnable = () -> {
+            if (!requestState.tryFinish()) {
+                return;
+            }
+            if (requestState.requestId != 0) {
+                getConnectionsManager().cancelRequest(requestState.requestId, true);
+            }
+            finishCallback.run(false);
+        };
+        requestState.requestId = getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (!requestState.tryFinish()) {
+                return;
+            }
+            AndroidUtilities.cancelRunOnUIThread(timeoutRunnable);
             if (response instanceof TLRPC.messages_Messages res) {
                 if (response instanceof TLRPC.TL_messages_messagesNotModified || res.messages.isEmpty()) {
-                    latch.countDown();
+                    finishCallback.run(true);
                     return;
                 }
                 var newOffsetId = offsetId;
@@ -725,14 +903,29 @@ public class MessageHelper extends BaseController {
                     }
                     messageIds.add(message.id);
                 }
-                doSearchMessages(fragment, latch, messageIds, peer, replyMessageId, fromId, before, newOffsetId, calcMessagesHash(res.messages));
+                doSearchMessages(fragmentRef, messageIds, peer, replyMessageId, fromId, before, newOffsetId, calcMessagesHash(res.messages), finishCallback);
             } else {
                 if (error != null) {
-                    AndroidUtilities.runOnUIThread(() -> AlertsCreator.showSimpleAlert(fragment, LocaleController.getString(R.string.ErrorOccurred) + "\n" + error.text));
+                    AndroidUtilities.runOnUIThread(() -> {
+                        BaseFragment currentFragment = fragmentRef.get();
+                        if (currentFragment != null && !currentFragment.isFinished && currentFragment.getParentActivity() != null) {
+                            AlertsCreator.showSimpleAlert(currentFragment, LocaleController.getString(R.string.ErrorOccurred) + "\n" + error.text);
+                        }
+                    });
                 }
-                latch.countDown();
+                finishCallback.run(false);
             }
         }, ConnectionsManager.RequestFlagFailOnServerErrors);
+        AndroidUtilities.runOnUIThread(timeoutRunnable, DELETE_HISTORY_SEARCH_TIMEOUT);
+    }
+
+    private static class SearchRequestState {
+        private final AtomicBoolean finished = new AtomicBoolean();
+        private volatile int requestId;
+
+        private boolean tryFinish() {
+            return finished.compareAndSet(false, true);
+        }
     }
 
     private long calcMessagesHash(ArrayList<TLRPC.Message> messages) {

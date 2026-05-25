@@ -3038,6 +3038,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
+        dismissSendPopupWindow();
         if (observersGroup != null) {
             observersGroup.removeAllObservers();
             observersGroup = null;
@@ -7212,6 +7213,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void onPause() {
         super.onPause();
+        dismissSendPopupWindow();
         if (storiesBulletin != null) {
             storiesBulletin.hide();
             storiesBulletin = null;
@@ -11790,29 +11792,45 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             delegate.didSelectDialogs(DialogsActivity.this, topicKeys, commentView.getFieldText(), false, notify, scheduleDate, scheduleRepeatPeriod, null);
         }, resourcesProvider);
 
-        sendPopupWindow = new ActionBarPopupWindow(layout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT);
-        sendPopupWindow.setAnimationEnabled(false);
-        sendPopupWindow.setAnimationStyle(R.style.PopupContextAnimation2);
-        sendPopupWindow.setOutsideTouchable(true);
-        sendPopupWindow.setClippingEnabled(true);
-        sendPopupWindow.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
-        sendPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED);
-        sendPopupWindow.getContentView().setFocusableInTouchMode(true);
+        dismissSendPopupWindow();
+        ActionBarPopupWindow popupWindow = new ActionBarPopupWindow(layout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT);
+        sendPopupWindow = popupWindow;
+        popupWindow.setOnDismissListener(() -> {
+            if (sendPopupWindow == popupWindow) {
+                sendPopupWindow = null;
+            }
+            layout.setSendPopupWindow(null);
+        });
+        popupWindow.setAnimationEnabled(false);
+        popupWindow.setAnimationStyle(R.style.PopupContextAnimation2);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setClippingEnabled(true);
+        popupWindow.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
+        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED);
+        popupWindow.getContentView().setFocusableInTouchMode(true);
         SharedConfig.removeScheduledOrNoSoundHint();
 
-        layout.setSendPopupWindow(sendPopupWindow);
+        layout.setSendPopupWindow(popupWindow);
         layout.measure(View.MeasureSpec.makeMeasureSpec(dp(1000), View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(dp(1000), View.MeasureSpec.AT_MOST));
-        sendPopupWindow.setFocusable(true);
+        popupWindow.setFocusable(true);
         int[] location = new int[2];
         view.getLocationInWindow(location);
         int y = location[1] - layout.getMeasuredHeight() - dp(2);
-        sendPopupWindow.showAtLocation(view, Gravity.LEFT | Gravity.TOP, location[0] + view.getMeasuredWidth() - layout.getMeasuredWidth() + dp(8), y);
-        sendPopupWindow.dimBehind();
+        popupWindow.showAtLocation(view, Gravity.LEFT | Gravity.TOP, location[0] + view.getMeasuredWidth() - layout.getMeasuredWidth() + dp(8), y);
+        popupWindow.dimBehind();
         try {
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
         } catch (Exception ignored) {}
 
         return true;
+    }
+
+    private void dismissSendPopupWindow() {
+        if (sendPopupWindow != null) {
+            ActionBarPopupWindow popupWindow = sendPopupWindow;
+            sendPopupWindow = null;
+            popupWindow.dismiss();
+        }
     }
 
     private float getRightSlidingProgress() {

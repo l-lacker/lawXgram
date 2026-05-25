@@ -31,19 +31,35 @@ public class StickerHelper {
 
     public static void convertStickerFormat(String path, boolean animated, Consumer<String> callback) {
         var resultPath = path + ".gif";
-        var cacheOptions = new BitmapsCache.CacheOptions();
-        var drawable = animated ?
-                new RLottieDrawable(new File(path), 512, 512, cacheOptions, false, null, 0) :
-                new AnimatedFileDrawable(new File(path), true, 0, 0, null, null, null, 0, 0, false, 0, 0, cacheOptions);
         rendererExecutor.execute(() -> {
-            var success = renderToGif(resultPath, drawable, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-            if (animated) {
-                ((RLottieDrawable) drawable).recycle(false);
-            } else {
-                ((AnimatedFileDrawable) drawable).recycle();
-            }
-            if (success) {
-                callback.accept(resultPath);
+            BitmapsCache.Cacheable source = null;
+            try {
+                var cacheOptions = new BitmapsCache.CacheOptions();
+                int width;
+                int height;
+                if (animated) {
+                    RLottieDrawable drawable = new RLottieDrawable(new File(path), 512, 512, cacheOptions, false, null, 0);
+                    source = drawable;
+                    width = drawable.getIntrinsicWidth();
+                    height = drawable.getIntrinsicHeight();
+                } else {
+                    AnimatedFileDrawable drawable = new AnimatedFileDrawable(new File(path), true, 0, 0, null, null, null, 0, 0, false, 0, 0, cacheOptions);
+                    source = drawable;
+                    width = drawable.getIntrinsicWidth();
+                    height = drawable.getIntrinsicHeight();
+                }
+                var success = renderToGif(resultPath, source, width, height);
+                if (success) {
+                    callback.accept(resultPath);
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            } finally {
+                if (source instanceof RLottieDrawable) {
+                    ((RLottieDrawable) source).recycle(false);
+                } else if (source instanceof AnimatedFileDrawable) {
+                    ((AnimatedFileDrawable) source).recycle();
+                }
             }
         });
     }

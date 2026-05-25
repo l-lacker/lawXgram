@@ -12,11 +12,15 @@ import org.telegram.messenger.browser.Browser;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.INavigationLayout;
 import org.telegram.ui.ChatActivity;
+import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.ProfileActivity;
 import org.telegram.ui.TopicsFragment;
 
+import java.lang.ref.WeakReference;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import ru.llacker.lawxgram.LawxEnvironment;
@@ -24,6 +28,7 @@ import ru.llacker.lawxgram.LawxEnvironment;
 public class UserHelper extends BaseController {
 
     private static final UserHelper[] Instance = new UserHelper[UserConfig.MAX_ACCOUNT_COUNT];
+    private static final long OPEN_PEER_TIMEOUT = 60_000L;
 
     public UserHelper(int num) {
         super(num);
@@ -42,43 +47,108 @@ public class UserHelper extends BaseController {
         return localInstance;
     }
 
-    public void openByDialogId(long dialogId, Activity activity, Consumer<BaseFragment> callback, Browser.Progress progress) {
-        if (dialogId == 0 || activity == null) {
+    public void openByDialogId(long dialogId, Activity activity, Browser.Progress progress) {
+        if (dialogId == 0 || !AndroidUtilities.isActivityRunning(activity)) {
             return;
         }
-        AlertDialog progressDialog = progress != null ? null : new AlertDialog(activity, AlertDialog.ALERT_TYPE_SPINNER);
-        searchPeer(dialogId, (peer) -> {
+        OpenPeerOperation operation = new OpenPeerOperation(activity, progress);
+        operation.start();
+        searchPeer(dialogId, operation::complete);
+    }
+
+    private static class OpenPeerOperation {
+        private final WeakReference<Activity> activityRef;
+        private Browser.Progress progress;
+        private AlertDialog progressDialog;
+        private final AtomicBoolean progressCompleted = new AtomicBoolean();
+        private final AtomicBoolean completed = new AtomicBoolean();
+        private final Runnable timeoutRunnable = this::completeByTimeout;
+
+        private OpenPeerOperation(Activity activity, Browser.Progress progress) {
+            activityRef = new WeakReference<>(activity);
+            this.progress = progress;
+            progressDialog = progress != null || !AndroidUtilities.isActivityRunning(activity) ? null : new AlertDialog(activity, AlertDialog.ALERT_TYPE_SPINNER);
+        }
+
+        private void start() {
             if (progress != null) {
-                progress.end();
-            }
-            if (progressDialog != null) {
+                progress.init();
+            } else if (progressDialog != null) {
                 try {
-                    progressDialog.dismiss();
+                    progressDialog.showDelayed(300);
+                } catch (Exception ignore) {
+
+                }
+            }
+            AndroidUtilities.runOnUIThread(timeoutRunnable, OPEN_PEER_TIMEOUT);
+        }
+
+        private void complete(Object peer) {
+            if (!completed.compareAndSet(false, true)) {
+                return;
+            }
+            finishProgress();
+            Activity activity = activityRef.get();
+            if (!AndroidUtilities.isActivityRunning(activity)) {
+                return;
+            }
+            BaseFragment fragment = createFragment(peer);
+            if (fragment != null) {
+                presentFragment(activity, fragment);
+            }
+        }
+
+        private void completeByTimeout() {
+            if (completed.compareAndSet(false, true)) {
+                finishProgress();
+            }
+        }
+
+        private void finishProgress() {
+            if (!progressCompleted.compareAndSet(false, true)) {
+                return;
+            }
+            AndroidUtilities.cancelRunOnUIThread(timeoutRunnable);
+            Browser.Progress currentProgress = progress;
+            progress = null;
+            if (currentProgress != null) {
+                currentProgress.end();
+            }
+            AlertDialog currentProgressDialog = progressDialog;
+            progressDialog = null;
+            if (currentProgressDialog != null) {
+                try {
+                    currentProgressDialog.dismiss();
                 } catch (Exception ignored) {
 
                 }
             }
+        }
+
+        private void presentFragment(Activity activity, BaseFragment fragment) {
+            if (activity instanceof LaunchActivity launchActivity) {
+                launchActivity.presentFragment(fragment, false, false);
+                if (AndroidUtilities.isTablet()) {
+                    launchActivity.actionBarLayout.rebuildFragments(INavigationLayout.REBUILD_FLAG_REBUILD_LAST);
+                    launchActivity.rightActionBarLayout.rebuildFragments(INavigationLayout.REBUILD_FLAG_REBUILD_LAST);
+                }
+            }
+        }
+
+        private BaseFragment createFragment(Object peer) {
             Bundle args = new Bundle();
             if (peer instanceof TLRPC.User user) {
                 args.putLong("user_id", user.id);
-                callback.accept(new ProfileActivity(args));
+                return new ProfileActivity(args);
             } else if (peer instanceof TLRPC.Chat chat) {
                 args.putLong("chat_id", chat.id);
                 if (ChatObject.isForum(chat)) {
-                    callback.accept(new TopicsFragment(args));
+                    return new TopicsFragment(args);
                 } else {
-                    callback.accept(new ChatActivity(args));
+                    return new ChatActivity(args);
                 }
             }
-        });
-        if (progress != null) {
-            progress.init();
-        } else {
-            try {
-                progressDialog.showDelayed(300);
-            } catch (Exception ignore) {
-
-            }
+            return null;
         }
     }
 

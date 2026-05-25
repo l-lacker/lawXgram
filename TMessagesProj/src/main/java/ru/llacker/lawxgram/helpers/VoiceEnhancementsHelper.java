@@ -1,8 +1,11 @@
 package ru.llacker.lawxgram.helpers;
 
+import android.media.audiofx.AudioEffect;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
 import android.media.audiofx.NoiseSuppressor;
+
+import org.telegram.messenger.FileLog;
 
 import ru.llacker.lawxgram.LawxConfig;
 
@@ -12,36 +15,77 @@ public class VoiceEnhancementsHelper {
     private static AcousticEchoCanceler acousticEchoCanceler;
 
     public static void initVoiceEnhancements(int audioSessionId) {
-        if (!LawxConfig.voiceEnhancements) return;
+        releaseVoiceEnhancements();
+        if (!LawxConfig.voiceEnhancements) {
+            return;
+        }
 
         if (AutomaticGainControl.isAvailable()) {
-            automaticGainControl = AutomaticGainControl.create(audioSessionId);
-            automaticGainControl.setEnabled(true);
+            try {
+                AutomaticGainControl effect = AutomaticGainControl.create(audioSessionId);
+                if (enableEffect(effect)) {
+                    automaticGainControl = effect;
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
         }
         if (NoiseSuppressor.isAvailable()) {
-            noiseSuppressor = NoiseSuppressor.create(audioSessionId);
-            noiseSuppressor.setEnabled(true);
+            try {
+                NoiseSuppressor effect = NoiseSuppressor.create(audioSessionId);
+                if (enableEffect(effect)) {
+                    noiseSuppressor = effect;
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
         }
         if (AcousticEchoCanceler.isAvailable()) {
-            acousticEchoCanceler = AcousticEchoCanceler.create(audioSessionId);
-            acousticEchoCanceler.setEnabled(true);
+            try {
+                AcousticEchoCanceler effect = AcousticEchoCanceler.create(audioSessionId);
+                if (enableEffect(effect)) {
+                    acousticEchoCanceler = effect;
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
         }
     }
 
     public static void releaseVoiceEnhancements() {
-        if (!LawxConfig.voiceEnhancements) return;
-
         if (automaticGainControl != null) {
-            automaticGainControl.release();
+            releaseEffect(automaticGainControl);
             automaticGainControl = null;
         }
         if (noiseSuppressor != null) {
-            noiseSuppressor.release();
+            releaseEffect(noiseSuppressor);
             noiseSuppressor = null;
         }
         if (acousticEchoCanceler != null) {
-            acousticEchoCanceler.release();
+            releaseEffect(acousticEchoCanceler);
             acousticEchoCanceler = null;
+        }
+    }
+
+    private static boolean enableEffect(AudioEffect effect) {
+        if (effect == null) {
+            return false;
+        }
+        try {
+            effect.setEnabled(true);
+            return true;
+        } catch (Exception e) {
+            FileLog.e(e);
+            releaseEffect(effect);
+            return false;
+        }
+    }
+
+    private static void releaseEffect(AudioEffect effect) {
+        try {
+            effect.release();
+        } catch (Exception e) {
+            FileLog.e(e);
         }
     }
 

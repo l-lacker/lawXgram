@@ -337,6 +337,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -789,6 +790,7 @@ public class ChatActivity extends BaseFragment implements
     private int runningAnimationIndex = -1;
 
     private ArrayList<String> qrResults;
+    private int qrDetectionGeneration;
     private MessageObject selectedObjectToEditCaption;
     private MessageObject selectedObject;
     private MessageObject.GroupedMessages selectedObjectGroup;
@@ -31734,8 +31736,12 @@ public class ChatActivity extends BaseFragment implements
                     });
                     if (option == OPTION_QR) {
                         cell.setVisibility(View.GONE);
+                        final int qrDetectionId = ++qrDetectionGeneration;
                         this.qrResults = null;
-                        MessageHelper.readQrFromMessage(cell, selectedObject, selectedObjectGroup, chatListView, results -> {
+                        MessageHelper.readQrFromMessage(selectedObject, selectedObjectGroup, chatListView, results -> {
+                            if (qrDetectionId != qrDetectionGeneration) {
+                                return;
+                            }
                             this.qrResults = results;
                             if (qrResults.size() == 1) {
                                 var text = qrResults.get(0);
@@ -32215,7 +32221,11 @@ public class ChatActivity extends BaseFragment implements
             final int finalPopupY = scrimPopupY = popupY;
             scrimPopupContainerLayout.setMaxHeight(maxY + height - popupY);
             ReactionsContainerLayout finalReactionsLayout = reactionsLayout;
+            final int popupDetectionGeneration = qrDetectionGeneration;
             Runnable showMenu = () -> {
+                if (popupDetectionGeneration != qrDetectionGeneration) {
+                    return;
+                }
                 if (scrimPopupWindow == null || fragmentView == null || scrimPopupWindow.isShowing() || !AndroidUtilities.isActivityRunning(getParentActivity())) {
                     return;
                 }
@@ -32515,6 +32525,8 @@ public class ChatActivity extends BaseFragment implements
     private ValueAnimator scrimViewAlphaAnimator;
 
     private void closeMenu(boolean hideDim) {
+        qrDetectionGeneration++;
+        qrResults = null;
         scrimPopupWindowHideDimOnDismiss = hideDim;
         if (scrimPopupWindow != null) {
             scrimPopupWindow.dismiss();
@@ -34050,16 +34062,22 @@ public class ChatActivity extends BaseFragment implements
                 });
                 break;
             } case OPTION_SAVE_TO_GALLERY_STICKER: {
-                if (Build.VERSION.SDK_INT >= 23 && (Build.VERSION.SDK_INT <= 28 || BuildVars.NO_SCOPED_STORAGE) && getParentActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    getParentActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 4);
+                Activity parentActivity = getParentActivity();
+                if (parentActivity == null) {
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 23 && (Build.VERSION.SDK_INT <= 28 || BuildVars.NO_SCOPED_STORAGE) && parentActivity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    parentActivity.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 4);
                     selectedObject = null;
                     selectedObjectGroup = null;
                     selectedObjectToEditCaption = null;
                     return;
                 }
-                getMessageHelper().saveStickerToGallery(getParentActivity(), selectedObject, (uri) -> {
-                    if (BulletinFactory.canShowBulletin(ChatActivity.this)) {
-                        BulletinFactory.of(this).createDownloadBulletin(BulletinFactory.FileType.STICKER, themeDelegate).show();
+                WeakReference<ChatActivity> chatActivityRef = new WeakReference<>(this);
+                getMessageHelper().saveStickerToGallery(parentActivity, selectedObject, (uri) -> {
+                    ChatActivity chatActivity = chatActivityRef.get();
+                    if (chatActivity != null && !chatActivity.isFinished && chatActivity.isLastFragment() && BulletinFactory.canShowBulletin(chatActivity)) {
+                        BulletinFactory.of(chatActivity).createDownloadBulletin(BulletinFactory.FileType.STICKER, chatActivity.themeDelegate).show();
                     }
                 });
                 break;

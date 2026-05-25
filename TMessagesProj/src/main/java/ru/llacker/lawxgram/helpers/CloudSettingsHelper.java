@@ -1,6 +1,7 @@
 package ru.llacker.lawxgram.helpers;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -34,9 +35,11 @@ import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -53,20 +56,32 @@ public class CloudSettingsHelper {
 
     private final SharedPreferences preferences = PreferencesMigrationHelper.getSharedPreferences(ApplicationLoader.applicationContext, PREFS_NAME, LEGACY_PREFS_NAME);
     private final long[] cloudSyncedDate = new long[UserConfig.MAX_ACCOUNT_COUNT];
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Runnable cloudSyncRunnable = () -> CloudSettingsHelper.getInstance().syncToCloud((success, error) -> {
-        if (!success) {
-            var global = BulletinFactory.global();
-            if (error == null) {
-                global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed)).show();
-            } else {
-                global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed), error).show();
-            }
-        }
-    });
-
     private long localSyncedDate = preferences.getLong("updated_at", -1);
     private boolean autoSync = preferences.getBoolean("auto_sync", false);
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private int pendingCloudSyncAccount = UserConfig.selectedAccount;
+    private final Runnable cloudSyncRunnable = () -> {
+        if (!autoSync) {
+            return;
+        }
+        int account = pendingCloudSyncAccount;
+        if (!isValidAccount(account)) {
+            return;
+        }
+        CloudSettingsHelper.getInstance().syncToCloud(account, (success, error) -> {
+            if (!success) {
+                if (account != UserConfig.selectedAccount) {
+                    return;
+                }
+                var global = BulletinFactory.global();
+                if (error == null) {
+                    global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed)).show();
+                } else {
+                    global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed), error).show();
+                }
+            }
+        });
+    };
 
     private static final class InstanceHolder {
         private static final CloudSettingsHelper instance = new CloudSettingsHelper();
@@ -82,8 +97,15 @@ public class CloudSettingsHelper {
         }
 
         Context context = parentFragment.getParentActivity();
+        if (context == null || parentFragment.isFinished) {
+            return;
+        }
         Theme.ResourcesProvider resourcesProvider = parentFragment.getResourceProvider();
-        int selectedAccount = UserConfig.selectedAccount;
+        int selectedAccount = parentFragment.getCurrentAccount();
+        if (!isValidAccount(selectedAccount)) {
+            return;
+        }
+        CloudDialogState dialogState = new CloudDialogState(parentFragment, selectedAccount);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context, resourcesProvider);
         builder.setTitle(LocaleController.getString(R.string.CloudConfig));
@@ -100,15 +122,16 @@ public class CloudSettingsHelper {
         });
         syncedDate.setInAnimation(context, R.anim.alpha_in);
         syncedDate.setOutAnimation(context, R.anim.alpha_out);
-        syncedDate.setText(formatSyncedDate(), false);
+        dialogState.setSyncedDateView(syncedDate);
+        syncedDate.setText(formatSyncedDate(selectedAccount), false);
 
-        getCloudItem(CLOUD_SETTINGS_UPDATED_AT_KEY, LEGACY_CLOUD_SETTINGS_UPDATED_AT_KEY, (res, error) -> {
+        getCloudItem(selectedAccount, CLOUD_SETTINGS_UPDATED_AT_KEY, LEGACY_CLOUD_SETTINGS_UPDATED_AT_KEY, (res, error) -> {
             if (error == null && AndroidUtilities.isNumeric(res)) {
                 cloudSyncedDate[selectedAccount] = Long.parseLong(res);
             } else {
                 cloudSyncedDate[selectedAccount] = -1;
             }
-            syncedDate.setText(formatSyncedDate());
+            dialogState.updateSyncedDate();
         });
 
         LinearLayout linearLayout = new LinearLayout(context);
@@ -118,15 +141,11 @@ public class CloudSettingsHelper {
         buttonTextView.setText(LocaleController.getString(R.string.CloudConfigSync), false);
         linearLayout.addView(buttonTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, 16, 0, 16, 0));
         buttonTextView.setOnClickListener(view -> {
-            syncedDate.setText(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.CloudConfigSyncing)));
-            syncToCloud((success, error) -> {
-                syncedDate.setText(formatSyncedDate());
+            dialogState.setSyncedDateText(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.CloudConfigSyncing)));
+            syncToCloud(selectedAccount, (success, error) -> {
+                dialogState.updateSyncedDate();
                 if (!success) {
-                    if (error == null) {
-                        BulletinFactory.of(Bulletin.BulletinWindow.make(context), resourcesProvider).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed)).show();
-                    } else {
-                        BulletinFactory.of(Bulletin.BulletinWindow.make(context), resourcesProvider).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed), error).show();
-                    }
+                    dialogState.showBulletin(R.string.CloudConfigSyncFailed, error);
                 }
             });
         });
@@ -135,15 +154,11 @@ public class CloudSettingsHelper {
         textView.setText(LocaleController.getString(R.string.CloudConfigRestore), false);
         linearLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, 16, 8, 16, 0));
         textView.setOnClickListener(view -> {
-            syncedDate.setText(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.CloudConfigSyncing)));
-            restoreFromCloud((success, error) -> {
-                syncedDate.setText(formatSyncedDate());
+            dialogState.setSyncedDateText(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.CloudConfigSyncing)));
+            restoreFromCloud(selectedAccount, (success, error) -> {
+                dialogState.updateSyncedDate();
                 if (!success) {
-                    if (error == null) {
-                        BulletinFactory.of(Bulletin.BulletinWindow.make(context), resourcesProvider).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigRestoreFailed)).show();
-                    } else {
-                        BulletinFactory.of(Bulletin.BulletinWindow.make(context), resourcesProvider).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigRestoreFailed), error).show();
-                    }
+                    dialogState.showBulletin(R.string.CloudConfigRestoreFailed, error);
                 }
             });
         });
@@ -160,52 +175,78 @@ public class CloudSettingsHelper {
         linearLayout.addView(syncedDate, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 16, 8, 16, 0));
 
         builder.setView(linearLayout);
-        parentFragment.showDialog(builder.create());
+        Dialog dialog = parentFragment.showDialog(builder.create(), dialogInterface -> dialogState.dismiss());
+        if (dialog == null) {
+            dialogState.dismiss();
+        }
     }
 
     public void doAutoSync() {
+        handler.removeCallbacks(cloudSyncRunnable);
         if (!autoSync) {
             return;
         }
-        handler.removeCallbacks(cloudSyncRunnable);
+        pendingCloudSyncAccount = UserConfig.selectedAccount;
+        if (!isValidAccount(pendingCloudSyncAccount)) {
+            return;
+        }
         handler.postDelayed(cloudSyncRunnable, 1200);
     }
 
+    private boolean isValidAccount(int account) {
+        return account >= 0 && account < UserConfig.MAX_ACCOUNT_COUNT;
+    }
+
     private void syncToCloud(Utilities.Callback2<Boolean, String> callback) {
-        String rawConfig = LawxConfig.exportConfigs();
-        String compressed = encodeConfig(rawConfig);
-        getCloudStorageHelper().setItem(CLOUD_SETTINGS_KEY, rawConfig.length() >= compressed.length() ? compressed : rawConfig, (res, error) -> {
-            if (error == null) {
-                localSyncedDate = cloudSyncedDate[UserConfig.selectedAccount] = System.currentTimeMillis();
-                getCloudStorageHelper().setItem(CLOUD_SETTINGS_UPDATED_AT_KEY, String.valueOf(localSyncedDate), null);
-                preferences.edit().putLong("updated_at", localSyncedDate).apply();
-                callback.run(true, null);
-            } else {
-                callback.run(false, error);
-            }
+        syncToCloud(UserConfig.selectedAccount, callback);
+    }
+
+    private void syncToCloud(int account, Utilities.Callback2<Boolean, String> callback) {
+        Utilities.globalQueue.postRunnable(() -> {
+            String rawConfig = LawxConfig.exportConfigs();
+            String compressed = encodeConfig(rawConfig);
+            String config = rawConfig.length() >= compressed.length() ? compressed : rawConfig;
+            getCloudStorageHelper(account).setItemAsync(CLOUD_SETTINGS_KEY, config, (res, error) -> {
+                if (error == null) {
+                    localSyncedDate = cloudSyncedDate[account] = System.currentTimeMillis();
+                    getCloudStorageHelper(account).setItem(CLOUD_SETTINGS_UPDATED_AT_KEY, String.valueOf(localSyncedDate), null);
+                    preferences.edit().putLong("updated_at", localSyncedDate).apply();
+                    callback.run(true, null);
+                } else {
+                    callback.run(false, error);
+                }
+            });
         });
     }
 
     private void restoreFromCloud(Utilities.Callback2<Boolean, String> callback) {
-        getCloudItem(CLOUD_SETTINGS_KEY, LEGACY_CLOUD_SETTINGS_KEY, (res, error) -> {
+        restoreFromCloud(UserConfig.selectedAccount, callback);
+    }
+
+    private void restoreFromCloud(int account, Utilities.Callback2<Boolean, String> callback) {
+        getCloudItem(account, CLOUD_SETTINGS_KEY, LEGACY_CLOUD_SETTINGS_KEY, (res, error) -> {
             if (error == null) {
                 if (TextUtils.isEmpty(res)) {
                     callback.run(false, "EMPTY_CONFIG");
                 } else {
-                    String config = decodeConfig(res);
-                    if (config == null) {
-                        callback.run(false, "DECODE_FAILED");
-                    } else {
-                        try {
-                            LawxConfig.importConfigs(config);
-                            localSyncedDate = System.currentTimeMillis();
-                            preferences.edit().putLong("updated_at", localSyncedDate).apply();
-                            callback.run(true, null);
-                        } catch (Exception e) {
-                            FileLog.e(e);
-                            callback.run(false, e.getLocalizedMessage());
+                    Utilities.globalQueue.postRunnable(() -> {
+                        String config = decodeConfig(res);
+                        if (config == null) {
+                            AndroidUtilities.runOnUIThread(() -> callback.run(false, "DECODE_FAILED"));
+                            return;
                         }
-                    }
+                        AndroidUtilities.runOnUIThread(() -> {
+                            try {
+                                LawxConfig.importConfigs(config);
+                                localSyncedDate = System.currentTimeMillis();
+                                preferences.edit().putLong("updated_at", localSyncedDate).apply();
+                                callback.run(true, null);
+                            } catch (Exception e) {
+                                FileLog.e(e);
+                                callback.run(false, e.getLocalizedMessage());
+                            }
+                        });
+                    });
                 }
             } else {
                 callback.run(false, error);
@@ -213,35 +254,33 @@ public class CloudSettingsHelper {
         });
     }
 
-    private CloudStorageHelper getCloudStorageHelper() {
-        return CloudStorageHelper.getInstance(UserConfig.selectedAccount);
+    private CloudStorageHelper getCloudStorageHelper(int account) {
+        return CloudStorageHelper.getInstance(account);
     }
 
-    private void getCloudItem(String key, String legacyKey, Utilities.Callback2<String, String> callback) {
-        getCloudStorageHelper().getItem(key, (res, error) -> {
+    private void getCloudItem(int account, String key, String legacyKey, Utilities.Callback2<String, String> callback) {
+        getCloudStorageHelper(account).getItem(key, (res, error) -> {
             if (error == null && !TextUtils.isEmpty(res)) {
                 callback.run(res, null);
                 return;
             }
-            getCloudStorageHelper().getItem(legacyKey, callback);
+            getCloudStorageHelper(account).getItem(legacyKey, callback);
         });
     }
 
-    private String formatSyncedDate() {
+    private String formatSyncedDate(int account) {
         return LocaleController.formatString(
                 R.string.CloudConfigSyncDate,
                 localSyncedDate > 0 ? formatDateUntil(localSyncedDate) : LocaleController.getString(R.string.CloudConfigSyncDateNever),
-                cloudSyncedDate[UserConfig.selectedAccount] > 0 ? formatDateUntil(cloudSyncedDate[UserConfig.selectedAccount]) : LocaleController.getString(R.string.CloudConfigSyncDateNever));
+                cloudSyncedDate[account] > 0 ? formatDateUntil(cloudSyncedDate[account]) : LocaleController.getString(R.string.CloudConfigSyncDateNever));
     }
 
     public static String encodeConfig(String string) {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(string.length());
-            GZIPOutputStream gzip = new GZIPOutputStream(bos);
-            gzip.write(string.getBytes());
-            gzip.close();
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(string.length());
+             GZIPOutputStream gzip = new GZIPOutputStream(bos)) {
+            gzip.write(string.getBytes(StandardCharsets.UTF_8));
+            gzip.finish();
             byte[] compressed = bos.toByteArray();
-            bos.close();
             return CONFIG_VERSION + Base64.encodeToString(compressed, Base64.NO_PADDING | Base64.NO_WRAP);
         } catch (Exception e) {
             FileLog.e(e);
@@ -253,16 +292,15 @@ public class CloudSettingsHelper {
         if (string.startsWith("{")) {
             return string;
         } else if (string.startsWith(String.valueOf(CONFIG_VERSION))) {
-            try {
-                ByteArrayInputStream bis = new ByteArrayInputStream(Base64.decode(string.substring(1), Base64.DEFAULT));
-                GZIPInputStream gis = new GZIPInputStream(bis);
-                //noinspection CharsetObjectCanBeUsed
-                String config = new Scanner(gis, "UTF-8")
-                        .useDelimiter("\\A")
-                        .next();
-                gis.close();
-                bis.close();
-                return config;
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(Base64.decode(string.substring(1), Base64.DEFAULT));
+                 GZIPInputStream gis = new GZIPInputStream(bis);
+                 ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = gis.read(buffer)) != -1) {
+                    bos.write(buffer, 0, read);
+                }
+                return bos.toString(StandardCharsets.UTF_8.name());
             } catch (Exception e) {
                 FileLog.e(e);
                 return null;
@@ -357,6 +395,64 @@ public class CloudSettingsHelper {
                 sb.append(valueTextView.getText());
             }
             info.setContentDescription(sb);
+        }
+    }
+
+    private class CloudDialogState {
+        private final WeakReference<BaseFragment> fragmentRef;
+        private final WeakReference<Theme.ResourcesProvider> resourcesProviderRef;
+        private final int account;
+        private final AtomicBoolean alive = new AtomicBoolean(true);
+        private WeakReference<TextViewSwitcher> syncedDateRef;
+
+        private CloudDialogState(BaseFragment fragment, int account) {
+            fragmentRef = new WeakReference<>(fragment);
+            resourcesProviderRef = new WeakReference<>(fragment.getResourceProvider());
+            this.account = account;
+        }
+
+        private void setSyncedDateView(TextViewSwitcher syncedDate) {
+            syncedDateRef = new WeakReference<>(syncedDate);
+        }
+
+        private boolean isAlive() {
+            BaseFragment fragment = fragmentRef.get();
+            return alive.get() && fragment != null && !fragment.isFinished && AndroidUtilities.isActivityRunning(fragment.getParentActivity());
+        }
+
+        private void setSyncedDateText(CharSequence text) {
+            if (!isAlive() || syncedDateRef == null) {
+                return;
+            }
+            TextViewSwitcher syncedDate = syncedDateRef.get();
+            if (syncedDate != null) {
+                syncedDate.setText(text);
+            }
+        }
+
+        private void updateSyncedDate() {
+            setSyncedDateText(formatSyncedDate(account));
+        }
+
+        private void showBulletin(int stringResId, String error) {
+            if (!isAlive()) {
+                return;
+            }
+            BaseFragment fragment = fragmentRef.get();
+            Context context = fragment != null ? fragment.getParentActivity() : null;
+            if (context == null) {
+                return;
+            }
+            Theme.ResourcesProvider resourcesProvider = resourcesProviderRef.get();
+            if (error == null) {
+                BulletinFactory.of(Bulletin.BulletinWindow.make(context), resourcesProvider).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(stringResId)).show();
+            } else {
+                BulletinFactory.of(Bulletin.BulletinWindow.make(context), resourcesProvider).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(stringResId), error).show();
+            }
+        }
+
+        private void dismiss() {
+            alive.set(false);
         }
     }
 }

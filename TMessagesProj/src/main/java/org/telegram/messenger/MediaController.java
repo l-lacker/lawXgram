@@ -133,6 +133,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import ru.llacker.lawxgram.SaveToDownloadReceiver;
 import ru.llacker.lawxgram.LawxConfig;
@@ -5129,7 +5130,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         private ArrayList<MessageObject> messageObjects;
         private HashMap<String, MessageObject> loadingMessageObjects = new HashMap<>();
         private float finishedProgress;
-        private boolean cancelled;
+        private volatile boolean cancelled;
         private boolean finished;
         private int copiedFiles;
         private CountDownLatch waitingForFile;
@@ -5152,7 +5153,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         public void start(Context context) {
             AndroidUtilities.runOnUIThread(() -> {
                 if (!finished) {
-                    SaveToDownloadReceiver.showNotification(context, notificationId, messageObjects.size(), () -> cancelled = true);
+                    SaveToDownloadReceiver.showNotification(notificationId, messageObjects.size(), this::cancel);
                 }
             }, 250);
 
@@ -5160,6 +5161,9 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 try {
                     if (Build.VERSION.SDK_INT >= 29) {
                         for (int b = 0, N = messageObjects.size(); b < N; b++) {
+                            if (cancelled) {
+                                break;
+                            }
                             MessageObject message = messageObjects.get(b);
                             if (processLivePhotoMessage(message)) {
                                 continue;
@@ -5221,6 +5225,9 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                         }
                         dir.mkdir();
                         for (int b = 0, N = messageObjects.size(); b < N; b++) {
+                            if (cancelled) {
+                                break;
+                            }
                             MessageObject message = messageObjects.get(b);
                             if (processLivePhotoMessage(message)) {
                                 continue;
@@ -5273,6 +5280,10 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                                 addMessageToLoad(message);
                                 waitingForFile.await();
                             }
+                            if (cancelled) {
+                                destFile.delete();
+                                break;
+                            }
                             if (sourceFile.exists()) {
                                 copyFile(sourceFile, destFile, message.getMimeType());
                                 copiedFiles++;
@@ -5282,9 +5293,22 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                     checkIfFinished();
                 } catch (Exception e) {
                     FileLog.e(e);
+                    cancel();
+                    checkIfFinished();
                 }
 
             }).start();
+        }
+
+        private void cancel() {
+            cancelled = true;
+            loadingMessageObjects.clear();
+            CountDownLatch latch = waitingForFile;
+            if (latch != null) {
+                while (latch.getCount() > 0) {
+                    latch.countDown();
+                }
+            }
         }
 
         private void checkIfFinished() {
@@ -5331,6 +5355,9 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 final TLRPC.Photo finalPhoto = media.photo;
                 final TLRPC.Document finalDoc = media.document;
                 AndroidUtilities.runOnUIThread(() -> {
+                    if (cancelled || finished) {
+                        return;
+                    }
                     if (needPhoto) {
                         String fileName = FileLoader.getAttachFileName(photoSize);
                         loadingMessageObjects.put(fileName, messageObject);
@@ -5423,6 +5450,9 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
 
         private void addMessageToLoad(MessageObject messageObject) {
             AndroidUtilities.runOnUIThread(() -> {
+                if (cancelled || finished) {
+                    return;
+                }
                 TLRPC.Document document = messageObject.getDocument();
                 if (messageObject.qualityToSave != null) {
                     document = messageObject.qualityToSave;
@@ -5551,7 +5581,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         }
 
         final File sourceFile = file;
-        final boolean[] cancelled = new boolean[]{false};
+        final AtomicBoolean cancelled = new AtomicBoolean();
         if (sourceFile.exists()) {
 
             var notificationId = SaveToDownloadReceiver.createNotificationId();
@@ -5560,7 +5590,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 try {
                     AndroidUtilities.runOnUIThread(() -> {
                         if (!finished[0]) {
-                            SaveToDownloadReceiver.showNotification(context, notificationId, 1, () -> cancelled[0] = true);
+                            SaveToDownloadReceiver.showNotification(notificationId, 1, () -> cancelled.set(true));
                         }
                     }, 250);
                 } catch (Exception e) {
@@ -5628,7 +5658,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                                 FileLog.e(e);
                             }
                             for (long a = 0; a < size; a += 4096) {
-                                if (cancelled[0]) {
+                                if (cancelled.get()) {
                                     break;
                                 }
                                 destination.transferFrom(source, a, Math.min(4096, size - a));
@@ -5644,7 +5674,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                             FileLog.e(e);
                             result = false;
                         }
-                        if (cancelled[0]) {
+                        if (cancelled.get()) {
                             destFile.delete();
                             result = false;
                         }

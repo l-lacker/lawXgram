@@ -43,6 +43,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.common.base.Charsets;
+import com.google.common.util.concurrent.ListenableFuture;
 //import com.google.mlkit.common.model.RemoteModelManager;
 //import com.google.mlkit.nl.translate.TranslateLanguage;
 //import com.google.mlkit.nl.translate.TranslateRemoteModel;
@@ -83,6 +84,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CancellationException;
 
 import ru.llacker.lawxgram.LawxConfig;
 import ru.llacker.lawxgram.translator.Translator;
@@ -116,6 +118,8 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
     private BaseFragment fragment;
     private Utilities.CallbackReturn<URLSpan, Boolean> onLinkPress;
     private boolean firstTranslation = true;
+    private ListenableFuture<?> translationFuture;
+    private int translationGeneration;
 
     public TranslateAlert2(
         Context context,
@@ -283,11 +287,20 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
     }
 
     public void translate() {
+        if (isDismissed()) {
+            return;
+        }
+        cancelTranslation();
+        final int generation = translationGeneration;
         var textWithEntities = Translator.textWithEntities(reqText == null ? "" : reqText.toString(), reqMessageEntities);
-        Translator.translate(textWithEntities, null, fromLanguage, null, new Translator.TranslateCallBack() {
+        translationFuture = Translator.translate(textWithEntities, null, fromLanguage, null, new Translator.TranslateCallBack() {
             @Override
             public void onSuccess(TLRPC.TL_textWithEntities translation, String sourceLanguage, String targetLanguage) {
                 AndroidUtilities.runOnUIThread(() -> {
+                    if (!canApplyTranslation(generation)) {
+                        return;
+                    }
+                    clearTranslationFuture(generation);
                     firstTranslation = false;
                     CharSequence translated = SpannableStringBuilder.valueOf(translation.text);
                     MessageObject.addEntitiesToText(translated, translation.entities, false, true, false, false);
@@ -300,9 +313,19 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
 
             @Override
             public void onError(Throwable t) {
+                if (t instanceof CancellationException) {
+                    return;
+                }
                 AndroidUtilities.runOnUIThread(() -> {
+                    if (!canApplyTranslation(generation)) {
+                        return;
+                    }
+                    clearTranslationFuture(generation);
                     String toLangRetry = toLanguage;
                     Translator.handleTranslationError(containerView.getContext(), t, () -> {
+                        if (!canApplyTranslation(generation)) {
+                            return;
+                        }
                         if (!firstTranslation) {
                             headerView.toLanguageTextView.setText(languageName(toLanguage = toLangRetry));
                         }
@@ -313,6 +336,25 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
                 });
             }
         });
+    }
+
+    private void cancelTranslation() {
+        translationGeneration++;
+        var currentFuture = translationFuture;
+        translationFuture = null;
+        if (currentFuture != null && !currentFuture.isDone()) {
+            currentFuture.cancel(true);
+        }
+    }
+
+    private boolean canApplyTranslation(int generation) {
+        return generation == translationGeneration && !isDismissed();
+    }
+
+    private void clearTranslationFuture(int generation) {
+        if (generation == translationGeneration) {
+            translationFuture = null;
+        }
     }
 
     public static final String[] userAgents = new String[] {
@@ -896,6 +938,7 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
             ConnectionsManager.getInstance(currentAccount).cancelRequest(reqId, true);
             reqId = null;
         }
+        cancelTranslation();
         super.dismissInternal();
     }
 

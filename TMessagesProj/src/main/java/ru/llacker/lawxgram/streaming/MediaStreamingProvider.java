@@ -15,6 +15,7 @@ import android.system.OsConstants;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 
@@ -101,10 +102,14 @@ public class MediaStreamingProvider extends ContentProvider {
         if (!"r".equals(mode)) {
             throw new SecurityException("Can only open files for read");
         }
+        Handler handler = callbackHandler;
+        if (handler == null) {
+            throw new FileNotFoundException("Provider is not ready");
+        }
         var callback = new ProxyFileDescriptorCallback(uri);
         var storageManager = StorageManagerCompat.from(getContext());
         try {
-            return storageManager.openProxyFileDescriptor(ParcelFileDescriptor.MODE_READ_ONLY, callback, callbackHandler);
+            return storageManager.openProxyFileDescriptor(ParcelFileDescriptor.MODE_READ_ONLY, callback, handler);
         } catch (IOException e) {
             throw new FileNotFoundException("Failed to open file");
         }
@@ -139,6 +144,8 @@ public class MediaStreamingProvider extends ContentProvider {
 
     private static class ProxyFileDescriptorCallback extends StorageManagerCompat.ProxyFileDescriptorCallbackCompat {
         private long size;
+        private long currentOffset = -1;
+        private boolean dataSourceOpened;
         private final DataSource dataSource;
         private final DataSpec.Builder dataSpecBuilder;
 
@@ -158,19 +165,33 @@ public class MediaStreamingProvider extends ContentProvider {
 
         @Override
         public int onRead(long offset, int size, byte[] data) throws ErrnoException {
+            if (size <= 0) {
+                return 0;
+            }
+            int totalRead = 0;
             try {
-                dataSpecBuilder.setPosition(offset);
-                dataSpecBuilder.setLength(size);
-
-                dataSource.open(dataSpecBuilder.build());
-                var bytesRead = dataSource.read(data, 0, size);
-
-                return bytesRead;
+                while (totalRead < size) {
+                    openDataSource(offset + totalRead);
+                    int bytesRead = dataSource.read(data, totalRead, size - totalRead);
+                    if (bytesRead > 0) {
+                        currentOffset += bytesRead;
+                        totalRead += bytesRead;
+                    } else if (bytesRead == C.RESULT_END_OF_INPUT) {
+                        closeDataSource();
+                        return totalRead;
+                    } else if (bytesRead == C.RESULT_NOTHING_READ) {
+                        if (totalRead > 0) {
+                            return totalRead;
+                        }
+                        throw new ErrnoException("onRead", OsConstants.EAGAIN);
+                    } else {
+                        return totalRead;
+                    }
+                }
+                return totalRead;
             } catch (IOException e) {
                 FileLog.e(e);
                 throw new ErrnoException("onRead", OsConstants.EBADF);
-            } finally {
-                closeDataSource();
             }
         }
 
@@ -199,7 +220,22 @@ public class MediaStreamingProvider extends ContentProvider {
                 dataSource.close();
             } catch (IOException e) {
                 FileLog.e(e);
+            } finally {
+                dataSourceOpened = false;
+                currentOffset = -1;
             }
+        }
+
+        private void openDataSource(long offset) throws IOException {
+            if (dataSourceOpened && currentOffset == offset) {
+                return;
+            }
+            closeDataSource();
+            dataSpecBuilder.setPosition(offset);
+            dataSpecBuilder.setLength(C.LENGTH_UNSET);
+            dataSource.open(dataSpecBuilder.build());
+            dataSourceOpened = true;
+            currentOffset = offset;
         }
     }
 }

@@ -204,7 +204,7 @@ public class LinkManager {
         if ("user".equalsIgnoreCase(first) || "chat".equalsIgnoreCase(first)) {
             var id = Utilities.parseLong(uri.getQueryParameter("id"));
             if (id > 0) {
-                UserHelper.getInstance(currentAccount).openByDialogId("chat".equalsIgnoreCase(first) ? -id : id, activity, this::presentFragment, progress);
+                UserHelper.getInstance(currentAccount).openByDialogId("chat".equalsIgnoreCase(first) ? -id : id, activity, progress);
                 return true;
             }
             return false;

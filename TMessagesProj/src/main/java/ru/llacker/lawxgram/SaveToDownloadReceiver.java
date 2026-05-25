@@ -14,15 +14,16 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationsController;
 import org.telegram.messenger.R;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SaveToDownloadReceiver extends BroadcastReceiver {
     public static final String NOTIFICATION_TAG = "MediaController";
     public static final String ACTION_CANCEL_DOWNLOAD = ApplicationLoader.getApplicationId() + ".CANCEL_SAVE_TO_DOWNLOAD";
     public static final String EXTRA_ID = ApplicationLoader.getApplicationId() + ".NOTIFICATION_ID";
-    private static final HashMap<Integer, Runnable> callbacks = new HashMap<>();
-    private static final HashMap<Integer, NotificationCompat.Builder> builders = new HashMap<>();
-    private static int notificationIdStart = 0;
+    private static final ConcurrentHashMap<Integer, Runnable> callbacks = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Integer, NotificationCompat.Builder> builders = new ConcurrentHashMap<>();
+    private static final AtomicInteger notificationIdStart = new AtomicInteger();
     @SuppressLint("StaticFieldLeak")
     private static NotificationManagerCompat notificationManager;
 
@@ -38,21 +39,24 @@ public class SaveToDownloadReceiver extends BroadcastReceiver {
         if (ACTION_CANCEL_DOWNLOAD.equals(intent.getAction())) {
             int notificationId = intent.getIntExtra(EXTRA_ID, -1);
             if (notificationId >= 0) {
-                var runnable = callbacks.get(notificationId);
-                if (runnable != null) {
-                    runnable.run();
+                var runnable = callbacks.remove(notificationId);
+                try {
+                    if (runnable != null) {
+                        runnable.run();
+                    }
+                } finally {
+                    cancelNotification(notificationId);
                 }
-                cancelNotification(notificationId);
             }
         }
     }
 
     public static int createNotificationId() {
-        return notificationIdStart++;
+        return notificationIdStart.getAndIncrement();
     }
 
-    public static void showNotification(Context context, int notificationId, int count, Runnable callback) {
-        context = ApplicationLoader.applicationContext;
+    public static void showNotification(int notificationId, int count, Runnable callback) {
+        Context context = ApplicationLoader.applicationContext;
         NotificationsController.checkOtherNotificationsChannel();
         var intent = new Intent(context, SaveToDownloadReceiver.class)
                 .setAction(ACTION_CANCEL_DOWNLOAD)

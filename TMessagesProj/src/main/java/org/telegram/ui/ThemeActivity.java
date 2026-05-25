@@ -125,6 +125,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ThemeActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
     private static final long LOCATION_UPDATE_TIMEOUT = 15000;
+    private static final long LOCATION_UPDATE_INTERVAL = 1000;
 
     public final static int THEME_TYPE_BASIC = 0;
     public final static int THEME_TYPE_NIGHT = 1;
@@ -1800,12 +1801,12 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
         updatingLocation = true;
         LocationManager locationManager = (LocationManager) ApplicationLoader.applicationContext.getSystemService(Context.LOCATION_SERVICE);
         try {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, gpsLocationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_UPDATE_INTERVAL, 0, gpsLocationListener);
         } catch (Exception e) {
             FileLog.e(e);
         }
         try {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 0, networkLocationListener);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, LOCATION_UPDATE_INTERVAL, 0, networkLocationListener);
         } catch (Exception e) {
             FileLog.e(e);
         }

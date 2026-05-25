@@ -5162,7 +5162,11 @@ public class MediaDataController extends BaseController {
                         builder.setCategories(category);
                     }
                     if (bitmap != null) {
-                        builder.setIcon(IconCompat.createWithAdaptiveBitmap(convertBitmapToAdaptive(bitmap)));
+                        try {
+                            builder.setIcon(IconCompat.createWithAdaptiveBitmap(convertBitmapToAdaptive(bitmap)));
+                        } finally {
+                            AndroidUtilities.recycleBitmap(bitmap);
+                        }
                     } else {
                         builder.setIcon(IconCompat.createWithResource(ApplicationLoader.applicationContext, R.drawable.shortcut_user_adaptive));
                     }
@@ -5862,6 +5866,7 @@ public class MediaDataController extends BaseController {
                         }
                         avatarDrawable.setBounds(0, 0, size, size);
                         avatarDrawable.draw(canvas);
+                        bitmap = result;
                     }
                 } catch (Throwable e) {
                     FileLog.e(e);
@@ -5874,7 +5879,11 @@ public class MediaDataController extends BaseController {
                             .setIntent(shortcutIntent);
 
             if (bitmap != null) {
-                pinShortcutInfo.setIcon(IconCompat.createWithAdaptiveBitmap(convertBitmapToAdaptive(bitmap)));
+                try {
+                    pinShortcutInfo.setIcon(IconCompat.createWithAdaptiveBitmap(convertBitmapToAdaptive(bitmap)));
+                } finally {
+                    AndroidUtilities.recycleBitmap(bitmap);
+                }
             } else {
                 if (user != null) {
                     if (user.bot) {

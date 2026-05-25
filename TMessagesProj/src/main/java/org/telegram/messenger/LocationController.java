@@ -72,6 +72,7 @@ public class LocationController extends BaseController implements NotificationCe
     private ILocationServiceProvider.IMapApiClient apiClient;
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private final static long UPDATE_INTERVAL = 1000, FASTEST_INTERVAL = 1000;
+    private final static long FALLBACK_PROVIDER_UPDATE_INTERVAL = 1000;
     private final static int BACKGROUD_UPDATE_TIME = 30 * 1000;
     private final static int LOCATION_ACQUIRE_TIME = 10 * 1000;
     private final static int FOREGROUND_UPDATE_TIME = 20 * 1000;
@@ -829,17 +830,17 @@ public class LocationController extends BaseController implements NotificationCe
         }
         if (!ok) {
             try {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, gpsLocationListener);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, FALLBACK_PROVIDER_UPDATE_INTERVAL, 0, gpsLocationListener);
             } catch (Exception e) {
                 FileLog.e(e);
             }
             try {
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 0, networkLocationListener);
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, FALLBACK_PROVIDER_UPDATE_INTERVAL, 0, networkLocationListener);
             } catch (Exception e) {
                 FileLog.e(e);
             }
             try {
-                locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 1, 0, passiveLocationListener);
+                locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, FALLBACK_PROVIDER_UPDATE_INTERVAL, 0, passiveLocationListener);
             } catch (Exception e) {
                 FileLog.e(e);
             }

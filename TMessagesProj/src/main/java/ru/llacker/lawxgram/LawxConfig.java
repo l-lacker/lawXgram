@@ -299,14 +299,23 @@ public class LawxConfig {
         }
     }
 
-    private static Gson gson;
+    private static volatile Gson gson;
+
+    private static Gson getConfigGson() {
+        if (gson == null) {
+            synchronized (sync) {
+                if (gson == null) {
+                    gson = new GsonBuilder()
+                            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+                            .create();
+                }
+            }
+        }
+        return gson;
+    }
 
     public static String exportConfigs() {
-        if (gson == null) {
-            gson = new GsonBuilder()
-                    .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-                    .create();
-        }
+        Gson gson = getConfigGson();
         SharedPreferences preferences = LawxConfig.getConfigPreferences();
         Map<String, Object> exportedValues = new HashMap<>(preferences.getAll());
         exportedValues.remove(PreferencesMigrationHelper.getMigrationMarkerKey(PREFS_NAME));
@@ -314,11 +323,7 @@ public class LawxConfig {
     }
 
     public static void importConfigs(String config) {
-        if (gson == null) {
-            gson = new GsonBuilder()
-                    .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-                    .create();
-        }
+        Gson gson = getConfigGson();
         //noinspection unchecked
         Map<String, ?> map = gson.fromJson(config, Map.class);
         SharedPreferences preferences = LawxConfig.getConfigPreferences();
@@ -854,11 +859,15 @@ public class LawxConfig {
     }
 
     public static void setStickerSize(float size) {
-        stickerSize = size;
+        setStickerSizeInMemory(size);
         SharedPreferences preferences = LawxConfig.getConfigPreferences();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putFloat("stickerSize", stickerSize);
         editor.apply();
+    }
+
+    public static void setStickerSizeInMemory(float size) {
+        stickerSize = size;
     }
 
     public static void setTranslationProvider(String provider) {

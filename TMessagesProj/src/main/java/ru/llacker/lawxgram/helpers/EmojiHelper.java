@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Build;
-import android.os.SystemClock;
 import android.text.TextPaint;
 
 import androidx.annotation.NonNull;
@@ -18,6 +17,7 @@ import com.jaredrummler.truetypeparser.TTFFile;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.DispatchQueue;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
@@ -33,14 +33,16 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import ru.llacker.lawxgram.LawxConfig;
 
@@ -58,14 +60,16 @@ public class EmojiHelper {
             "\uD83D\uDE28"
     };
     private static TextPaint textPaint;
+    private static final DispatchQueue deleteQueue = new DispatchQueue("lawxEmojiDeleteQueue");
 
-    private final HashMap<String, Typeface> typefaceCache = new HashMap<>();
+    private final ConcurrentHashMap<String, Typeface> typefaceCache = new ConcurrentHashMap<>();
     private final ArrayList<EmojiPack> emojiPacksInfo = new ArrayList<>();
     private final SharedPreferences preferences = PreferencesMigrationHelper.getSharedPreferences(ApplicationLoader.applicationContext, PREFS_NAME, LEGACY_PREFS_NAME);
 
     private String emojiPack;
     private Bitmap systemEmojiPreview;
-    private String pendingDeleteEmojiPackId;
+    private final Object emojiFilesLock = new Object();
+    private final AtomicReference<PendingDeleteSession> pendingDeleteSession = new AtomicReference<>();
     private Bulletin emojiPackBulletin;
 
     static {
@@ -248,7 +252,7 @@ public class EmojiHelper {
 
     public String getSelectedPackName() {
         if (LawxConfig.useSystemEmoji) return "System";
-        return emojiPacksInfo
+        return getEmojiPacks()
                 .stream()
                 .filter(emojiPackInfo -> Objects.equals(emojiPackInfo.packId, emojiPack))
                 .findFirst()
@@ -265,13 +269,23 @@ public class EmojiHelper {
     }
 
     public ArrayList<EmojiPack> getEmojiPacks() {
-        return emojiPacksInfo;
+        synchronized (emojiFilesLock) {
+            return new ArrayList<>(emojiPacksInfo);
+        }
     }
 
     public ArrayList<EmojiPack> getEmojiPacksInfo() {
-        return emojiPacksInfo.stream()
-                .filter(e -> !e.getPackId().equals(pendingDeleteEmojiPackId))
-                .collect(Collectors.toCollection(ArrayList::new));
+        synchronized (emojiFilesLock) {
+            PendingDeleteSession pendingSession = pendingDeleteSession.get();
+            String pendingPackId = pendingSession != null ? pendingSession.packId : null;
+            ArrayList<EmojiPack> packs = new ArrayList<>(emojiPacksInfo.size());
+            for (EmojiPack emojiPack : emojiPacksInfo) {
+                if (!emojiPack.getPackId().equals(pendingPackId)) {
+                    packs.add(emojiPack);
+                }
+            }
+            return packs;
+        }
     }
 
     public EmojiPack getCurrentEmojiPackInfo() {
@@ -279,7 +293,8 @@ public class EmojiHelper {
         if ("default".equals(selected)) {
             return DEFAULT_PACK;
         }
-        return emojiPacksInfo.stream()
+        return getEmojiPacks()
+                .stream()
                 .filter(emojiPackInfo -> emojiPackInfo != null && emojiPackInfo.packId.equals(selected))
                 .findFirst()
                 .orElse(null);
@@ -318,34 +333,48 @@ public class EmojiHelper {
         } catch (IOException e) {
             FileLog.e(e);
         }
-        File emojiDir = new File(EMOJI_PACKS_FILE_DIR + fontName + "_v" + sb);
-        boolean isAlreadyInstalled = getAllEmojis().stream()
-                .filter(EmojiHelper::isValidPack)
-                .anyMatch(file -> file.getName().endsWith(sb.toString()));
-        if (isAlreadyInstalled) {
-            if (checkInstallation) {
-                return null;
-            } else {
+        synchronized (emojiFilesLock) {
+            File emojiDir = new File(EMOJI_PACKS_FILE_DIR + fontName + "_v" + sb);
+            boolean isAlreadyInstalled = getAllEmojis().stream()
+                    .filter(EmojiHelper::isValidPack)
+                    .anyMatch(file -> file.getName().endsWith(sb.toString()));
+            if (isAlreadyInstalled) {
+                if (checkInstallation) {
+                    return null;
+                } else {
+                    EmojiPack emojiPack = new EmojiPack();
+                    emojiPack.loadFromFile(emojiDir);
+                    return emojiPack;
+                }
+            }
+            boolean installed = false;
+            try {
+                emojiDir.mkdirs();
+                File emojiFont = new File(emojiDir, fontName + ".ttf");
+                try (FileInputStream inputStream = new FileInputStream(emojiFile)) {
+                    AndroidUtilities.copyFile(inputStream, emojiFont);
+                }
+                Typeface typeface = Typeface.createFromFile(emojiFont);
+                Bitmap bitmap = drawPreviewBitmap(typeface);
+                File emojiPreview = new File(emojiDir, "preview.png");
+                try {
+                    try (FileOutputStream outputStream = new FileOutputStream(emojiPreview)) {
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                    }
+                } finally {
+                    AndroidUtilities.recycleBitmap(bitmap);
+                }
                 EmojiPack emojiPack = new EmojiPack();
                 emojiPack.loadFromFile(emojiDir);
+                emojiPacksInfo.add(emojiPack);
+                installed = true;
                 return emojiPack;
+            } finally {
+                if (!installed) {
+                    deleteFolder(emojiDir);
+                }
             }
         }
-        emojiDir.mkdirs();
-        File emojiFont = new File(emojiDir, fontName + ".ttf");
-        try (FileInputStream inputStream = new FileInputStream(emojiFile)) {
-            AndroidUtilities.copyFile(inputStream, emojiFont);
-        }
-        Typeface typeface = Typeface.createFromFile(emojiFont);
-        Bitmap bitmap = drawPreviewBitmap(typeface);
-        File emojiPreview = new File(emojiDir, "preview.png");
-        try (FileOutputStream outputStream = new FileOutputStream(emojiPreview)) {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-        }
-        EmojiPack emojiPack = new EmojiPack();
-        emojiPack.loadFromFile(emojiDir);
-        emojiPacksInfo.add(emojiPack);
-        return emojiPack;
     }
 
     private Bitmap drawPreviewBitmap(Typeface typeface) {
@@ -378,15 +407,17 @@ public class EmojiHelper {
     }
 
     private void loadEmojiPacks() {
-        getAllEmojis().stream()
-                .filter(EmojiHelper::isValidPack)
-                .sorted(Comparator.comparingLong(File::lastModified))
-                .map(file -> {
-                    EmojiPack emojiPack = new EmojiPack();
-                    emojiPack.loadFromFile(file);
-                    return emojiPack;
-                })
-                .forEach(emojiPacksInfo::add);
+        synchronized (emojiFilesLock) {
+            getAllEmojis().stream()
+                    .filter(EmojiHelper::isValidPack)
+                    .sorted(Comparator.comparingLong(File::lastModified))
+                    .map(file -> {
+                        EmojiPack emojiPack = new EmojiPack();
+                        emojiPack.loadFromFile(file);
+                        return emojiPack;
+                    })
+                    .forEach(emojiPacksInfo::add);
+        }
     }
 
     public boolean isSelectedEmojiPack() {
@@ -396,26 +427,41 @@ public class EmojiHelper {
     }
 
     public void cancelableDelete(BaseFragment fragment, EmojiPack emojiPack, OnBulletinAction onUndoBulletinAction) {
-        if (emojiPackBulletin != null && pendingDeleteEmojiPackId != null) {
+        if (fragment == null || fragment.isFinished || fragment.getParentActivity() == null) {
+            return;
+        }
+        if (pendingDeleteSession.get() != null) {
             AlertDialog progressDialog = new AlertDialog(fragment.getParentActivity(), 3);
-            emojiPackBulletin.hide(false, 0);
-            new Thread() {
-                @Override
-                public void run() {
-                    do {
-                        SystemClock.sleep(50);
-                    } while (pendingDeleteEmojiPackId != null);
-                    AndroidUtilities.runOnUIThread(() -> {
-                        progressDialog.dismiss();
-                        cancelableDelete(fragment, emojiPack, onUndoBulletinAction);
-                    });
-                }
-            }.start();
+            Bulletin currentBulletin = emojiPackBulletin;
+            if (currentBulletin != null) {
+                currentBulletin.hide(false, 0);
+            }
+            WeakReference<BaseFragment> fragmentRef = new WeakReference<>(fragment);
+            WeakReference<AlertDialog> progressDialogRef = new WeakReference<>(progressDialog);
+            deleteQueue.postRunnable(() -> {
+                boolean pendingDeleteFinished = waitForPendingDelete();
+                AndroidUtilities.runOnUIThread(() -> {
+                    AlertDialog currentProgressDialog = progressDialogRef.get();
+                    if (currentProgressDialog != null) {
+                        currentProgressDialog.dismiss();
+                    }
+                    BaseFragment currentFragment = fragmentRef.get();
+                    if (!pendingDeleteFinished || currentFragment == null || currentFragment.isFinished || currentFragment.getParentActivity() == null) {
+                        return;
+                    }
+                    cancelableDelete(currentFragment, emojiPack, onUndoBulletinAction);
+                });
+            });
             progressDialog.setCanCancel(false);
             progressDialog.showDelayed(150);
             return;
         }
-        pendingDeleteEmojiPackId = emojiPack.getPackId();
+        String pendingPackId = emojiPack.getPackId();
+        PendingDeleteSession deleteSession = setPendingDeleteEmojiPackId(pendingPackId);
+        if (deleteSession == null) {
+            cancelableDelete(fragment, emojiPack, onUndoBulletinAction);
+            return;
+        }
         onUndoBulletinAction.onPreStart();
         boolean wasSelected = emojiPack.getPackId().equals(this.emojiPack);
         if (wasSelected) {
@@ -430,36 +476,83 @@ public class EmojiHelper {
         );
         Bulletin.UndoButton undoButton = new Bulletin.UndoButton(fragment.getParentActivity(), false).setUndoAction(() -> {
             if (wasSelected) {
-                EmojiHelper.getInstance().setEmojiPack(pendingDeleteEmojiPackId, false);
+                EmojiHelper.getInstance().setEmojiPack(pendingPackId, false);
             }
-            pendingDeleteEmojiPackId = null;
+            clearPendingDeleteSession(deleteSession);
             onUndoBulletinAction.onUndo();
-        }).setDelayedAction(() -> new Thread() {
-            @Override
-            public void run() {
+        }).setDelayedAction(() -> deleteQueue.postRunnable(() -> {
+            try {
                 deleteEmojiPack(emojiPack);
                 reloadEmoji();
-                pendingDeleteEmojiPackId = null;
+            } finally {
+                clearPendingDeleteSession(deleteSession);
             }
-        }.start());
+        }));
         bulletinLayout.setButton(undoButton);
-        emojiPackBulletin = Bulletin.make(fragment, bulletinLayout, Bulletin.DURATION_LONG).show();
+        final Bulletin[] currentBulletin = new Bulletin[1];
+        currentBulletin[0] = Bulletin.make(fragment, bulletinLayout, Bulletin.DURATION_LONG)
+                .setOnHideListener(() -> {
+                    if (emojiPackBulletin == currentBulletin[0]) {
+                        emojiPackBulletin = null;
+                    }
+                }).show();
+        emojiPackBulletin = currentBulletin[0];
+    }
+
+    public void dismissEmojiPackBulletin() {
+        AndroidUtilities.runOnUIThread(() -> {
+            Bulletin currentBulletin = emojiPackBulletin;
+            if (currentBulletin != null) {
+                currentBulletin.hide(false, 0);
+                emojiPackBulletin = null;
+            }
+        });
+    }
+
+    private PendingDeleteSession setPendingDeleteEmojiPackId(String packId) {
+        PendingDeleteSession session = new PendingDeleteSession(packId);
+        return pendingDeleteSession.compareAndSet(null, session) ? session : null;
+    }
+
+    private void clearPendingDeleteSession(PendingDeleteSession session) {
+        if (session != null && pendingDeleteSession.compareAndSet(session, null)) {
+            session.finish();
+        }
+    }
+
+    private boolean waitForPendingDelete() {
+        PendingDeleteSession session = pendingDeleteSession.get();
+        if (session == null) {
+            return true;
+        }
+        try {
+            session.await();
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     public void deleteEmojiPack(EmojiPack emojiPack) {
-        File emojiDir = new File(emojiPack.getFileLocation()).getParentFile();
-        if (emojiDir != null && emojiDir.exists()) {
-            File[] files = emojiDir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
+        synchronized (emojiFilesLock) {
+            String packId = emojiPack.getPackId();
+            typefaceCache.remove(packId);
+            File emojiDir = new File(emojiPack.getFileLocation()).getParentFile();
+            if (emojiDir != null && emojiDir.exists()) {
+                File[] files = emojiDir.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        file.delete();
+                    }
                 }
+                emojiDir.delete();
             }
-            emojiDir.delete();
-        }
-        emojiPacksInfo.remove(emojiPack);
-        if (emojiPack.getPackId().equals(this.emojiPack)) {
-            EmojiHelper.getInstance().setEmojiPack("default", false);
+            emojiPacksInfo.remove(emojiPack);
+            typefaceCache.remove(packId);
+            if (packId.equals(this.emojiPack)) {
+                EmojiHelper.getInstance().setEmojiPack("default", false);
+            }
         }
     }
 
@@ -473,6 +566,23 @@ public class EmojiHelper {
         void onPreStart();
 
         void onUndo();
+    }
+
+    private static final class PendingDeleteSession {
+        private final String packId;
+        private final CountDownLatch completionLatch = new CountDownLatch(1);
+
+        private PendingDeleteSession(String packId) {
+            this.packId = packId;
+        }
+
+        private void await() throws InterruptedException {
+            completionLatch.await();
+        }
+
+        private void finish() {
+            completionLatch.countDown();
+        }
     }
 
     public static class EmojiPack {

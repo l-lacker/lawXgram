@@ -19,6 +19,7 @@ import java.io.IOException;
 public final class StorageManagerCompat {
 
     private final static String TAG = "StorageManagerCompat";
+    private static final int PIPE_BUFFER_SIZE = 64 * 1024;
 
     @NonNull
     public static StorageManagerCompat from(@NonNull Context context) {
@@ -49,16 +50,15 @@ public final class StorageManagerCompat {
                 try (final ParcelFileDescriptor.AutoCloseOutputStream os =
                              new ParcelFileDescriptor.AutoCloseOutputStream(pipe[1])) {
                     long offset = 0;
-                    byte[] buffer = new byte[4 * 1024];
+                    byte[] buffer = new byte[PIPE_BUFFER_SIZE];
                     while (true) {
                         int size = callback.onRead(offset, buffer.length, buffer);
-                        if (size == 0) {
+                        if (size <= 0) {
                             break;
                         }
                         offset += size;
                         os.write(buffer, 0, size);
                     }
-                    callback.onRelease();
                 } catch (IOException | ErrnoException e) {
                     Log.e(TAG, "Failed to read file.", e);
 
@@ -66,6 +66,12 @@ public final class StorageManagerCompat {
                         pipe[1].closeWithError(e.getMessage());
                     } catch (IOException exc) {
                         Log.e(TAG, "Can't even close PFD with error.", exc);
+                    }
+                } finally {
+                    try {
+                        callback.onRelease();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to release callback.", e);
                     }
                 }
             });

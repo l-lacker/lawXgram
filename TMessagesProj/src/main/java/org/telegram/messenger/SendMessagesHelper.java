@@ -646,6 +646,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
     @SuppressLint("MissingPermission")
     public static class LocationProvider {
+        private static final long LOCATION_PROVIDER_UPDATE_INTERVAL = 1000;
 
         public interface LocationProviderDelegate {
             void onLocationAcquired(Location location);
@@ -721,12 +722,12 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 locationManager = (LocationManager) ApplicationLoader.applicationContext.getSystemService(Context.LOCATION_SERVICE);
             }
             try {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, gpsLocationListener);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_PROVIDER_UPDATE_INTERVAL, 0, gpsLocationListener);
             } catch (Exception e) {
                 FileLog.e(e);
             }
             try {
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 0, networkLocationListener);
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, LOCATION_PROVIDER_UPDATE_INTERVAL, 0, networkLocationListener);
             } catch (Exception e) {
                 FileLog.e(e);
             }

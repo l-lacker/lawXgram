@@ -1,6 +1,7 @@
 package ru.llacker.lawxgram.settings;
 
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -343,7 +344,16 @@ public abstract class BaseLawxSettingsActivity extends BaseFragment {
             LocaleController.getString(R.string.RestartNow),
             Bulletin.DURATION_PROLONG,
             false,
-            () -> AndroidUtilities.runOnUIThread(() -> SettingsHelper.restartApplication(getParentActivity()), 120)
+            () -> {
+                Activity activity = getParentActivity();
+                if (activity != null) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (AndroidUtilities.isActivityRunning(activity)) {
+                            SettingsHelper.restartApplication(activity);
+                        }
+                    }, 120);
+                }
+            }
         ).show();
     }
 

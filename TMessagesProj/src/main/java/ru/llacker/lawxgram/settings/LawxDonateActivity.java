@@ -83,14 +83,19 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
 
-        billingClient.endConnection();
+        if (billingClient != null) {
+            billingClient.endConnection();
+        }
     }
 
     private void showErrorAlert(BillingResult result) {
-        if (getParentActivity() == null || result.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED || result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+        if (result.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED || result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
             return;
         }
         AndroidUtilities.runOnUIThread(() -> {
+            if (!canShowBillingUi()) {
+                return;
+            }
             if (TextUtils.isEmpty(result.getDebugMessage())) {
                 BulletinFactory.of(this).createErrorBulletin(LocaleController.getString(R.string.ErrorOccurred) + ": " + result.getResponseCode()).show();
             } else {
@@ -101,6 +106,10 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
                 showDialog(builder.create());
             }
         });
+    }
+
+    private boolean canShowBillingUi() {
+        return !isFinished && !isFinishing() && AndroidUtilities.isActivityRunning(getParentActivity());
     }
 
     @Override
@@ -116,6 +125,9 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
             @Override
             public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                    if (isFinished || billingClient == null) {
+                        return;
+                    }
                     var productList =
                             SKUS.stream().map(s -> QueryProductDetailsParams.Product.newBuilder()
                                             .setProductId(s)
@@ -129,10 +141,11 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
                         if (queryResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                             if (!list.isEmpty()) {
                                 AndroidUtilities.runOnUIThread(() -> {
-                                    productDetails = list;
-                                    if (listView != null) {
-                                        listView.adapter.update(true);
+                                    if (!canShowBillingUi() || listView == null || listView.adapter == null) {
+                                        return;
                                     }
+                                    productDetails = list;
+                                    listView.adapter.update(true);
                                 });
                             }
                         } else {
@@ -177,7 +190,7 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
     protected void onItemClick(UItem item, View view, int position, float x, float y) {
         var id = item.id;
         if (id >= donateRow && id < cryptoRow) {
-            if (productDetails != null && productDetails.size() > id - donateRow) {
+            if (billingClient != null && getParentActivity() != null && productDetails != null && productDetails.size() > id - donateRow) {
                 var productDetailsParamsList =
                         ImmutableList.of(
                                 BillingFlowParams.ProductDetailsParams.newBuilder()
@@ -230,6 +243,9 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
                     billingClient.consumeAsync(params, (billingResult1, s) -> {
                         if (billingResult1.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                             AndroidUtilities.runOnUIThread(() -> {
+                                if (!canShowBillingUi() || fragmentView == null) {
+                                    return;
+                                }
                                 BulletinFactory.of(this).createErrorBulletin(LocaleController.getString(R.string.DonateThankYou)).show();
                                 try {
                                     fragmentView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
@@ -251,6 +267,9 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
     }
 
     public static class QRCodeBottomSheet extends BottomSheet {
+
+        private ImageView qrImageView;
+        private Bitmap qrBitmap;
 
         private QRCodeBottomSheet(Context context, ConfigHelper.Crypto crypto, Theme.ResourcesProvider resourcesProvider) {
             super(context, false, resourcesProvider);
@@ -276,17 +295,19 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
             imageContainer.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(16), Theme.getColor(Theme.key_windowBackgroundWhite)));
             linearLayout.addView(imageContainer, LayoutHelper.createLinear(220 + 16, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 18, 0, 18, 0));
 
-            var imageView = new ImageView(context);
-            imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-            imageView.setOutlineProvider(new ViewOutlineProvider() {
+            qrImageView = new ImageView(context);
+            qrImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+            qrImageView.setOutlineProvider(new ViewOutlineProvider() {
                 @Override
                 public void getOutline(View view, Outline outline) {
                     outline.setRoundRect(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight(), AndroidUtilities.dp(12));
                 }
             });
-            imageView.setClipToOutline(true);
-            imageView.setImageBitmap(createQR(crypto.address));
-            imageContainer.addView(imageView, LayoutHelper.createLinear(220, 220));
+            qrImageView.setClipToOutline(true);
+            qrBitmap = createQR(crypto.address);
+            qrImageView.setImageBitmap(qrBitmap);
+            imageContainer.addView(qrImageView, LayoutHelper.createLinear(220, 220));
+            super.setOnDismissListener(dialog -> recycleQrBitmap());
 
             View.OnClickListener copy = (v) -> {
                 AndroidUtilities.addToClipboard(crypto.address);
@@ -321,6 +342,17 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
                 FileLog.e(e);
             }
             return null;
+        }
+
+        private void recycleQrBitmap() {
+            if (qrImageView != null) {
+                qrImageView.setImageDrawable(null);
+                qrImageView = null;
+            }
+            if (qrBitmap != null) {
+                AndroidUtilities.recycleBitmap(qrBitmap);
+                qrBitmap = null;
+            }
         }
 
         public static void showForCrypto(BaseFragment fragment, ConfigHelper.Crypto crypto) {
