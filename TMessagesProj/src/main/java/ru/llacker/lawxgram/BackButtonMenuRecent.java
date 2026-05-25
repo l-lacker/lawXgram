@@ -197,6 +197,14 @@ public class BackButtonMenuRecent {
 
     public static void addToRecentDialogs(int currentAccount, long dialogId) {
         LinkedList<Long> recentDialog = getRecentDialogs(currentAccount);
+        if (!recentDialog.isEmpty() && recentDialog.getFirst() == dialogId) {
+            if (recentDialog.size() <= MAX_RECENT_DIALOGS) {
+                return;
+            }
+            trimRecentDialogs(recentDialog);
+            saveRecentDialogsAsync(currentAccount, recentDialog);
+            return;
+        }
         for (int i = 0; i < recentDialog.size(); i++) {
             if (recentDialog.get(i) == dialogId) {
                 recentDialog.remove(i);
@@ -204,10 +212,18 @@ public class BackButtonMenuRecent {
             }
         }
 
-        if (recentDialog.size() > MAX_RECENT_DIALOGS) {
+        recentDialog.addFirst(dialogId);
+        trimRecentDialogs(recentDialog);
+        saveRecentDialogsAsync(currentAccount, recentDialog);
+    }
+
+    private static void trimRecentDialogs(LinkedList<Long> recentDialog) {
+        while (recentDialog.size() > MAX_RECENT_DIALOGS) {
             recentDialog.removeLast();
         }
-        recentDialog.addFirst(dialogId);
+    }
+
+    private static void saveRecentDialogsAsync(int currentAccount, LinkedList<Long> recentDialog) {
         LinkedList<Long> finalRecentDialog = new LinkedList<>(recentDialog);
         Utilities.globalQueue.postRunnable(() -> saveRecentDialogs(currentAccount, finalRecentDialog));
     }
