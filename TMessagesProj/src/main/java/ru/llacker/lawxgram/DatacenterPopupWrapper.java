@@ -18,6 +18,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.LinkSpanDrawable;
 import org.telegram.ui.Components.PopupSwipeBackLayout;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import ru.llacker.lawxgram.helpers.UserHelper;
@@ -25,6 +26,8 @@ import ru.llacker.lawxgram.settings.BaseLawxSettingsActivity;
 
 public class DatacenterPopupWrapper {
 
+    private static final long DATACENTER_CHECK_CACHE_TIME = 2 * 60 * 1000L;
+    private static final long DATACENTER_CHECK_TIMEOUT = 60_000L;
     private static final ArrayList<DatacenterInfo> datacenterInfos = new ArrayList<>(5) {{
         for (int a = 1; a <= 5; a++) {
             add(new DatacenterInfo(a));
@@ -87,14 +90,41 @@ public class DatacenterPopupWrapper {
         if (datacenterInfo.checking) {
             return;
         }
-        if (!force && SystemClock.elapsedRealtime() - datacenterInfo.availableCheckTime < 2 * 60 * 1000) {
+        if (!force && SystemClock.elapsedRealtime() - datacenterInfo.availableCheckTime < DATACENTER_CHECK_CACHE_TIME) {
             return;
         }
         datacenterInfo.checking = true;
+        int generation = ++datacenterInfo.checkGeneration;
         updateStatus(item, resourcesProvider, true);
+        WeakReference<DatacenterPopupWrapper> wrapperRef = new WeakReference<>(this);
+        WeakReference<ActionBarMenuSubItem> itemRef = new WeakReference<>(item);
+        WeakReference<Theme.ResourcesProvider> resourcesProviderRef = new WeakReference<>(resourcesProvider);
+        Runnable timeoutRunnable = () -> finishDatacenterCheck(datacenterInfo, generation, null, wrapperRef, itemRef, resourcesProviderRef);
+        datacenterInfo.timeoutRunnable = timeoutRunnable;
+        AndroidUtilities.runOnUIThread(timeoutRunnable, DATACENTER_CHECK_TIMEOUT);
         datacenterInfo.pingId = ConnectionsManager.getInstance(UserConfig.selectedAccount).checkProxy("ping.neko", datacenterInfo.id, null, null, null, time -> AndroidUtilities.runOnUIThread(() -> {
+            if (datacenterInfo.checkGeneration == generation) {
+                AndroidUtilities.cancelRunOnUIThread(timeoutRunnable);
+            }
+            finishDatacenterCheck(datacenterInfo, generation, time, wrapperRef, itemRef, resourcesProviderRef);
+        }));
+    }
+
+    private static void finishDatacenterCheck(DatacenterInfo datacenterInfo, int generation, Long time, WeakReference<DatacenterPopupWrapper> wrapperRef, WeakReference<ActionBarMenuSubItem> itemRef, WeakReference<Theme.ResourcesProvider> resourcesProviderRef) {
+        if (datacenterInfo.checkGeneration != generation) {
+            return;
+        }
+        if (datacenterInfo.timeoutRunnable != null) {
+            datacenterInfo.timeoutRunnable = null;
+        }
+        boolean wasChecking = datacenterInfo.checking;
+        datacenterInfo.checking = false;
+        if (time == null) {
+            updateDatacenterStatus(datacenterInfo, wrapperRef, itemRef, resourcesProviderRef);
+            return;
+        }
+        if (time != -1 || wasChecking) {
             datacenterInfo.availableCheckTime = SystemClock.elapsedRealtime();
-            datacenterInfo.checking = false;
             if (time == -1) {
                 datacenterInfo.available = false;
                 datacenterInfo.ping = 0;
@@ -102,11 +132,17 @@ public class DatacenterPopupWrapper {
                 datacenterInfo.ping = time;
                 datacenterInfo.available = true;
             }
-            if (disposed) {
-                return;
-            }
-            updateStatus(item, resourcesProvider, true);
-        }));
+        }
+        updateDatacenterStatus(datacenterInfo, wrapperRef, itemRef, resourcesProviderRef);
+    }
+
+    private static void updateDatacenterStatus(DatacenterInfo datacenterInfo, WeakReference<DatacenterPopupWrapper> wrapperRef, WeakReference<ActionBarMenuSubItem> itemRef, WeakReference<Theme.ResourcesProvider> resourcesProviderRef) {
+        DatacenterPopupWrapper wrapper = wrapperRef.get();
+        ActionBarMenuSubItem item = itemRef.get();
+        if (wrapper == null || wrapper.disposed || item == null) {
+            return;
+        }
+        wrapper.updateStatus(item, resourcesProviderRef.get(), true);
     }
 
     public void updateStatus(ActionBarMenuSubItem item, Theme.ResourcesProvider resourcesProvider, boolean animated) {
@@ -142,6 +178,8 @@ public class DatacenterPopupWrapper {
         public boolean checking;
         public boolean available;
         public long availableCheckTime;
+        public int checkGeneration;
+        public Runnable timeoutRunnable;
 
         public DatacenterInfo(int i) {
             id = i;
