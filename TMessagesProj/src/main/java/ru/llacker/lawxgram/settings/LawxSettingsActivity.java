@@ -72,7 +72,7 @@ public class LawxSettingsActivity extends BaseLawxSettingsActivity implements Fa
     private final int sponsorRow = 100;
 
     private ActionBarMenuItem syncItem;
-    private final ArrayList<SearchResult> searchArray = createSearchArray();
+    private ArrayList<SearchResult> searchArray;
     private final ArrayList<CharSequence> resultNames = new ArrayList<>();
     private final ArrayList<SearchResult> searchResults = new ArrayList<>();
     private boolean searchWas;
@@ -262,6 +262,9 @@ public class LawxSettingsActivity extends BaseLawxSettingsActivity implements Fa
             Utilities.searchQueue.cancelRunnable(searchRunnable);
             searchRunnable = null;
         }
+        searchArray = null;
+        searchResults.clear();
+        resultNames.clear();
         super.onFragmentDestroy();
     }
 
@@ -314,14 +317,16 @@ public class LawxSettingsActivity extends BaseLawxSettingsActivity implements Fa
                     continue;
                 }
                 if (TextUtils.isEmpty(item.slug)) continue;
-                searchResultList.add(new SearchResult(i * 1000 + item.id, item.text.toString(), null, fragmentTitle, fragmentTitle.equals(headerText) ? null : headerText, icon, () -> {
+                String slug = item.slug;
+                String title = item.text.toString();
+                searchResultList.add(new SearchResult(i * 1000 + item.id, title, null, fragmentTitle, fragmentTitle.equals(headerText) ? null : headerText, icon, () -> {
                     var fragment1 = createFragment(icon);
                     presentFragment(fragment1);
-                    AndroidUtilities.runOnUIThread(() -> fragment1.scrollToRow(item.slug, () -> {
+                    AndroidUtilities.runOnUIThread(() -> fragment1.scrollToRow(slug, () -> {
                     }));
                 }));
             }
-            searchResultList.add(new SearchResult(10000 + i, fragmentTitle, icon, () -> presentFragment(fragment)));
+            searchResultList.add(new SearchResult(10000 + i, fragmentTitle, icon, () -> presentFragment(createFragment(icon))));
         }
         searchResultList.add(new SearchResult(8000, LocaleController.getString(R.string.EmojiUseDefault), null, LocaleController.getString(R.string.Chat), LocaleController.getString(R.string.EmojiSets), R.drawable.msg_theme, () -> {
             var fragment = new LawxEmojiSettingsActivity();
@@ -337,6 +342,13 @@ public class LawxSettingsActivity extends BaseLawxSettingsActivity implements Fa
         searchResultList.add(new SearchResult(20004, LocaleController.getString(R.string.Donate), LocaleController.getString(R.string.DonateAbout), R.drawable.msg2_help, () -> presentFragment(new LawxDonateActivity())));
 
         return searchResultList;
+    }
+
+    private ArrayList<SearchResult> getSearchArray() {
+        if (searchArray == null) {
+            searchArray = createSearchArray();
+        }
+        return searchArray;
     }
 
     private void fillSearchItems(ArrayList<UItem> items) {
@@ -361,17 +373,19 @@ public class LawxSettingsActivity extends BaseLawxSettingsActivity implements Fa
             listView.adapter.update(true);
             return;
         }
+        ArrayList<SearchResult> currentSearchArray = getSearchArray();
+        int highlightColor = getThemedColor(Theme.key_windowBackgroundWhiteBlueText4);
         Utilities.searchQueue.postRunnable(searchRunnable = () -> {
             var results = new ArrayList<SearchResult>();
             var names = new ArrayList<CharSequence>();
             var lowerQuery = text.toLowerCase();
-            for (var result : searchArray) {
+            for (var result : currentSearchArray) {
                 var title = result.searchTitle.toLowerCase();
                 var index = title.indexOf(lowerQuery);
                 var matchLen = lowerQuery.length();
                 if (index < 0) continue;
                 var ssb = new SpannableStringBuilder(result.searchTitle);
-                ssb.setSpan(new ForegroundColorSpan(getThemedColor(Theme.key_windowBackgroundWhiteBlueText4)), index, Math.min(index + matchLen, ssb.length()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                ssb.setSpan(new ForegroundColorSpan(highlightColor), index, Math.min(index + matchLen, ssb.length()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 results.add(result);
                 names.add(ssb);
             }
