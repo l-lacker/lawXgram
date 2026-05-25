@@ -18,8 +18,8 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.LinkSpanDrawable;
 import org.telegram.ui.Components.PopupSwipeBackLayout;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import ru.llacker.lawxgram.helpers.UserHelper;
 import ru.llacker.lawxgram.settings.BaseLawxSettingsActivity;
@@ -35,9 +35,13 @@ public class DatacenterPopupWrapper {
     }};
 
     public ActionBarPopupWindow.ActionBarPopupWindowLayout windowLayout;
+    private final Theme.ResourcesProvider resourcesProvider;
+    private final HashMap<DatacenterInfo, ActionBarMenuSubItem> datacenterItems = new HashMap<>(5);
+    private final HashMap<DatacenterInfo, Integer> activeCheckGenerations = new HashMap<>(5);
     private boolean disposed;
 
     public DatacenterPopupWrapper(BaseFragment fragment, PopupSwipeBackLayout swipeBackLayout, Theme.ResourcesProvider resourcesProvider) {
+        this.resourcesProvider = resourcesProvider;
         var context = fragment.getParentActivity();
         windowLayout = new ActionBarPopupWindow.ActionBarPopupWindowLayout(context, swipeBackLayout != null ? 0 : R.drawable.popup_fixed_alert4, resourcesProvider, ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK);
         windowLayout.setFitItems(true);
@@ -50,6 +54,7 @@ public class DatacenterPopupWrapper {
             @Override
             public void onViewDetachedFromWindow(View v) {
                 disposed = true;
+                cancelPendingDatacenterChecks();
             }
         });
 
@@ -63,14 +68,15 @@ public class DatacenterPopupWrapper {
         for (var datacenterInfo : datacenterInfos) {
             var item = ActionBarMenuItem.addItem(windowLayout, 0, UserHelper.formatDCString(datacenterInfo.id), false, resourcesProvider);
             item.setTag(datacenterInfo);
+            datacenterItems.put(datacenterInfo, item);
             item.setOnClickListener(view -> {
                 if (datacenterInfo.checking) {
                     return;
                 }
-                checkDatacenter(item, true, resourcesProvider);
+                checkDatacenter(item, true);
             });
             updateStatus(item, resourcesProvider, false);
-            checkDatacenter(item, false, resourcesProvider);
+            checkDatacenter(item, false);
         }
 
         ActionBarMenuItem.addColoredGap(windowLayout, resourcesProvider);
@@ -85,7 +91,7 @@ public class DatacenterPopupWrapper {
         windowLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 8, 0, 0));
     }
 
-    private void checkDatacenter(ActionBarMenuSubItem item, boolean force, Theme.ResourcesProvider resourcesProvider) {
+    private void checkDatacenter(ActionBarMenuSubItem item, boolean force) {
         var datacenterInfo = (DatacenterInfo) item.getTag();
         if (datacenterInfo.checking) {
             return;
@@ -95,32 +101,26 @@ public class DatacenterPopupWrapper {
         }
         datacenterInfo.checking = true;
         int generation = ++datacenterInfo.checkGeneration;
+        activeCheckGenerations.put(datacenterInfo, generation);
         updateStatus(item, resourcesProvider, true);
-        WeakReference<DatacenterPopupWrapper> wrapperRef = new WeakReference<>(this);
-        WeakReference<ActionBarMenuSubItem> itemRef = new WeakReference<>(item);
-        WeakReference<Theme.ResourcesProvider> resourcesProviderRef = new WeakReference<>(resourcesProvider);
-        Runnable timeoutRunnable = () -> finishDatacenterCheck(datacenterInfo, generation, null, wrapperRef, itemRef, resourcesProviderRef);
+        Runnable timeoutRunnable = () -> finishDatacenterCheck(datacenterInfo, generation, null);
         datacenterInfo.timeoutRunnable = timeoutRunnable;
         AndroidUtilities.runOnUIThread(timeoutRunnable, DATACENTER_CHECK_TIMEOUT);
         datacenterInfo.pingId = ConnectionsManager.getInstance(UserConfig.selectedAccount).checkProxy("ping.neko", datacenterInfo.id, null, null, null, time -> AndroidUtilities.runOnUIThread(() -> {
-            if (datacenterInfo.checkGeneration == generation) {
-                AndroidUtilities.cancelRunOnUIThread(timeoutRunnable);
-            }
-            finishDatacenterCheck(datacenterInfo, generation, time, wrapperRef, itemRef, resourcesProviderRef);
+            finishDatacenterCheck(datacenterInfo, generation, time);
         }));
     }
 
-    private static void finishDatacenterCheck(DatacenterInfo datacenterInfo, int generation, Long time, WeakReference<DatacenterPopupWrapper> wrapperRef, WeakReference<ActionBarMenuSubItem> itemRef, WeakReference<Theme.ResourcesProvider> resourcesProviderRef) {
+    private void finishDatacenterCheck(DatacenterInfo datacenterInfo, int generation, Long time) {
         if (datacenterInfo.checkGeneration != generation) {
             return;
         }
-        if (datacenterInfo.timeoutRunnable != null) {
-            datacenterInfo.timeoutRunnable = null;
-        }
+        cancelDatacenterTimeout(datacenterInfo);
+        activeCheckGenerations.remove(datacenterInfo);
         boolean wasChecking = datacenterInfo.checking;
         datacenterInfo.checking = false;
         if (time == null) {
-            updateDatacenterStatus(datacenterInfo, wrapperRef, itemRef, resourcesProviderRef);
+            updateDatacenterStatus(datacenterInfo);
             return;
         }
         if (time != -1 || wasChecking) {
@@ -133,16 +133,38 @@ public class DatacenterPopupWrapper {
                 datacenterInfo.available = true;
             }
         }
-        updateDatacenterStatus(datacenterInfo, wrapperRef, itemRef, resourcesProviderRef);
+        updateDatacenterStatus(datacenterInfo);
     }
 
-    private static void updateDatacenterStatus(DatacenterInfo datacenterInfo, WeakReference<DatacenterPopupWrapper> wrapperRef, WeakReference<ActionBarMenuSubItem> itemRef, WeakReference<Theme.ResourcesProvider> resourcesProviderRef) {
-        DatacenterPopupWrapper wrapper = wrapperRef.get();
-        ActionBarMenuSubItem item = itemRef.get();
-        if (wrapper == null || wrapper.disposed || item == null) {
+    private void updateDatacenterStatus(DatacenterInfo datacenterInfo) {
+        if (disposed) {
             return;
         }
-        wrapper.updateStatus(item, resourcesProviderRef.get(), true);
+        ActionBarMenuSubItem item = datacenterItems.get(datacenterInfo);
+        if (item == null) {
+            return;
+        }
+        updateStatus(item, resourcesProvider, true);
+    }
+
+    private void cancelPendingDatacenterChecks() {
+        if (activeCheckGenerations.isEmpty()) {
+            return;
+        }
+        for (DatacenterInfo datacenterInfo : new ArrayList<>(activeCheckGenerations.keySet())) {
+            Integer generation = activeCheckGenerations.get(datacenterInfo);
+            if (generation != null) {
+                finishDatacenterCheck(datacenterInfo, generation, null);
+            }
+        }
+    }
+
+    private void cancelDatacenterTimeout(DatacenterInfo datacenterInfo) {
+        Runnable timeoutRunnable = datacenterInfo.timeoutRunnable;
+        if (timeoutRunnable != null) {
+            AndroidUtilities.cancelRunOnUIThread(timeoutRunnable);
+            datacenterInfo.timeoutRunnable = null;
+        }
     }
 
     public void updateStatus(ActionBarMenuSubItem item, Theme.ResourcesProvider resourcesProvider, boolean animated) {
