@@ -59,12 +59,20 @@ public class CloudSettingsHelper {
     private long localSyncedDate = preferences.getLong("updated_at", -1);
     private boolean autoSync = preferences.getBoolean("auto_sync", false);
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private int pendingCloudSyncAccount = UserConfig.selectedAccount;
     private final Runnable cloudSyncRunnable = () -> {
         if (!autoSync) {
             return;
         }
-        CloudSettingsHelper.getInstance().syncToCloud((success, error) -> {
+        int account = pendingCloudSyncAccount;
+        if (!isValidAccount(account)) {
+            return;
+        }
+        CloudSettingsHelper.getInstance().syncToCloud(account, (success, error) -> {
             if (!success) {
+                if (account != UserConfig.selectedAccount) {
+                    return;
+                }
                 var global = BulletinFactory.global();
                 if (error == null) {
                     global.createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.CloudConfigSyncFailed)).show();
@@ -93,7 +101,10 @@ public class CloudSettingsHelper {
             return;
         }
         Theme.ResourcesProvider resourcesProvider = parentFragment.getResourceProvider();
-        int selectedAccount = UserConfig.selectedAccount;
+        int selectedAccount = parentFragment.getCurrentAccount();
+        if (!isValidAccount(selectedAccount)) {
+            return;
+        }
         CloudDialogState dialogState = new CloudDialogState(parentFragment, selectedAccount);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context, resourcesProvider);
@@ -175,7 +186,15 @@ public class CloudSettingsHelper {
         if (!autoSync) {
             return;
         }
+        pendingCloudSyncAccount = UserConfig.selectedAccount;
+        if (!isValidAccount(pendingCloudSyncAccount)) {
+            return;
+        }
         handler.postDelayed(cloudSyncRunnable, 1200);
+    }
+
+    private boolean isValidAccount(int account) {
+        return account >= 0 && account < UserConfig.MAX_ACCOUNT_COUNT;
     }
 
     private void syncToCloud(Utilities.Callback2<Boolean, String> callback) {
