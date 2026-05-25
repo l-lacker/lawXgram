@@ -859,11 +859,15 @@ public class LawxConfig {
     }
 
     public static void setStickerSize(float size) {
-        stickerSize = size;
+        setStickerSizeInMemory(size);
         SharedPreferences preferences = LawxConfig.getConfigPreferences();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putFloat("stickerSize", stickerSize);
         editor.apply();
+    }
+
+    public static void setStickerSizeInMemory(float size) {
+        stickerSize = size;
     }
 
     public static void setTranslationProvider(String provider) {

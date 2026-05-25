@@ -1,5 +1,7 @@
 package ru.llacker.lawxgram.settings;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -116,14 +118,42 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
                 resetAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
                 resetAnimator.addUpdateListener(valueAnimator -> {
                     var floatValue = (float) valueAnimator.getAnimatedValue();
-                    LawxConfig.setStickerSize(floatValue);
+                    LawxConfig.setStickerSizeInMemory(floatValue);
                     stickerCell.setValue(floatValue);
+                });
+                resetAnimator.addListener(new AnimatorListenerAdapter() {
+                    private boolean finished;
+
+                    private void finish(Animator animation) {
+                        if (finished) {
+                            return;
+                        }
+                        finished = true;
+                        LawxConfig.setStickerSizeInMemory(14.0f);
+                        stickerCell.setValue(14.0f);
+                        if (resetAnimator == animation) {
+                            resetAnimator = null;
+                        }
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        finish(animation);
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        finish(animation);
+                    }
                 });
                 resetAnimator.start();
             } else {
-                LawxConfig.setStickerSize(14.0f);
+                LawxConfig.setStickerSizeInMemory(14.0f);
             }
-            item.floatValue = 14.0f;
+            LawxConfig.setStickerSize(14.0f);
+            if (item != null) {
+                item.floatValue = 14.0f;
+            }
         });
         AndroidUtilities.updateViewVisibilityAnimated(resetItem, Float.compare(LawxConfig.stickerSize, 14.0f) != 0, 1f, false);
 
@@ -157,8 +187,15 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
 
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
-        items.add(StickerSizeCellFactory.of(stickerSizeRow, LocaleController.getString(R.string.StickerSize), LawxConfig.stickerSize, progress -> {
-            LawxConfig.setStickerSize(progress);
+        items.add(StickerSizeCellFactory.of(stickerSizeRow, LocaleController.getString(R.string.StickerSize), LawxConfig.stickerSize, (progress, stop) -> {
+            LawxConfig.setStickerSizeInMemory(progress);
+            var item = listView.findItemByItemId(stickerSizeRow);
+            if (item != null) {
+                item.floatValue = progress;
+            }
+            if (stop) {
+                LawxConfig.setStickerSize(progress);
+            }
             if (progress != 14.0f && resetItem.getVisibility() != View.VISIBLE) {
                 AndroidUtilities.updateViewVisibilityAnimated(resetItem, true, 0.5f, true);
             }
@@ -585,9 +622,9 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
 
             setWillNotDraw(false);
 
-            sizeBar = new AltSeekbar(context, progress -> {
+            sizeBar = new AltSeekbar(context, (progress, stop) -> {
                 setValue(progress);
-                if (onDrag != null) onDrag.run(progress);
+                if (onDrag != null) onDrag.run(progress, stop);
             }, 2, 20, LocaleController.getString(R.string.StickerSize), LocaleController.getString(R.string.StickerSizeLeft), LocaleController.getString(R.string.StickerSizeRight), resourcesProvider);
             sizeBar.setValue(LawxConfig.stickerSize);
             addView(sizeBar, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
@@ -629,9 +666,11 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
         private final int min, max;
         private float currentValue;
         private int roundedValue;
+        private boolean dragging;
+        private boolean dragCommitted;
 
         public interface OnDrag {
-            void run(float progress);
+            void run(float progress, boolean stop);
         }
 
         public AltSeekbar(Context context, AltSeekbar.OnDrag onDrag, int min, int max, String title, String left, String right, Theme.ResourcesProvider resourcesProvider) {
@@ -674,12 +713,32 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
 
             seekBarView = new SeekBarView(context, true, resourcesProvider);
             seekBarView.setReportChanges(true);
-            seekBarView.setDelegate((stop, progress) -> {
-                currentValue = min + (max - min) * progress;
-                onDrag.run(currentValue);
-                if (Math.round(currentValue) != roundedValue) {
-                    roundedValue = Math.round(currentValue);
-                    updateText();
+            seekBarView.setDelegate(new SeekBarView.SeekBarViewDelegate() {
+                @Override
+                public void onSeekBarDrag(boolean stop, float progress) {
+                    currentValue = min + (max - min) * progress;
+                    if (stop) {
+                        dragCommitted = true;
+                    }
+                    onDrag.run(currentValue, stop);
+                    if (Math.round(currentValue) != roundedValue) {
+                        roundedValue = Math.round(currentValue);
+                        updateText();
+                    }
+                }
+
+                @Override
+                public void onSeekBarPressed(boolean pressed) {
+                    if (pressed) {
+                        dragging = true;
+                        dragCommitted = false;
+                    } else if (dragging) {
+                        dragging = false;
+                        if (!dragCommitted) {
+                            dragCommitted = true;
+                            onDrag.run(currentValue, true);
+                        }
+                    }
                 }
             });
             addView(seekBarView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 38 + 6, Gravity.TOP, 6, 68, 6, 0));
