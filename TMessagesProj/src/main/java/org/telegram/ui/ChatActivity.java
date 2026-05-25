@@ -337,6 +337,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34061,16 +34062,22 @@ public class ChatActivity extends BaseFragment implements
                 });
                 break;
             } case OPTION_SAVE_TO_GALLERY_STICKER: {
-                if (Build.VERSION.SDK_INT >= 23 && (Build.VERSION.SDK_INT <= 28 || BuildVars.NO_SCOPED_STORAGE) && getParentActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    getParentActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 4);
+                Activity parentActivity = getParentActivity();
+                if (parentActivity == null) {
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 23 && (Build.VERSION.SDK_INT <= 28 || BuildVars.NO_SCOPED_STORAGE) && parentActivity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    parentActivity.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 4);
                     selectedObject = null;
                     selectedObjectGroup = null;
                     selectedObjectToEditCaption = null;
                     return;
                 }
-                getMessageHelper().saveStickerToGallery(getParentActivity(), selectedObject, (uri) -> {
-                    if (BulletinFactory.canShowBulletin(ChatActivity.this)) {
-                        BulletinFactory.of(this).createDownloadBulletin(BulletinFactory.FileType.STICKER, themeDelegate).show();
+                WeakReference<ChatActivity> chatActivityRef = new WeakReference<>(this);
+                getMessageHelper().saveStickerToGallery(parentActivity, selectedObject, (uri) -> {
+                    ChatActivity chatActivity = chatActivityRef.get();
+                    if (chatActivity != null && !chatActivity.isFinished && chatActivity.isLastFragment() && BulletinFactory.canShowBulletin(chatActivity)) {
+                        BulletinFactory.of(chatActivity).createDownloadBulletin(BulletinFactory.FileType.STICKER, chatActivity.themeDelegate).show();
                     }
                 });
                 break;

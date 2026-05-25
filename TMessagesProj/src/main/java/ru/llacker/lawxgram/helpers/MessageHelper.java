@@ -379,11 +379,20 @@ public class MessageHelper extends BaseController {
 
     private static void saveStickerToGallery(Activity activity, String path, boolean video, boolean animated, Utilities.Callback<Uri> callback) {
         if (path == null) return;
+        var activityRef = new WeakReference<>(activity);
+        Context saveContext = ApplicationLoader.applicationContext;
+        Utilities.Callback<Uri> safeCallback = callback == null ? null : uri -> {
+            Activity callbackActivity = activityRef.get();
+            if (callbackActivity == null || callbackActivity.isFinishing() || Build.VERSION.SDK_INT >= 17 && callbackActivity.isDestroyed()) {
+                return;
+            }
+            callback.run(uri);
+        };
         Utilities.globalQueue.postRunnable(() -> {
             try {
                 if (video || animated) {
                     StickerHelper.convertStickerFormat(path, animated, path1 -> Utilities.globalQueue.postRunnable(() ->
-                            MediaController.saveFile(path1, activity, 0, null, null, callback)));
+                            MediaController.saveFile(path1, saveContext, 0, null, null, safeCallback)));
                 } else {
                     var image = BitmapFactory.decodeFile(path);
                     if (image != null) {
@@ -392,7 +401,7 @@ public class MessageHelper extends BaseController {
                             try (var stream = new FileOutputStream(file)) {
                                 image.compress(Bitmap.CompressFormat.PNG, 100, stream);
                             }
-                            MediaController.saveFile(file.toString(), activity, 0, null, null, callback);
+                            MediaController.saveFile(file.toString(), saveContext, 0, null, null, safeCallback);
                         } finally {
                             AndroidUtilities.recycleBitmap(image);
                         }
