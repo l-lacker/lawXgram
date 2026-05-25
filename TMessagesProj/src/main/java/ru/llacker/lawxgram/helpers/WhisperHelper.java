@@ -6,6 +6,7 @@ import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Base64OutputStream;
 import android.util.TypedValue;
 import android.view.inputmethod.EditorInfo;
 import android.widget.LinearLayout;
@@ -33,9 +34,9 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.LaunchActivity;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -46,10 +47,14 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okio.BufferedSink;
 import ru.llacker.lawxgram.LawxConfig;
 
 public class WhisperHelper {
     private static final int MAX_TRANSCRIBE_WORKERS = Math.max(1, Math.min(2, Runtime.getRuntime().availableProcessors()));
+    private static final MediaType WHISPER_REQUEST_MEDIA_TYPE = MediaType.get("application/json");
+    private static final String WHISPER_JSON_PREFIX = "{\"audio\":\"";
+    private static final String WHISPER_JSON_SUFFIX = "\",\"vad_filter\":false}";
     private static OkHttpClient okHttpClient;
     private static final Gson gson = new Gson();
     private static final ThreadPoolExecutor executorService = new ThreadPoolExecutor(
@@ -244,6 +249,38 @@ public class WhisperHelper {
         }
     }
 
+    private static long getBase64Length(long bytes) {
+        return ((bytes + 2) / 3) * 4;
+    }
+
+    private static RequestBody createAudioRequestBody(File audioFile) {
+        return new RequestBody() {
+            @Override
+            public MediaType contentType() {
+                return WHISPER_REQUEST_MEDIA_TYPE;
+            }
+
+            @Override
+            public long contentLength() {
+                return WHISPER_JSON_PREFIX.length() + getBase64Length(audioFile.length()) + WHISPER_JSON_SUFFIX.length();
+            }
+
+            @Override
+            public void writeTo(@NonNull BufferedSink sink) throws IOException {
+                sink.writeUtf8(WHISPER_JSON_PREFIX);
+                try (var input = new FileInputStream(audioFile);
+                     var output = new Base64OutputStream(sink.outputStream(), Base64.NO_WRAP | Base64.NO_CLOSE)) {
+                    var buffer = new byte[64 * 1024];
+                    int read;
+                    while ((read = input.read(buffer)) != -1) {
+                        output.write(buffer, 0, read);
+                    }
+                }
+                sink.writeUtf8(WHISPER_JSON_SUFFIX);
+            }
+        };
+    }
+
     public static void requestWorkersAi(String path, boolean video, BiConsumer<String, Exception> callback) {
         if (TextUtils.isEmpty(LawxConfig.cfAccountID) || TextUtils.isEmpty(LawxConfig.cfApiToken)) {
             runCallback(callback, null, new Exception(LocaleController.getString(R.string.CloudflareCredentialsNotSet)));
@@ -261,46 +298,43 @@ public class WhisperHelper {
                     extractAudio(path, audioFile.getAbsolutePath());
                 } catch (IOException e) {
                     FileLog.e(e);
+                    if (audioFile.exists() && !audioFile.delete()) {
+                        FileLog.e("can't delete failed extracted audio " + audioFile);
+                    }
+                    runCallback(callback, null, e);
+                    return;
                 }
-                audioPath = audioFile.exists() ? audioFile : new File(path);
+                audioPath = audioFile;
             } else {
                 audioPath = new File(path);
             }
-            byte[] audio;
             try {
-                audio = Files.readAllBytes(audioPath.toPath());
-            } catch (IOException e) {
+                var client = getOkHttpClient();
+                var request = new Request.Builder()
+                        .url("https://api.cloudflare.com/client/v4/accounts/" + LawxConfig.cfAccountID + "/ai/run/@cf/openai/whisper-large-v3-turbo")
+                        .header("Authorization", "Bearer " + LawxConfig.cfApiToken)
+                        .post(createAudioRequestBody(audioPath));
+                try (var response = client.newCall(request.build()).execute()) {
+                    var responseBody = response.body();
+                    if (responseBody == null) {
+                        runCallback(callback, null, new Exception("EMPTY_RESPONSE"));
+                        return;
+                    }
+                    var body = responseBody.string();
+                    var whisperResponse = gson.fromJson(body, WhisperResponse.class);
+                    if (whisperResponse != null && Boolean.TRUE.equals(whisperResponse.success) && whisperResponse.result != null) {
+                        runCallback(callback, whisperResponse.result.text, null);
+                    } else {
+                        var errors = whisperResponse != null ? whisperResponse.errors : null;
+                        runCallback(callback, null, new Exception(errors != null && errors.size() == 1 ? errors.get(0).message : String.valueOf(errors)));
+                    }
+                }
+            } catch (Exception e) {
                 runCallback(callback, null, e);
-                return;
             } finally {
                 if (audioFile != null && audioPath == audioFile && audioFile.exists() && !audioFile.delete()) {
                     FileLog.e("can't delete extracted audio " + audioFile);
                 }
-            }
-            var payload = new WhisperRequest();
-            payload.audio = Base64.encodeToString(audio, Base64.NO_WRAP);
-            payload.vadFilter = false;
-            var client = getOkHttpClient();
-            var request = new Request.Builder()
-                    .url("https://api.cloudflare.com/client/v4/accounts/" + LawxConfig.cfAccountID + "/ai/run/@cf/openai/whisper-large-v3-turbo")
-                    .header("Authorization", "Bearer " + LawxConfig.cfApiToken)
-                    .post(RequestBody.create(gson.toJson(payload), MediaType.get("application/json")));
-            try (var response = client.newCall(request.build()).execute()) {
-                var responseBody = response.body();
-                if (responseBody == null) {
-                    runCallback(callback, null, new Exception("EMPTY_RESPONSE"));
-                    return;
-                }
-                var body = responseBody.string();
-                var whisperResponse = gson.fromJson(body, WhisperResponse.class);
-                if (whisperResponse != null && Boolean.TRUE.equals(whisperResponse.success) && whisperResponse.result != null) {
-                    runCallback(callback, whisperResponse.result.text, null);
-                } else {
-                    var errors = whisperResponse != null ? whisperResponse.errors : null;
-                    runCallback(callback, null, new Exception(errors != null && errors.size() == 1 ? errors.get(0).message : String.valueOf(errors)));
-                }
-            } catch (Exception e) {
-                runCallback(callback, null, e);
             }
         });
     }
@@ -309,15 +343,6 @@ public class WhisperHelper {
         if (callback != null) {
             AndroidUtilities.runOnUIThread(() -> callback.accept(text, exception));
         }
-    }
-
-    public static class WhisperRequest {
-        @SerializedName("audio")
-        @Expose
-        public String audio;
-        @SerializedName("vad_filter")
-        @Expose
-        public Boolean vadFilter;
     }
 
     public static class Result {
