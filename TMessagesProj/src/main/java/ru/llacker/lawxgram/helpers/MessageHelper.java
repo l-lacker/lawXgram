@@ -77,6 +77,7 @@ public class MessageHelper extends BaseController {
     private static final MessageHelper[] Instance = new MessageHelper[UserConfig.MAX_ACCOUNT_COUNT];
     private static final CharsetDecoder utf8Decoder = StandardCharsets.UTF_8.newDecoder();
     private static final SpannableStringBuilder[] spannedStrings = new SpannableStringBuilder[5];
+    private static final long DELETE_HISTORY_SEARCH_TIMEOUT = 60_000L;
 
     private final ArrayDeque<DeleteHistoryJob> deleteHistoryQueue = new ArrayDeque<>();
     private boolean deleteHistoryRunning;
@@ -775,7 +776,21 @@ public class MessageHelper extends BaseController {
             req.flags |= 2;
         }
         req.hash = hash;
-        getConnectionsManager().sendRequest(req, (response, error) -> {
+        SearchRequestState requestState = new SearchRequestState();
+        Runnable timeoutRunnable = () -> {
+            if (!requestState.tryFinish()) {
+                return;
+            }
+            if (requestState.requestId != 0) {
+                getConnectionsManager().cancelRequest(requestState.requestId, true);
+            }
+            finishCallback.run(false);
+        };
+        requestState.requestId = getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (!requestState.tryFinish()) {
+                return;
+            }
+            AndroidUtilities.cancelRunOnUIThread(timeoutRunnable);
             if (response instanceof TLRPC.messages_Messages res) {
                 if (response instanceof TLRPC.TL_messages_messagesNotModified || res.messages.isEmpty()) {
                     finishCallback.run(true);
@@ -802,6 +817,16 @@ public class MessageHelper extends BaseController {
                 finishCallback.run(false);
             }
         }, ConnectionsManager.RequestFlagFailOnServerErrors);
+        AndroidUtilities.runOnUIThread(timeoutRunnable, DELETE_HISTORY_SEARCH_TIMEOUT);
+    }
+
+    private static class SearchRequestState {
+        private final AtomicBoolean finished = new AtomicBoolean();
+        private volatile int requestId;
+
+        private boolean tryFinish() {
+            return finished.compareAndSet(false, true);
+        }
     }
 
     private long calcMessagesHash(ArrayList<TLRPC.Message> messages) {
