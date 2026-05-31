@@ -529,7 +529,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
             videoPlayImageView.setVisibility(GONE);
             videoInfoContainer.setVisibility(INVISIBLE);
         }
-        roundVideoBadgeContainer.setVisibility(photoEntry.isVideo && !photoEntry.isLivePhoto() && photoEntry.sendAsRoundVideo ? VISIBLE : GONE);
+        setRoundVideoBadgeVisible(photoEntry.isVideo && !photoEntry.isLivePhoto() && photoEntry.sendAsRoundVideo);
         if (photoEntry.coverPath != null) {
             imageView.setImage(photoEntry.coverPath, null, Theme.chat_attachEmptyDrawable);
         } else if (photoEntry.thumbPath != null) {
@@ -553,6 +553,11 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         setHasSpoiler(entry.hasSpoiler);
         setHighQuality(entry.isHighQuality() && isChecked());
         setStarsPrice(entry.starsAmount, selectedMultiple);
+    }
+
+    public void setRoundVideoBadgeVisible(boolean visible) {
+        roundVideoBadgeContainer.setVisibility(visible ? VISIBLE : GONE);
+        roundVideoBadgeContainer.setAlpha(1.0f);
     }
 
     public void setPhotoEntry(MediaController.SearchImage searchImage, boolean needCheckShow, boolean last) {
@@ -591,7 +596,8 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         checkBox.setAlpha(showing ? 0.0f : 1.0f);
         videoInfoContainer.setAlpha(showing ? 0.0f : 1.0f);
         roundVideoBadgeContainer.setAlpha(showing ? 0.0f : 1.0f);
-        roundVideoBadgeContainer.setVisibility(GONE);
+        setRoundVideoBadgeVisible(searchImage.sendAsRoundVideo);
+        roundVideoBadgeContainer.setAlpha(showing ? 0.0f : 1.0f);
         requestLayout();
         setHasSpoiler(false);
         setHighQuality(false);

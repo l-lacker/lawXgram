@@ -450,6 +450,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                 if (photoEntry == null) {
                     return;
                 }
+                cell.setRoundVideoBadgeVisible(photoEntry.isVideo && !photoEntry.isLivePhoto() && photoEntry.sendAsRoundVideo);
                 if (photoEntry.coverPath != null) {
                     cell.getImageView().setImage(photoEntry.coverPath, null, Theme.chat_attachEmptyDrawable);
                 } else if (photoEntry.thumbPath != null) {

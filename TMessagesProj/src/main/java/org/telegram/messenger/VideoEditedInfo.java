@@ -712,6 +712,9 @@ public class VideoEditedInfo {
     }
 
     public boolean needConvert() {
+        if (roundVideo) {
+            return true;
+        }
         if (bitrate == -2) {
             return false;
         }

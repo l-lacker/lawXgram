@@ -1457,7 +1457,10 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                 if (index < 0 || index >= photos.size()) {
                     return -1;
                 }
-                Object imageId = photos.get(index).imageId;
+                MediaController.PhotoEntry photoEntry = photos.get(index);
+                photoEntry.editedInfo = videoEditedInfo;
+                photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
+                Object imageId = photoEntry.imageId;
                 int orderIndex = photosOrder.indexOf((Integer) imageId);
                 if (orderIndex >= 0) {
                     if (photosOrder.size() <= 1) {

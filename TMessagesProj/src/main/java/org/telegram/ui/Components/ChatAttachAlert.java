@@ -2395,6 +2395,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                         return;
                     }
                     entry.editedInfo = videoEditedInfo;
+                    entry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
                     AlertsCreator.ensurePaidMessageConfirmation(currentAccount, getDialogId(), 1 + getAdditionalMessagesCount(), payStars -> {
                         ChatAttachAlertPhotoLayout.selectedPhotosOrder.clear();
                         ChatAttachAlertPhotoLayout.selectedPhotos.clear();

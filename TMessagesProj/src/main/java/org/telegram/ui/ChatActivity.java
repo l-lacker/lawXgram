@@ -14196,11 +14196,15 @@ public class ChatActivity extends BaseFragment implements
                 usedUpdateStickersOrder = true;
                 regularMedia = new ArrayList<>();
             }
+            if (info.videoEditedInfo == null && !TextUtils.isEmpty(info.path)) {
+                info.videoEditedInfo = SendMessagesHelper.createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset);
+            }
             if (info.videoEditedInfo == null || TextUtils.isEmpty(info.path)) {
                 regularMedia.add(info);
                 continue;
             }
             info.videoEditedInfo.roundVideo = true;
+            SendMessagesHelper.prepareRoundVideoEditedInfo(info.videoEditedInfo);
             SendMessagesHelper.prepareSendingVideo(getAccountInstance(), info.path, info.videoEditedInfo, info.coverPath, info.coverPhoto, dialog_id, replyToMsg, getThreadMessage(), null, replyingQuote, info.entities, info.ttl, editingObject, notify, scheduleDate, scheduleRepeatPeriod, false, info.hasMediaSpoilers, info.caption, quickReplyShortcut, getQuickReplyId(), effectId, payStars, getSendMonoForumPeerId(), suggestionParams, invertMedia);
         }
         if (!regularMedia.isEmpty()) {

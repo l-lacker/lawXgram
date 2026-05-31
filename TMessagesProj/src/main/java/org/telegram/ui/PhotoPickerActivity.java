@@ -236,6 +236,7 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                     BackupImageView imageView = cell.getImageView();
                     imageView.setOrientation(0, true);
                     MediaController.PhotoEntry photoEntry = selectedAlbum.photos.get(index);
+                    cell.setRoundVideoBadgeVisible(photoEntry.isVideo && !photoEntry.isLivePhoto() && photoEntry.sendAsRoundVideo);
                     if (photoEntry.thumbPath != null) {
                         imageView.setImage(photoEntry.thumbPath, null, Theme.chat_attachEmptyDrawable);
                     } else if (photoEntry.path != null) {
@@ -351,10 +352,12 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                 MediaController.PhotoEntry photoEntry = selectedAlbum.photos.get(index);
                 if ((num = addToSelectedPhotos(photoEntry, -1)) == -1) {
                     photoEntry.editedInfo = videoEditedInfo;
+                    photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
                     num = selectedPhotosOrder.indexOf(photoEntry.imageId);
                 } else {
                     add = false;
                     photoEntry.editedInfo = null;
+                    photoEntry.sendAsRoundVideo = false;
                 }
             } else {
                 if (index < 0 || index >= searchResult.size()) {
@@ -363,10 +366,12 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                 MediaController.SearchImage photoEntry = searchResult.get(index);
                 if ((num = addToSelectedPhotos(photoEntry, -1)) == -1) {
                     photoEntry.editedInfo = videoEditedInfo;
+                    photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
                     num = selectedPhotosOrder.indexOf(photoEntry.id);
                 } else {
                     add = false;
                     photoEntry.editedInfo = null;
+                    photoEntry.sendAsRoundVideo = false;
                 }
             }
             int count = listView.getChildCount();
@@ -374,7 +379,14 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                 View view = listView.getChildAt(a);
                 int tag = (Integer) view.getTag();
                 if (tag == index) {
-                    ((PhotoAttachPhotoCell) view).setChecked(allowIndices ? num : -1, add, false);
+                    PhotoAttachPhotoCell cell = (PhotoAttachPhotoCell) view;
+                    cell.setChecked(allowIndices ? num : -1, add, false);
+                    if (selectedAlbum != null) {
+                        MediaController.PhotoEntry photoEntry = selectedAlbum.photos.get(index);
+                        cell.setRoundVideoBadgeVisible(photoEntry.isVideo && !photoEntry.isLivePhoto() && photoEntry.sendAsRoundVideo);
+                    } else {
+                        cell.setRoundVideoBadgeVisible(searchResult.get(index).sendAsRoundVideo);
+                    }
                     break;
                 }
             }
@@ -404,6 +416,7 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                     }
                     MediaController.PhotoEntry photoEntry = selectedAlbum.photos.get(index);
                     photoEntry.editedInfo = videoEditedInfo;
+                    photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
                     addToSelectedPhotos(photoEntry, -1);
                 } else {
                     if (index < 0 || index >= searchResult.size()) {
@@ -411,6 +424,7 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                     }
                     MediaController.SearchImage searchImage = searchResult.get(index);
                     searchImage.editedInfo = videoEditedInfo;
+                    searchImage.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
                     addToSelectedPhotos(searchImage, -1);
                 }
             }

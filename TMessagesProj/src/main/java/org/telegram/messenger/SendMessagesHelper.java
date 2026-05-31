@@ -125,6 +125,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
     public static final int MEDIA_TYPE_DICE = 11;
     public static final int MEDIA_TYPE_STORY = 12;
+    public static final int ROUND_VIDEO_MAX_SIZE = 640;
+    public static final int ROUND_VIDEO_MAX_FRAMERATE = 60;
     private final HashMap<String, ArrayList<DelayedMessage>> delayedMessages = new HashMap<>();
     private final SparseArray<DelayedMessage> activeDelayedMessages = new SparseArray<>();
     private final SparseArray<MessageObject> unsentMessages = new SparseArray<>();
@@ -10525,10 +10527,15 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         if (forceDocument && !sendAsRoundVideo) {
                             videoEditedInfo = null;
                         } else {
-                            videoEditedInfo = info.videoEditedInfo != null ? info.videoEditedInfo : createCompressionSettings(info.path, info.livePhotoVideoOffset);
+                            videoEditedInfo = info.videoEditedInfo != null ? info.videoEditedInfo : sendAsRoundVideo ? createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset) : createCompressionSettings(info.path, info.livePhotoVideoOffset);
                             if (sendAsRoundVideo && videoEditedInfo != null) {
                                 videoEditedInfo.roundVideo = true;
+                                prepareRoundVideoEditedInfo(videoEditedInfo);
                             }
+                        }
+                        if (sendAsRoundVideo && videoEditedInfo == null) {
+                            FileLog.e("unable to prepare round video conversion for " + info.path);
+                            continue;
                         }
 
                         if ((!forceDocument || sendAsRoundVideo) && (videoEditedInfo != null || info.path.endsWith("mp4")) || info.isLivePhoto) {
@@ -11267,6 +11274,243 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         return bitmap;
     }
 
+    public static VideoEditedInfo createRoundVideoEditedInfo(String videoPath, long videoOffset) {
+        VideoEditedInfo videoEditedInfo = createCompressionSettings(videoPath, videoOffset);
+        if (videoEditedInfo == null) {
+            videoEditedInfo = createCompressionSettingsFromMetadata(videoPath, videoOffset);
+        }
+        if (videoEditedInfo != null) {
+            videoEditedInfo.roundVideo = true;
+            prepareRoundVideoEditedInfo(videoEditedInfo);
+        }
+        return videoEditedInfo;
+    }
+
+    private static int roundEven(float value) {
+        return Math.max(2, Math.round(value / 2.0f) * 2);
+    }
+
+    private static int clampRoundVideoSide(int side) {
+        side = Math.min(side, ROUND_VIDEO_MAX_SIZE);
+        if (side > 16) {
+            side -= side % 16;
+        }
+        if ((side & 1) != 0) {
+            side--;
+        }
+        return Math.max(2, side);
+    }
+
+    private static int getRoundVideoTransformWidth(VideoEditedInfo videoEditedInfo, MediaController.CropState cropState) {
+        int rotation = videoEditedInfo.rotationValue;
+        while (rotation >= 360) {
+            rotation -= 360;
+        }
+        while (rotation < 0) {
+            rotation += 360;
+        }
+        if (rotation == 90 || rotation == 270) {
+            return (int) (videoEditedInfo.resultWidth * cropState.cropPh);
+        }
+        return (int) (videoEditedInfo.resultWidth * cropState.cropPw);
+    }
+
+    private static int getRoundVideoTransformHeight(VideoEditedInfo videoEditedInfo, MediaController.CropState cropState) {
+        int rotation = videoEditedInfo.rotationValue;
+        while (rotation >= 360) {
+            rotation -= 360;
+        }
+        while (rotation < 0) {
+            rotation += 360;
+        }
+        if (rotation == 90 || rotation == 270) {
+            return (int) (videoEditedInfo.resultHeight * cropState.cropPw);
+        }
+        return (int) (videoEditedInfo.resultHeight * cropState.cropPh);
+    }
+
+    private static void ensureRoundVideoCropState(VideoEditedInfo videoEditedInfo) {
+        if (videoEditedInfo.cropState == null) {
+            videoEditedInfo.cropState = new MediaController.CropState();
+        }
+        MediaController.CropState cropState = videoEditedInfo.cropState;
+        if (cropState.cropPw <= 0) {
+            cropState.cropPw = 1.0f;
+        }
+        if (cropState.cropPh <= 0) {
+            cropState.cropPh = 1.0f;
+        }
+        if (cropState.cropScale <= 0) {
+            cropState.cropScale = 1.0f;
+        }
+        if (!cropState.initied && cropState.cropPw == 1.0f && cropState.cropPh == 1.0f) {
+            int rotation = videoEditedInfo.rotationValue;
+            while (rotation >= 360) {
+                rotation -= 360;
+            }
+            while (rotation < 0) {
+                rotation += 360;
+            }
+            int side;
+            if (rotation == 90 || rotation == 270) {
+                side = Math.min(videoEditedInfo.resultHeight, videoEditedInfo.resultWidth);
+                cropState.cropPw = side / (float) videoEditedInfo.resultHeight;
+                cropState.cropPh = side / (float) videoEditedInfo.resultWidth;
+            } else {
+                side = Math.min(videoEditedInfo.resultWidth, videoEditedInfo.resultHeight);
+                cropState.cropPw = side / (float) videoEditedInfo.resultWidth;
+                cropState.cropPh = side / (float) videoEditedInfo.resultHeight;
+            }
+            cropState.cropPx = 0;
+            cropState.cropPy = 0;
+            cropState.cropRotate = 0;
+            cropState.transformRotation = 0;
+            cropState.mirrored = false;
+            cropState.stateScale = 1.0f;
+            cropState.scale = 1.0f;
+            cropState.width = side;
+            cropState.height = side;
+            cropState.freeform = false;
+            cropState.lockedAspectRatio = 1.0f;
+            cropState.initied = true;
+        }
+    }
+
+    public static void prepareRoundVideoEditedInfo(VideoEditedInfo videoEditedInfo) {
+        if (videoEditedInfo == null || !videoEditedInfo.roundVideo) {
+            return;
+        }
+        if (videoEditedInfo.originalWidth <= 0) {
+            videoEditedInfo.originalWidth = Math.max(2, videoEditedInfo.resultWidth);
+        }
+        if (videoEditedInfo.originalHeight <= 0) {
+            videoEditedInfo.originalHeight = Math.max(2, videoEditedInfo.resultHeight);
+        }
+        if (videoEditedInfo.resultWidth <= 0) {
+            videoEditedInfo.resultWidth = videoEditedInfo.originalWidth;
+        }
+        if (videoEditedInfo.resultHeight <= 0) {
+            videoEditedInfo.resultHeight = videoEditedInfo.originalHeight;
+        }
+        if (videoEditedInfo.framerate <= 0) {
+            videoEditedInfo.framerate = 30;
+        } else if (videoEditedInfo.framerate > ROUND_VIDEO_MAX_FRAMERATE) {
+            videoEditedInfo.framerate = ROUND_VIDEO_MAX_FRAMERATE;
+        }
+        if (videoEditedInfo.bitrate == -2) {
+            videoEditedInfo.bitrate = 0;
+        }
+
+        ensureRoundVideoCropState(videoEditedInfo);
+        MediaController.CropState cropState = videoEditedInfo.cropState;
+
+        int transformWidth = getRoundVideoTransformWidth(videoEditedInfo, cropState);
+        int transformHeight = getRoundVideoTransformHeight(videoEditedInfo, cropState);
+        int side = Math.min(transformWidth, transformHeight);
+        if (side > ROUND_VIDEO_MAX_SIZE) {
+            float scale = ROUND_VIDEO_MAX_SIZE / (float) side;
+            videoEditedInfo.resultWidth = roundEven(videoEditedInfo.resultWidth * scale);
+            videoEditedInfo.resultHeight = roundEven(videoEditedInfo.resultHeight * scale);
+            transformWidth = getRoundVideoTransformWidth(videoEditedInfo, cropState);
+            transformHeight = getRoundVideoTransformHeight(videoEditedInfo, cropState);
+            side = Math.min(transformWidth, transformHeight);
+        }
+
+        side = clampRoundVideoSide(side);
+        cropState.transformWidth = side;
+        cropState.transformHeight = side;
+        int sourceBitrate = videoEditedInfo.originalBitrate > 0 ? videoEditedInfo.originalBitrate : videoEditedInfo.bitrate;
+        if (sourceBitrate <= 0) {
+            sourceBitrate = 921600;
+        }
+        int roundBitrate = MediaController.makeVideoBitrate(videoEditedInfo.originalHeight, videoEditedInfo.originalWidth, sourceBitrate, side, side);
+        if (roundBitrate <= 0) {
+            roundBitrate = 921600;
+        }
+        if (videoEditedInfo.bitrate <= 0 || videoEditedInfo.bitrate > roundBitrate) {
+            videoEditedInfo.bitrate = roundBitrate;
+        }
+        int bitrate = videoEditedInfo.bitrate > 0 ? videoEditedInfo.bitrate : 921600;
+        long duration = videoEditedInfo.estimatedDuration > 0 ? videoEditedInfo.estimatedDuration : videoEditedInfo.originalDuration;
+        if (duration > 0) {
+            videoEditedInfo.estimatedSize = Math.max(1, (long) (duration / 1000.0f * bitrate / 8));
+        } else if (videoEditedInfo.estimatedSize <= 0) {
+            videoEditedInfo.estimatedSize = 1;
+        }
+    }
+
+    private static VideoEditedInfo createCompressionSettingsFromMetadata(String videoPath, long videoOffset) {
+        MediaMetadataRetriever mediaMetadataRetriever = null;
+        try {
+            mediaMetadataRetriever = new MediaMetadataRetriever();
+            mediaMetadataRetriever.setDataSource(videoPath);
+            int width = Utilities.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+            int height = Utilities.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+            long duration = Utilities.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+            if (width <= 0 || height <= 0 || duration <= 0) {
+                MediaPlayer mediaPlayer = null;
+                try {
+                    mediaPlayer = MediaPlayer.create(ApplicationLoader.applicationContext, Uri.fromFile(new File(videoPath)));
+                    if (mediaPlayer != null) {
+                        if (width <= 0) {
+                            width = mediaPlayer.getVideoWidth();
+                        }
+                        if (height <= 0) {
+                            height = mediaPlayer.getVideoHeight();
+                        }
+                        if (duration <= 0) {
+                            duration = mediaPlayer.getDuration();
+                        }
+                    }
+                } catch (Exception e) {
+                    FileLog.e(e);
+                } finally {
+                    if (mediaPlayer != null) {
+                        mediaPlayer.release();
+                    }
+                }
+            }
+            if (width <= 0 || height <= 0) {
+                return null;
+            }
+            int rotation = Utilities.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
+            int bitrate = MediaController.getVideoBitrate(videoPath);
+            if (bitrate <= 0) {
+                bitrate = Utilities.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE));
+            }
+            if (bitrate <= 0) {
+                bitrate = 921600;
+            }
+
+            VideoEditedInfo videoEditedInfo = new VideoEditedInfo();
+            videoEditedInfo.startTime = -1;
+            videoEditedInfo.endTime = -1;
+            videoEditedInfo.bitrate = bitrate;
+            videoEditedInfo.originalBitrate = bitrate;
+            videoEditedInfo.originalPath = videoPath;
+            videoEditedInfo.videoOffset = videoOffset;
+            videoEditedInfo.framerate = 30;
+            videoEditedInfo.estimatedDuration = duration;
+            videoEditedInfo.originalDuration = duration * 1000;
+            videoEditedInfo.resultWidth = videoEditedInfo.originalWidth = width;
+            videoEditedInfo.resultHeight = videoEditedInfo.originalHeight = height;
+            videoEditedInfo.rotationValue = rotation;
+            videoEditedInfo.estimatedSize = Math.max(1, new File(videoPath).length());
+            return videoEditedInfo;
+        } catch (Exception e) {
+            FileLog.e(e);
+        } finally {
+            try {
+                if (mediaMetadataRetriever != null) {
+                    mediaMetadataRetriever.release();
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        }
+        return null;
+    }
+
     private static VideoEditedInfo createCompressionSettings(String videoPath, long videoOffset) {
         int[] params = new int[AnimatedFileDrawable.PARAM_NUM_COUNT];
         AnimatedFileDrawable.getVideoInfo(videoPath, params, videoOffset);
@@ -11395,6 +11639,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         }
         new Thread(() -> {
             final VideoEditedInfo videoEditedInfo = info != null ? info : createCompressionSettings(videoPath, 0);
+            if (videoEditedInfo != null && videoEditedInfo.roundVideo) {
+                prepareRoundVideoEditedInfo(videoEditedInfo);
+            }
 
             boolean isEncrypted = DialogObject.isEncryptedDialog(dialogId);
 

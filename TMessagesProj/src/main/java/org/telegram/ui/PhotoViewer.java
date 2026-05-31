@@ -961,8 +961,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private boolean roundVideoCropPending;
     private boolean roundVideoCropPreviousValue;
     private static final float ROUND_VIDEO_MAX_DURATION = 60000.0f;
-    private static final int ROUND_VIDEO_MAX_SIZE = 639;
-    private static final int ROUND_VIDEO_MAX_FRAMERATE = 60;
+    private static final int ROUND_VIDEO_MAX_SIZE = SendMessagesHelper.ROUND_VIDEO_MAX_SIZE;
+    private static final int ROUND_VIDEO_MAX_FRAMERATE = SendMessagesHelper.ROUND_VIDEO_MAX_FRAMERATE;
 
     private Runnable onUserLeaveHintListener = this::onUserLeaveHint;
 
@@ -7045,6 +7045,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 updateVideoInfo();
                 if ((sendPhotoType == 0 || sendPhotoType == 4) && placeProvider != null) {
                     placeProvider.updatePhotoAtIndex(currentIndex);
+                    if (selectedPhotosAdapter != null) {
+                        selectedPhotosAdapter.notifyDataSetChanged();
+                    }
                 }
                 return;
             }
@@ -8075,12 +8078,19 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             applyCurrentEditMode();
             if (roundVideoCropPending) {
                 setCurrentMediaRoundVideo(true);
+                Object object = imagesArrLocals.get(currentIndex);
+                if (object instanceof MediaController.MediaEditState) {
+                    ((MediaController.MediaEditState) object).editedInfo = getCurrentVideoEditedInfo();
+                }
                 roundVideoCropPending = false;
                 updateRoundVideoButton();
                 updateMuteButton();
                 updateVideoInfo();
                 if ((sendPhotoType == 0 || sendPhotoType == 4) && placeProvider != null) {
                     placeProvider.updatePhotoAtIndex(currentIndex);
+                    if (selectedPhotosAdapter != null) {
+                        selectedPhotosAdapter.notifyDataSetChanged();
+                    }
                     if (!placeProvider.isPhotoChecked(currentIndex)) {
                         setPhotoChecked();
                     }
@@ -10270,6 +10280,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             int side = getRoundVideoSide(videoEditedInfo.resultWidth, videoEditedInfo.resultHeight);
             videoEditedInfo.resultWidth = side;
             videoEditedInfo.resultHeight = side;
+        }
+        if (videoEditedInfo.roundVideo) {
+            SendMessagesHelper.prepareRoundVideoEditedInfo(videoEditedInfo);
         }
         if (sendPhotoType == SELECT_TYPE_AVATAR) {
             videoEditedInfo.avatarStartTime = avatarStartTime;
@@ -12811,6 +12824,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                             newScaleX = minSide / (float) bitmapWidth;
                             newScaleY = minSide / (float) bitmapHeight;
                             newScale = Math.max(newScaleX, newScaleY);
+                            if (isCurrentMediaRoundVideo()) {
+                                newScale = getCropFillScale(centerImage.getOrientation() == 90 || centerImage.getOrientation() == 270);
+                            }
                         }
 
                         animateToScale = newScale / scale;
@@ -21675,12 +21691,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             if (state.editedInfo != null) {
                 state.editedInfo.roundVideo = value;
             }
-            if (value && state.editedInfo == null && isCurrentVideo) {
-                state.editedInfo = getCurrentVideoEditedInfo();
-            }
-            if (state.editedInfo != null) {
-                state.editedInfo.roundVideo = value;
-            }
         }
     }
 
@@ -22381,29 +22391,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
             PhotoPickerPhotoCell cell = (PhotoPickerPhotoCell) holder.itemView;
             cell.setItemWidth(dp(85), position != 0 ? dp(6) : 0);
-            BackupImageView imageView = cell.imageView;
-            boolean showing;
-            imageView.setOrientation(0, true);
+            cell.imageView.setOrientation(0, true);
             ArrayList<Object> order = placeProvider.getSelectedPhotosOrder();
             Object object = placeProvider.getSelectedPhotos().get(order.get(position));
             if (object instanceof MediaController.PhotoEntry) {
                 MediaController.PhotoEntry photoEntry = (MediaController.PhotoEntry) object;
                 cell.setTag(photoEntry);
-                cell.videoInfoContainer.setVisibility(View.INVISIBLE);
-                if (photoEntry.thumbPath != null) {
-                    imageView.setImage(photoEntry.thumbPath, null, mContext.getResources().getDrawable(R.drawable.nophotos));
-                } else if (photoEntry.path != null) {
-                    imageView.setOrientation(photoEntry.orientation, photoEntry.invert, true);
-                    if (photoEntry.isVideo && !photoEntry.isLivePhoto()) {
-                        cell.videoInfoContainer.setVisibility(View.VISIBLE);
-                        cell.videoTextView.setText(AndroidUtilities.formatShortDuration(photoEntry.duration));
-                        imageView.setImage("vthumb://" + photoEntry.imageId + ":" + photoEntry.path, null, mContext.getResources().getDrawable(R.drawable.nophotos));
-                    } else {
-                        imageView.setImage("thumb://" + photoEntry.imageId + ":" + photoEntry.path, null, mContext.getResources().getDrawable(R.drawable.nophotos));
-                    }
-                } else {
-                    imageView.setImageResource(R.drawable.nophotos);
-                }
+                cell.setImage(photoEntry);
                 cell.setChecked(-1, true, false);
                 cell.checkBox.setVisibility(View.VISIBLE);
             } else if (object instanceof MediaController.SearchImage) {

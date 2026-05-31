@@ -162,23 +162,23 @@ public class PhotoPickerPhotoCell extends FrameLayout {
             imageView.setOrientation(photoEntry.orientation, photoEntry.invert, true);
             if (photoEntry.isLivePhoto()) {
                 videoInfoContainer.setVisibility(View.INVISIBLE);
-                roundVideoBadgeContainer.setVisibility(View.GONE);
+                setRoundVideoBadgeVisible(false);
                 setContentDescription(LocaleController.getString(R.string.AttachLivePhoto));
                 imageView.setImage("thumb://" + photoEntry.imageId + ":" + photoEntry.path, null, thumb);
             } else if (photoEntry.isVideo) {
                 videoInfoContainer.setVisibility(View.VISIBLE);
-                roundVideoBadgeContainer.setVisibility(photoEntry.sendAsRoundVideo ? View.VISIBLE : View.GONE);
+                setRoundVideoBadgeVisible(photoEntry.sendAsRoundVideo);
                 videoTextView.setText(AndroidUtilities.formatShortDuration(photoEntry.duration));
                 setContentDescription(LocaleController.getString(photoEntry.sendAsRoundVideo ? R.string.AttachRound : R.string.AttachVideo) + ", " + LocaleController.formatDuration(photoEntry.duration));
                 imageView.setImage("vthumb://" + photoEntry.imageId + ":" + photoEntry.path, null, thumb);
             } else {
                 videoInfoContainer.setVisibility(View.INVISIBLE);
-                roundVideoBadgeContainer.setVisibility(View.GONE);
+                setRoundVideoBadgeVisible(false);
                 setContentDescription(LocaleController.getString(R.string.AttachPhoto));
                 imageView.setImage("thumb://" + photoEntry.imageId + ":" + photoEntry.path, null, thumb);
             }
         } else {
-            roundVideoBadgeContainer.setVisibility(View.GONE);
+            setRoundVideoBadgeVisible(false);
             imageView.setImageDrawable(thumb);
         }
     }
@@ -199,7 +199,12 @@ public class PhotoPickerPhotoCell extends FrameLayout {
         } else {
             imageView.setImageDrawable(thumb);
         }
-        roundVideoBadgeContainer.setVisibility(View.GONE);
+        setRoundVideoBadgeVisible(searchImage.sendAsRoundVideo);
+    }
+
+    public void setRoundVideoBadgeVisible(boolean visible) {
+        roundVideoBadgeContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
+        roundVideoBadgeContainer.setAlpha(1.0f);
     }
 
     public void setChecked(final int num, final boolean checked, final boolean animated) {
