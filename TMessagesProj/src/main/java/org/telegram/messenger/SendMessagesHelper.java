@@ -635,6 +635,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         public boolean forceImage;
         public boolean updateStickersOrder;
         public boolean hasMediaSpoilers;
+        public boolean sendAsRoundVideo;
         public TLRPC.VideoSize emojiMarkup;
         public long stars;
         public boolean highQuality;
@@ -10519,14 +10520,18 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         String thumbKey = null;
                         TLRPC.PhotoSize cover = null;
 
+                        final boolean sendAsRoundVideo = info.sendAsRoundVideo || info.videoEditedInfo != null && info.videoEditedInfo.roundVideo;
                         final VideoEditedInfo videoEditedInfo;
-                        if (forceDocument) {
+                        if (forceDocument && !sendAsRoundVideo) {
                             videoEditedInfo = null;
                         } else {
                             videoEditedInfo = info.videoEditedInfo != null ? info.videoEditedInfo : createCompressionSettings(info.path, info.livePhotoVideoOffset);
+                            if (sendAsRoundVideo && videoEditedInfo != null) {
+                                videoEditedInfo.roundVideo = true;
+                            }
                         }
 
-                        if (!forceDocument && (videoEditedInfo != null || info.path.endsWith("mp4")) || info.isLivePhoto) {
+                        if ((!forceDocument || sendAsRoundVideo) && (videoEditedInfo != null || info.path.endsWith("mp4")) || info.isLivePhoto) {
                             if (info.path == null && info.searchImage != null) {
                                 if (info.searchImage.photo instanceof TLRPC.TL_photo) {
                                     info.path = FileLoader.getInstance(accountInstance.getCurrentAccount()).getPathToAttach(info.searchImage.photo, true).getAbsolutePath();
@@ -10545,6 +10550,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             if (videoEditedInfo != null) {
                                 muted = videoEditedInfo.muted;
                                 originalPath += videoEditedInfo.estimatedDuration + "_" + videoEditedInfo.startTime + "_" + videoEditedInfo.endTime + (videoEditedInfo.muted ? "_m" : "");
+                                if (sendAsRoundVideo) {
+                                    originalPath += "_round";
+                                }
                                 if (videoEditedInfo.resultWidth != videoEditedInfo.originalWidth) {
                                     originalPath += "_" + videoEditedInfo.resultWidth;
                                 }
@@ -10644,6 +10652,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                     attributeVideo = new TLRPC.TL_documentAttributeVideo();
                                     attributeVideo.supports_streaming = true;
                                 }
+                                attributeVideo.round_message = sendAsRoundVideo;
                                 document.attributes.add(attributeVideo);
                                 if (videoEditedInfo != null && (videoEditedInfo.needConvert() || !info.isVideo)) {
                                     if (info.isVideo && videoEditedInfo.muted) {
@@ -10742,7 +10751,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             if (parentFinal != null) {
                                 params.put("parentObject", parentFinal);
                             }
-                            if (!muted && groupMediaFinal) {
+                            if (!sendAsRoundVideo && !muted && groupMediaFinal) {
                                 mediaCount++;
                                 params.put("groupId", "" + groupId);
                                 if (!forcedPollDoNotSendFinal && (pollSendParams == null && mediaCount == 10 || a == count -1)) {

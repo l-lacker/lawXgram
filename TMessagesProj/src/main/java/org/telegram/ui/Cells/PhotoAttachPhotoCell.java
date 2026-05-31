@@ -77,6 +77,8 @@ public class PhotoAttachPhotoCell extends FrameLayout {
     private ImageView videoPlayImageView;
     private TextView videoTextView;
     private FrameLayout videoInfoContainer;
+    private ImageView roundVideoBadgeImageView;
+    private FrameLayout roundVideoBadgeContainer;
     private AnimatorSet animatorSet;
     private boolean isLast;
     private boolean allowLivePhotos;
@@ -271,6 +273,25 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         videoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
         videoTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         videoInfoContainer.addView(videoTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 13, -0.7f, 0, 0));
+
+        roundVideoBadgeContainer = new FrameLayout(context) {
+
+            private RectF rect = new RectF();
+
+            @Override
+            protected void onDraw(Canvas canvas) {
+                rect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+                canvas.drawOval(rect, Theme.chat_timeBackgroundPaint);
+            }
+        };
+        roundVideoBadgeContainer.setWillNotDraw(false);
+        roundVideoBadgeContainer.setVisibility(GONE);
+        container.addView(roundVideoBadgeContainer, LayoutHelper.createFrame(22, 22, Gravity.LEFT | Gravity.TOP, 4, 4, 0, 0));
+
+        roundVideoBadgeImageView = new ImageView(context);
+        roundVideoBadgeImageView.setImageResource(R.drawable.msg_round_play_m);
+        roundVideoBadgeImageView.setScaleType(ImageView.ScaleType.CENTER);
+        roundVideoBadgeContainer.addView(roundVideoBadgeImageView, LayoutHelper.createFrame(16, 16, Gravity.CENTER));
 
         checkBox = new CheckBox2(context, 24, resourcesProvider);
         checkBox.setDrawBackgroundAsArc(7);
@@ -508,6 +529,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
             videoPlayImageView.setVisibility(GONE);
             videoInfoContainer.setVisibility(INVISIBLE);
         }
+        roundVideoBadgeContainer.setVisibility(photoEntry.isVideo && !photoEntry.isLivePhoto() && photoEntry.sendAsRoundVideo ? VISIBLE : GONE);
         if (photoEntry.coverPath != null) {
             imageView.setImage(photoEntry.coverPath, null, Theme.chat_attachEmptyDrawable);
         } else if (photoEntry.thumbPath != null) {
@@ -526,6 +548,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         imageView.getImageReceiver().setVisible(!showing, true);
         checkBox.setAlpha(showing ? 0.0f : 1.0f);
         videoInfoContainer.setAlpha(showing ? 0.0f : 1.0f);
+        roundVideoBadgeContainer.setAlpha(showing ? 0.0f : 1.0f);
         requestLayout();
         setHasSpoiler(entry.hasSpoiler);
         setHighQuality(entry.isHighQuality() && isChecked());
@@ -567,6 +590,8 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         imageView.getImageReceiver().setVisible(!showing, true);
         checkBox.setAlpha(showing ? 0.0f : 1.0f);
         videoInfoContainer.setAlpha(showing ? 0.0f : 1.0f);
+        roundVideoBadgeContainer.setAlpha(showing ? 0.0f : 1.0f);
+        roundVideoBadgeContainer.setVisibility(GONE);
         requestLayout();
         setHasSpoiler(false);
         setHighQuality(false);
@@ -685,6 +710,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         animatorSet.setDuration(180);
         animatorSet.playTogether(
                 ObjectAnimator.ofFloat(videoInfoContainer, View.ALPHA, show ? 1.0f : 0.0f),
+                ObjectAnimator.ofFloat(roundVideoBadgeContainer, View.ALPHA, show ? 1.0f : 0.0f),
                 ObjectAnimator.ofFloat(checkBox, View.ALPHA, show ? 1.0f : 0.0f));
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
@@ -761,7 +787,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         if (photoEntry != null && photoEntry.isLivePhoto()) {
             sb.append(getString(R.string.AttachLivePhoto));
         } else if (photoEntry != null && photoEntry.isVideo) {
-            sb.append(getString(R.string.AttachVideo) + ", " + LocaleController.formatDuration(photoEntry.duration));
+            sb.append(getString(photoEntry.sendAsRoundVideo ? R.string.AttachRound : R.string.AttachVideo) + ", " + LocaleController.formatDuration(photoEntry.duration));
         } else {
             sb.append(getString(R.string.AttachPhoto));
         }

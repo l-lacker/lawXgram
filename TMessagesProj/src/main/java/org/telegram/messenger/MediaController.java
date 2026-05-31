@@ -524,6 +524,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         public boolean isFiltered;
         public boolean isPainted;
         public boolean isCropped;
+        public boolean sendAsRoundVideo;
         public int ttl;
         public long effectId;
         @Nullable
@@ -554,6 +555,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             isFiltered = false;
             isPainted = false;
             isCropped = false;
+            sendAsRoundVideo = false;
             ttl = 0;
             mediaEntities = null;
             editedInfo = null;
@@ -573,6 +575,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             isFiltered = false;
             isPainted = false;
             isCropped = false;
+            sendAsRoundVideo = false;
             mediaEntities = null;
             editedInfo = null;
             entities = null;
@@ -602,6 +605,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             isFiltered = state.isFiltered;
             isPainted = state.isPainted;
             isCropped = state.isCropped;
+            sendAsRoundVideo = state.sendAsRoundVideo;
             livePhotoVideoOffset = state.livePhotoVideoOffset;
             ttl = state.ttl;
 
@@ -947,6 +951,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             searchImage.thumbPhotoSize = thumbPhotoSize;
             searchImage.inlineResult = inlineResult;
             searchImage.params = params;
+            searchImage.copyFrom(this);
             return searchImage;
         }
     }

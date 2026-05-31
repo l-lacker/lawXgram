@@ -41,6 +41,8 @@ public class PhotoPickerPhotoCell extends FrameLayout {
     public CheckBox2 checkBox;
     public TextView videoTextView;
     public FrameLayout videoInfoContainer;
+    private ImageView roundVideoBadgeImageView;
+    private FrameLayout roundVideoBadgeContainer;
     private int itemWidth;
     private int extraWidth;
     private Paint backgroundPaint = new Paint();
@@ -88,6 +90,27 @@ public class PhotoPickerPhotoCell extends FrameLayout {
         videoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
         videoTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         videoInfoContainer.addView(videoTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 18, -0.7f, 0, 0));
+
+        roundVideoBadgeContainer = new FrameLayout(context) {
+
+            private RectF rect = new RectF();
+            private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+            @Override
+            protected void onDraw(Canvas canvas) {
+                rect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+                paint.setColor(0x7f000000);
+                canvas.drawOval(rect, paint);
+            }
+        };
+        roundVideoBadgeContainer.setWillNotDraw(false);
+        roundVideoBadgeContainer.setVisibility(GONE);
+        addView(roundVideoBadgeContainer, LayoutHelper.createFrame(22, 22, Gravity.LEFT | Gravity.TOP, 4, 4, 0, 0));
+
+        roundVideoBadgeImageView = new ImageView(context);
+        roundVideoBadgeImageView.setImageResource(R.drawable.msg_round_play_m);
+        roundVideoBadgeImageView.setScaleType(ImageView.ScaleType.CENTER);
+        roundVideoBadgeContainer.addView(roundVideoBadgeImageView, LayoutHelper.createFrame(16, 16, Gravity.CENTER));
 
         checkBox = new CheckBox2(context, 24);
         checkBox.setDrawBackgroundAsArc(11);
@@ -139,19 +162,23 @@ public class PhotoPickerPhotoCell extends FrameLayout {
             imageView.setOrientation(photoEntry.orientation, photoEntry.invert, true);
             if (photoEntry.isLivePhoto()) {
                 videoInfoContainer.setVisibility(View.INVISIBLE);
+                roundVideoBadgeContainer.setVisibility(View.GONE);
                 setContentDescription(LocaleController.getString(R.string.AttachLivePhoto));
                 imageView.setImage("thumb://" + photoEntry.imageId + ":" + photoEntry.path, null, thumb);
             } else if (photoEntry.isVideo) {
                 videoInfoContainer.setVisibility(View.VISIBLE);
+                roundVideoBadgeContainer.setVisibility(photoEntry.sendAsRoundVideo ? View.VISIBLE : View.GONE);
                 videoTextView.setText(AndroidUtilities.formatShortDuration(photoEntry.duration));
-                setContentDescription(LocaleController.getString(R.string.AttachVideo) + ", " + LocaleController.formatDuration(photoEntry.duration));
+                setContentDescription(LocaleController.getString(photoEntry.sendAsRoundVideo ? R.string.AttachRound : R.string.AttachVideo) + ", " + LocaleController.formatDuration(photoEntry.duration));
                 imageView.setImage("vthumb://" + photoEntry.imageId + ":" + photoEntry.path, null, thumb);
             } else {
                 videoInfoContainer.setVisibility(View.INVISIBLE);
+                roundVideoBadgeContainer.setVisibility(View.GONE);
                 setContentDescription(LocaleController.getString(R.string.AttachPhoto));
                 imageView.setImage("thumb://" + photoEntry.imageId + ":" + photoEntry.path, null, thumb);
             }
         } else {
+            roundVideoBadgeContainer.setVisibility(View.GONE);
             imageView.setImageDrawable(thumb);
         }
     }
@@ -172,6 +199,7 @@ public class PhotoPickerPhotoCell extends FrameLayout {
         } else {
             imageView.setImageDrawable(thumb);
         }
+        roundVideoBadgeContainer.setVisibility(View.GONE);
     }
 
     public void setChecked(final int num, final boolean checked, final boolean animated) {

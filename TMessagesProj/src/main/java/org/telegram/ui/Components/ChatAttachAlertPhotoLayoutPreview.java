@@ -98,6 +98,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
     private float draggingCellGroupY = 0;
 
     private Drawable videoPlayImage;
+    private Drawable roundVideoImage;
 
     public ChatAttachAlertPhotoLayoutPreview(ChatAttachAlert alert, Context context, Theme.ResourcesProvider themeDelegate) {
         super(alert, context, themeDelegate);
@@ -195,6 +196,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
         addView(undoView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM | Gravity.LEFT, 8, 0, 8, 52));
 
         videoPlayImage = context.getResources().getDrawable(R.drawable.play_mini_video);
+        roundVideoImage = context.getResources().getDrawable(R.drawable.msg_round_play_m);
     }
 
     public void startMediaCrossfade() {
@@ -2347,6 +2349,29 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                     }
                 }
 
+                private void drawRoundVideoBadge(Canvas canvas, float left, float top, float scale, float alpha) {
+                    if (photoEntry == null || !photoEntry.isVideo || !photoEntry.sendAsRoundVideo) {
+                        return;
+                    }
+                    final float size = AndroidUtilities.dp(22) * scale;
+                    if (size <= 0) {
+                        return;
+                    }
+                    int oldPaintAlpha = Theme.chat_timeBackgroundPaint.getAlpha();
+                    Theme.chat_timeBackgroundPaint.setAlpha((int) (oldPaintAlpha * alpha));
+                    canvas.drawCircle(left + size / 2f, top + size / 2f, size / 2f, Theme.chat_timeBackgroundPaint);
+                    Theme.chat_timeBackgroundPaint.setAlpha(oldPaintAlpha);
+
+                    int oldDrawableAlpha = roundVideoImage.getAlpha();
+                    roundVideoImage.setAlpha((int) (255 * alpha));
+                    int iconSize = (int) (AndroidUtilities.dp(16) * scale);
+                    int iconLeft = (int) (left + (size - iconSize) / 2f);
+                    int iconTop = (int) (top + (size - iconSize) / 2f);
+                    roundVideoImage.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize);
+                    roundVideoImage.draw(canvas);
+                    roundVideoImage.setAlpha(oldDrawableAlpha);
+                }
+
                 private void startRevealMedia(float x, float y) {
                     spoilerRevealX = x;
                     spoilerRevealY = y;
@@ -2490,6 +2515,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                         }
                     }
                     drawPhotoIndex(canvas, drawingRect.top + AndroidUtilities.dp(10), drawingRect.right - AndroidUtilities.dp(10), indexText, scale, scale * visibleT);
+                    drawRoundVideoBadge(canvas, drawingRect.left + AndroidUtilities.dp(4), drawingRect.top + AndroidUtilities.dp(4), scale, scale * visibleT);
                     drawDuration(canvas, drawingRect.left + AndroidUtilities.dp(4), drawingRect.bottom - AndroidUtilities.dp(4), videoDurationText, scale, scale * visibleT);
 
                     if (ignoreBounds) {

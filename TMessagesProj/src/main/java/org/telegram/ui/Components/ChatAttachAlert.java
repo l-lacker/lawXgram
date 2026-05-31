@@ -2316,6 +2316,11 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                             }
                             info.thumbPath = searchImage.thumbPath;
                             info.videoEditedInfo = searchImage.editedInfo;
+                            info.sendAsRoundVideo = searchImage.sendAsRoundVideo;
+                            if (info.sendAsRoundVideo && info.videoEditedInfo != null) {
+                                info.videoEditedInfo.roundVideo = true;
+                                info.isVideo = true;
+                            }
                             info.caption = searchImage.caption != null ? searchImage.caption.toString() : null;
                             info.entities = searchImage.entities;
                             info.masks = searchImage.stickers;
