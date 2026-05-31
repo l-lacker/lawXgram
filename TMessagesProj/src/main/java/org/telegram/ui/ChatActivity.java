@@ -14197,14 +14197,14 @@ public class ChatActivity extends BaseFragment implements
                 regularMedia = new ArrayList<>();
             }
             if (info.videoEditedInfo == null && !TextUtils.isEmpty(info.path)) {
-                info.videoEditedInfo = SendMessagesHelper.createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset);
+                info.videoEditedInfo = SendMessagesHelper.createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset, currentAccount);
             }
             if (info.videoEditedInfo == null || TextUtils.isEmpty(info.path)) {
-                regularMedia.add(info);
+                FileLog.e("unable to prepare round video conversion for " + info.path);
                 continue;
             }
             info.videoEditedInfo.roundVideo = true;
-            SendMessagesHelper.prepareRoundVideoEditedInfo(info.videoEditedInfo);
+            SendMessagesHelper.prepareRoundVideoEditedInfo(info.videoEditedInfo, currentAccount);
             SendMessagesHelper.prepareSendingVideo(getAccountInstance(), info.path, info.videoEditedInfo, info.coverPath, info.coverPhoto, dialog_id, replyToMsg, getThreadMessage(), null, replyingQuote, info.entities, info.ttl, editingObject, notify, scheduleDate, scheduleRepeatPeriod, false, info.hasMediaSpoilers, info.caption, quickReplyShortcut, getQuickReplyId(), effectId, payStars, getSendMonoForumPeerId(), suggestionParams, invertMedia);
         }
         if (!regularMedia.isEmpty()) {

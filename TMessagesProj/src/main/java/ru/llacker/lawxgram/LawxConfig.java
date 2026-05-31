@@ -93,6 +93,11 @@ public class LawxConfig {
     public static boolean ignoreBlocked = false;
     public static boolean hideKeyboardOnChatScroll = false;
     public static boolean rearVideoMessages = false;
+    public static int roundVideoResolution = 384;
+    public static int roundVideoFpsCap = 30;
+    public static int roundVideoBitrateMbps = 1;
+    public static boolean roundVideoSmoothCameraSwitch = true;
+    public static String roundVideoRearCameraId = "";
     public static boolean hideAllTab = false;
     public static boolean confirmAVMessage = false;
     public static boolean askBeforeCall = true;
@@ -220,6 +225,11 @@ public class LawxConfig {
             hideKeyboardOnChatScroll = preferences.getBoolean("hideKeyboardOnChatScroll", false);
             useSystemEmoji = preferences.getBoolean("useSystemEmoji", false);
             rearVideoMessages = preferences.getBoolean("rearVideoMessages", false);
+            roundVideoResolution = clampRoundVideoResolution(preferences.getInt("roundVideoResolution", 384));
+            roundVideoFpsCap = preferences.getInt("roundVideoFpsCap", 30) >= 60 ? 60 : 30;
+            roundVideoBitrateMbps = clampRoundVideoBitrateMbps(preferences.getInt("roundVideoBitrateMbps", 1));
+            roundVideoSmoothCameraSwitch = preferences.getBoolean("roundVideoSmoothCameraSwitch", true);
+            roundVideoRearCameraId = preferences.getString("roundVideoRearCameraId", "");
             hideAllTab = preferences.getBoolean("hideAllTab", false);
             tabsTitleType = preferences.getInt("tabsTitleType2", TITLE_TYPE_MIX);
             confirmAVMessage = preferences.getBoolean("confirmAVMessage", false);
@@ -924,6 +934,56 @@ public class LawxConfig {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("rearVideoMessages", rearVideoMessages);
         editor.apply();
+    }
+
+    public static void setRoundVideoResolution(int resolution) {
+        roundVideoResolution = clampRoundVideoResolution(resolution);
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("roundVideoResolution", roundVideoResolution);
+        editor.apply();
+    }
+
+    public static void setRoundVideoFpsCap(int fpsCap) {
+        roundVideoFpsCap = fpsCap >= 60 ? 60 : 30;
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("roundVideoFpsCap", roundVideoFpsCap);
+        editor.apply();
+    }
+
+    public static void setRoundVideoBitrateMbps(int bitrateMbps) {
+        roundVideoBitrateMbps = clampRoundVideoBitrateMbps(bitrateMbps);
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("roundVideoBitrateMbps", roundVideoBitrateMbps);
+        editor.apply();
+    }
+
+    public static void toggleRoundVideoSmoothCameraSwitch() {
+        roundVideoSmoothCameraSwitch = !roundVideoSmoothCameraSwitch;
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("roundVideoSmoothCameraSwitch", roundVideoSmoothCameraSwitch);
+        editor.apply();
+    }
+
+    public static void setRoundVideoRearCameraId(String cameraId) {
+        roundVideoRearCameraId = cameraId == null ? "" : cameraId;
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("roundVideoRearCameraId", roundVideoRearCameraId);
+        editor.apply();
+    }
+
+    private static int clampRoundVideoResolution(int resolution) {
+        resolution = Math.max(384, Math.min(640, resolution));
+        resolution -= resolution % 16;
+        return Math.max(384, resolution);
+    }
+
+    private static int clampRoundVideoBitrateMbps(int bitrateMbps) {
+        return Math.max(1, Math.min(10, bitrateMbps));
     }
 
     public static void toggleHideAllTab() {

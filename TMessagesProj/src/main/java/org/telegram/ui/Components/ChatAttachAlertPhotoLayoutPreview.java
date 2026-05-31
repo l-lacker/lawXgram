@@ -196,7 +196,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
         addView(undoView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM | Gravity.LEFT, 8, 0, 8, 52));
 
         videoPlayImage = context.getResources().getDrawable(R.drawable.play_mini_video);
-        roundVideoImage = context.getResources().getDrawable(R.drawable.msg_round_play_m);
+        roundVideoImage = context.getResources().getDrawable(R.drawable.msg_minvideo);
     }
 
     public void startMediaCrossfade() {
@@ -2356,7 +2356,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                     if (photoEntry == null || !photoEntry.isVideo || !photoEntry.sendAsRoundVideo) {
                         return;
                     }
-                    final float size = AndroidUtilities.dp(22) * scale;
+                    final float size = AndroidUtilities.dp(28) * scale;
                     if (size <= 0) {
                         return;
                     }
@@ -2367,7 +2367,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
 
                     int oldDrawableAlpha = roundVideoImage.getAlpha();
                     roundVideoImage.setAlpha((int) (255 * alpha));
-                    int iconSize = (int) (AndroidUtilities.dp(16) * scale);
+                    int iconSize = (int) (AndroidUtilities.dp(20) * scale);
                     int iconLeft = (int) (left + (size - iconSize) / 2f);
                     int iconTop = (int) (top + (size - iconSize) / 2f);
                     roundVideoImage.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize);

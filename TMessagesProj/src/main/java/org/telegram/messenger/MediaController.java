@@ -137,6 +137,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import ru.llacker.lawxgram.SaveToDownloadReceiver;
 import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.helpers.RoundVideoQualityHelper;
 import ru.llacker.lawxgram.helpers.VoiceEnhancementsHelper;
 
 public class MediaController implements AudioManager.OnAudioFocusChangeListener, NotificationCenter.NotificationCenterDelegate, SensorEventListener {
@@ -6768,7 +6769,16 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             duration = info.originalDuration;
         }
 
-        if (framerate == 0) {
+        if (info.roundVideo) {
+            int account = messageObject.currentAccount >= 0 ? messageObject.currentAccount : UserConfig.selectedAccount;
+            long qualityDuration = RoundVideoQualityHelper.getDurationMs(info);
+            int outputSide = info.cropState != null ? Math.min(info.cropState.transformWidth, info.cropState.transformHeight) : Math.min(resultWidth, resultHeight);
+            framerate = RoundVideoQualityHelper.chooseFps(framerate);
+            bitrate = RoundVideoQualityHelper.calculateTargetVideoBitrate(account, originalWidth, originalHeight, originalBitrate > 0 ? originalBitrate : bitrate, Math.max(2, outputSide), qualityDuration);
+            info.framerate = framerate;
+            info.bitrate = bitrate;
+            info.estimatedSize = RoundVideoQualityHelper.estimateRoundVideoSize(account, bitrate, qualityDuration);
+        } else if (framerate == 0) {
             framerate = 25;
         } else if (framerate > 59) {
             framerate = 59;
@@ -6780,7 +6790,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             resultWidth = temp;
         }
 
-        if (!info.shouldLimitFps && framerate > 40 && (Math.min(resultHeight, resultWidth) <= 480)) {
+        if (!info.roundVideo && !info.shouldLimitFps && framerate > 40 && (Math.min(resultHeight, resultWidth) <= 480)) {
             framerate = 30;
         }
 

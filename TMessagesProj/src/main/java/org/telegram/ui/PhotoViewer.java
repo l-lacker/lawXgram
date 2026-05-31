@@ -10282,7 +10282,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             videoEditedInfo.resultHeight = side;
         }
         if (videoEditedInfo.roundVideo) {
-            SendMessagesHelper.prepareRoundVideoEditedInfo(videoEditedInfo);
+            SendMessagesHelper.prepareRoundVideoEditedInfo(videoEditedInfo, currentAccount);
         }
         if (sendPhotoType == SELECT_TYPE_AVATAR) {
             videoEditedInfo.avatarStartTime = avatarStartTime;
@@ -12824,9 +12824,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                             newScaleX = minSide / (float) bitmapWidth;
                             newScaleY = minSide / (float) bitmapHeight;
                             newScale = Math.max(newScaleX, newScaleY);
-                            if (isCurrentMediaRoundVideo()) {
-                                newScale = getCropFillScale(centerImage.getOrientation() == 90 || centerImage.getOrientation() == 270);
-                            }
                         }
 
                         animateToScale = newScale / scale;

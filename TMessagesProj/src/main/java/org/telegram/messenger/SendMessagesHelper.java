@@ -120,6 +120,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import ru.llacker.lawxgram.LawxConfig;
+import ru.llacker.lawxgram.helpers.RoundVideoQualityHelper;
 
 public class SendMessagesHelper extends BaseController implements NotificationCenter.NotificationCenterDelegate {
 
@@ -10527,10 +10528,10 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         if (forceDocument && !sendAsRoundVideo) {
                             videoEditedInfo = null;
                         } else {
-                            videoEditedInfo = info.videoEditedInfo != null ? info.videoEditedInfo : sendAsRoundVideo ? createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset) : createCompressionSettings(info.path, info.livePhotoVideoOffset);
+                            videoEditedInfo = info.videoEditedInfo != null ? info.videoEditedInfo : sendAsRoundVideo ? createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset, accountInstance.getCurrentAccount()) : createCompressionSettings(info.path, info.livePhotoVideoOffset);
                             if (sendAsRoundVideo && videoEditedInfo != null) {
                                 videoEditedInfo.roundVideo = true;
-                                prepareRoundVideoEditedInfo(videoEditedInfo);
+                                prepareRoundVideoEditedInfo(videoEditedInfo, accountInstance.getCurrentAccount());
                             }
                         }
                         if (sendAsRoundVideo && videoEditedInfo == null) {
@@ -11275,13 +11276,17 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     public static VideoEditedInfo createRoundVideoEditedInfo(String videoPath, long videoOffset) {
+        return createRoundVideoEditedInfo(videoPath, videoOffset, UserConfig.selectedAccount);
+    }
+
+    public static VideoEditedInfo createRoundVideoEditedInfo(String videoPath, long videoOffset, int account) {
         VideoEditedInfo videoEditedInfo = createCompressionSettings(videoPath, videoOffset);
         if (videoEditedInfo == null) {
             videoEditedInfo = createCompressionSettingsFromMetadata(videoPath, videoOffset);
         }
         if (videoEditedInfo != null) {
             videoEditedInfo.roundVideo = true;
-            prepareRoundVideoEditedInfo(videoEditedInfo);
+            prepareRoundVideoEditedInfo(videoEditedInfo, account);
         }
         return videoEditedInfo;
     }
@@ -11377,6 +11382,10 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     public static void prepareRoundVideoEditedInfo(VideoEditedInfo videoEditedInfo) {
+        prepareRoundVideoEditedInfo(videoEditedInfo, UserConfig.selectedAccount);
+    }
+
+    public static void prepareRoundVideoEditedInfo(VideoEditedInfo videoEditedInfo, int account) {
         if (videoEditedInfo == null || !videoEditedInfo.roundVideo) {
             return;
         }
@@ -11392,11 +11401,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         if (videoEditedInfo.resultHeight <= 0) {
             videoEditedInfo.resultHeight = videoEditedInfo.originalHeight;
         }
-        if (videoEditedInfo.framerate <= 0) {
-            videoEditedInfo.framerate = 30;
-        } else if (videoEditedInfo.framerate > ROUND_VIDEO_MAX_FRAMERATE) {
-            videoEditedInfo.framerate = ROUND_VIDEO_MAX_FRAMERATE;
-        }
+        videoEditedInfo.framerate = RoundVideoQualityHelper.chooseFps(videoEditedInfo.framerate);
         if (videoEditedInfo.bitrate == -2) {
             videoEditedInfo.bitrate = 0;
         }
@@ -11407,8 +11412,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         int transformWidth = getRoundVideoTransformWidth(videoEditedInfo, cropState);
         int transformHeight = getRoundVideoTransformHeight(videoEditedInfo, cropState);
         int side = Math.min(transformWidth, transformHeight);
-        if (side > ROUND_VIDEO_MAX_SIZE) {
-            float scale = ROUND_VIDEO_MAX_SIZE / (float) side;
+        int maxSide = RoundVideoQualityHelper.getConfiguredSide(account);
+        if (side > maxSide) {
+            float scale = maxSide / (float) side;
             videoEditedInfo.resultWidth = roundEven(videoEditedInfo.resultWidth * scale);
             videoEditedInfo.resultHeight = roundEven(videoEditedInfo.resultHeight * scale);
             transformWidth = getRoundVideoTransformWidth(videoEditedInfo, cropState);
@@ -11416,27 +11422,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             side = Math.min(transformWidth, transformHeight);
         }
 
-        side = clampRoundVideoSide(side);
-        cropState.transformWidth = side;
-        cropState.transformHeight = side;
-        int sourceBitrate = videoEditedInfo.originalBitrate > 0 ? videoEditedInfo.originalBitrate : videoEditedInfo.bitrate;
-        if (sourceBitrate <= 0) {
-            sourceBitrate = 921600;
-        }
-        int roundBitrate = MediaController.makeVideoBitrate(videoEditedInfo.originalHeight, videoEditedInfo.originalWidth, sourceBitrate, side, side);
-        if (roundBitrate <= 0) {
-            roundBitrate = 921600;
-        }
-        if (videoEditedInfo.bitrate <= 0 || videoEditedInfo.bitrate > roundBitrate) {
-            videoEditedInfo.bitrate = roundBitrate;
-        }
-        int bitrate = videoEditedInfo.bitrate > 0 ? videoEditedInfo.bitrate : 921600;
-        long duration = videoEditedInfo.estimatedDuration > 0 ? videoEditedInfo.estimatedDuration : videoEditedInfo.originalDuration;
-        if (duration > 0) {
-            videoEditedInfo.estimatedSize = Math.max(1, (long) (duration / 1000.0f * bitrate / 8));
-        } else if (videoEditedInfo.estimatedSize <= 0) {
-            videoEditedInfo.estimatedSize = 1;
-        }
+        side = RoundVideoQualityHelper.chooseOutputSide(account, transformWidth, transformHeight);
+        RoundVideoQualityHelper.applyQuality(videoEditedInfo, account, side);
     }
 
     private static VideoEditedInfo createCompressionSettingsFromMetadata(String videoPath, long videoOffset) {
@@ -11640,7 +11627,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         new Thread(() -> {
             final VideoEditedInfo videoEditedInfo = info != null ? info : createCompressionSettings(videoPath, 0);
             if (videoEditedInfo != null && videoEditedInfo.roundVideo) {
-                prepareRoundVideoEditedInfo(videoEditedInfo);
+                prepareRoundVideoEditedInfo(videoEditedInfo, accountInstance.getCurrentAccount());
             }
 
             boolean isEncrypted = DialogObject.isEncryptedDialog(dialogId);
@@ -11662,6 +11649,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         if (videoEditedInfo.resultWidth != videoEditedInfo.originalWidth) {
                             originalPath += "_" + videoEditedInfo.resultWidth;
                         }
+                    } else {
+                        originalPath += "_round_" + videoEditedInfo.estimatedDuration + "_" + videoEditedInfo.resultWidth + "_" + videoEditedInfo.framerate + "_" + videoEditedInfo.bitrate;
                     }
                     startTime = videoEditedInfo.startTime >= 0 ? videoEditedInfo.startTime : 0;
                 }

@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import ru.llacker.lawxgram.LawxConfig;
 import ru.llacker.lawxgram.helpers.EntitiesHelper;
 import ru.llacker.lawxgram.helpers.PopupHelper;
+import ru.llacker.lawxgram.helpers.RoundVideoQualityHelper;
 import ru.llacker.lawxgram.helpers.VoiceEnhancementsHelper;
 import ru.llacker.lawxgram.helpers.WhisperHelper;
 
@@ -79,6 +80,7 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
 
     private final int voiceEnhancementsRow = rowId++;
     private final int rearVideoMessagesRow = rowId++;
+    private final int videoMessagesQualityRow = rowId++;
     private final int confirmAVRow = rowId++;
     private final int disableProximityEventsRow = rowId++;
     private final int disableVoiceMessageAutoPlayRow = rowId++;
@@ -185,6 +187,11 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
         };
     }
 
+    private String getVideoMessagesQualityText() {
+        int side = RoundVideoQualityHelper.getConfiguredSide(currentAccount);
+        return side + "x" + side + ", " + LawxConfig.roundVideoFpsCap + " FPS, " + LawxConfig.roundVideoBitrateMbps + " Mbit/s";
+    }
+
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
         items.add(StickerSizeCellFactory.of(stickerSizeRow, LocaleController.getString(R.string.StickerSize), LawxConfig.stickerSize, (progress, stop) -> {
@@ -245,6 +252,7 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
             items.add(UItem.asCheck(voiceEnhancementsRow, LocaleController.getString(R.string.VoiceEnhancements), LocaleController.getString(R.string.VoiceEnhancementsAbout)).slug("voiceEnhancements").setChecked(LawxConfig.voiceEnhancements));
         }
         items.add(UItem.asCheck(rearVideoMessagesRow, LocaleController.getString(R.string.RearVideoMessages)).slug("rearVideoMessages").setChecked(LawxConfig.rearVideoMessages));
+        items.add(TextSettingsCellFactory.of(videoMessagesQualityRow, LocaleController.getString(R.string.VideoMessagesQuality), getVideoMessagesQualityText()).slug("videoMessagesQuality"));
         items.add(UItem.asCheck(confirmAVRow, LocaleController.getString(R.string.ConfirmAVMessage)).slug("confirmAV").setChecked(LawxConfig.confirmAVMessage));
         items.add(UItem.asCheck(disableProximityEventsRow, LocaleController.getString(R.string.DisableProximityEvents)).slug("disableProximityEvents").setChecked(LawxConfig.disableProximityEvents));
         items.add(UItem.asCheck(disableVoiceMessageAutoPlayRow, LocaleController.getString(R.string.DisableVoiceMessagesAutoPlay)).slug("disableVoiceMessageAutoPlay").setChecked(LawxConfig.disableVoiceMessageAutoPlay));
@@ -294,6 +302,8 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(LawxConfig.rearVideoMessages);
             }
+        } else if (id == videoMessagesQualityRow) {
+            presentFragment(new LawxVideoMessagesSettingsActivity());
         } else if (id == confirmAVRow) {
             LawxConfig.toggleConfirmAVMessage();
             if (view instanceof TextCheckCell) {

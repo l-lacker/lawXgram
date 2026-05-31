@@ -73,12 +73,31 @@ public class Camera2Session {
     private Rect sensorSize;
     private float maxZoom = 1f;
     private float currentZoom = 1f;
+    private int targetFps = 30;
 
     private final Size previewSize;
 
     private ImageReader imageReader;
 
     private long lastTime;
+
+    public static class CameraModule {
+        public final String cameraId;
+        public final boolean front;
+        public final float focalLength;
+        public final int maxFps;
+        public final int previewWidth;
+        public final int previewHeight;
+
+        private CameraModule(String cameraId, boolean front, float focalLength, int maxFps, Size previewSize) {
+            this.cameraId = cameraId;
+            this.front = front;
+            this.focalLength = focalLength;
+            this.maxFps = maxFps;
+            this.previewWidth = previewSize.getWidth();
+            this.previewHeight = previewSize.getHeight();
+        }
+    }
 
     public static Camera2Session create(boolean front, int viewWidth, int viewHeight) {
         final Context context = ApplicationLoader.applicationContext;
@@ -123,6 +142,71 @@ public class Camera2Session {
             return null;
         }
         return new Camera2Session(context, front, cameraId, bestSize);
+    }
+
+    public static Camera2Session create(String cameraId, int viewWidth, int viewHeight) {
+        if (cameraId == null) {
+            return null;
+        }
+        final Context context = ApplicationLoader.applicationContext;
+        final CameraManager cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        try {
+            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
+            if (characteristics == null) {
+                return null;
+            }
+            StreamConfigurationMap confMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (confMap == null) {
+                return null;
+            }
+            Size bestSize = chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false);
+            Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+            return new Camera2Session(context, facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT, cameraId, bestSize);
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        return null;
+    }
+
+    public static ArrayList<CameraModule> getCameraModules(boolean front, int viewWidth, int viewHeight) {
+        ArrayList<CameraModule> modules = new ArrayList<>();
+        final Context context = ApplicationLoader.applicationContext;
+        final CameraManager cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        try {
+            String[] cameraIds = cameraManager.getCameraIdList();
+            for (String id : cameraIds) {
+                CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(id);
+                if (characteristics == null) {
+                    continue;
+                }
+                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (facing == null || facing != (front ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK)) {
+                    continue;
+                }
+                StreamConfigurationMap confMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                if (confMap == null) {
+                    continue;
+                }
+                Size size = chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false);
+                if (size == null) {
+                    continue;
+                }
+                modules.add(new CameraModule(id, front, getFocalLength(characteristics), getMaxFps(characteristics), size));
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        Collections.sort(modules, (lhs, rhs) -> {
+            if (lhs.focalLength > 0 && rhs.focalLength > 0) {
+                return Float.compare(lhs.focalLength, rhs.focalLength);
+            } else if (lhs.focalLength > 0) {
+                return -1;
+            } else if (rhs.focalLength > 0) {
+                return 1;
+            }
+            return lhs.cameraId.compareTo(rhs.cameraId);
+        });
+        return modules;
     }
 
     private Camera2Session(Context context, boolean isFront, String cameraId, Size size) {
@@ -379,6 +463,16 @@ public class Camera2Session {
         return 1f;
     }
 
+    public int getBestSupportedFps(int fpsCap) {
+        Range<Integer> range = chooseBestFpsRange(cameraCharacteristics, fpsCap);
+        return range != null ? range.getUpper() : fpsCap;
+    }
+
+    public void setTargetFps(int fps) {
+        targetFps = Math.max(1, fps);
+        updateCaptureRequest();
+    }
+
     public int getPreviewWidth() {
         return previewSize.getWidth();
     }
@@ -490,7 +584,10 @@ public class Camera2Session {
             captureRequestBuilder.set(CaptureRequest.FLASH_MODE, flashing ? (recordingVideo ? CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_SINGLE) : CaptureRequest.FLASH_MODE_OFF);
 
             if (recordingVideo) {
-                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<Integer>(30, 60));
+                Range<Integer> range = chooseBestFpsRange(cameraCharacteristics, targetFps);
+                if (range != null) {
+                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, range);
+                }
                 captureRequestBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD);
             }
 
@@ -589,6 +686,64 @@ public class Camera2Session {
         } else {
             return Collections.max(Arrays.asList(choices), new CompareSizesByArea());
         }
+    }
+
+    private static float getFocalLength(CameraCharacteristics characteristics) {
+        float[] focalLengths = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+        if (focalLengths == null || focalLengths.length == 0) {
+            return 0f;
+        }
+        float result = 0f;
+        for (float focalLength : focalLengths) {
+            if (focalLength > 0 && (result == 0f || focalLength < result)) {
+                result = focalLength;
+            }
+        }
+        return result;
+    }
+
+    private static int getMaxFps(CameraCharacteristics characteristics) {
+        Range<Integer>[] ranges = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        int max = 0;
+        if (ranges != null) {
+            for (Range<Integer> range : ranges) {
+                if (range != null) {
+                    max = Math.max(max, range.getUpper());
+                }
+            }
+        }
+        return max;
+    }
+
+    private static Range<Integer> chooseBestFpsRange(CameraCharacteristics characteristics, int fpsCap) {
+        if (characteristics == null) {
+            return null;
+        }
+        Range<Integer>[] ranges = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        if (ranges == null || ranges.length == 0) {
+            return null;
+        }
+        Range<Integer> best = null;
+        for (Range<Integer> range : ranges) {
+            if (range == null || range.getUpper() > fpsCap) {
+                continue;
+            }
+            if (best == null || range.getUpper() > best.getUpper() || range.getUpper().equals(best.getUpper()) && range.getLower() > best.getLower()) {
+                best = range;
+            }
+        }
+        if (best != null) {
+            return best;
+        }
+        for (Range<Integer> range : ranges) {
+            if (range == null) {
+                continue;
+            }
+            if (best == null || range.getUpper() < best.getUpper()) {
+                best = range;
+            }
+        }
+        return best;
     }
     static class CompareSizesByArea implements Comparator<Size> {
         @Override
