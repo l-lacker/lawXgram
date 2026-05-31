@@ -983,7 +983,12 @@ public class LawxConfig {
     }
 
     private static int clampRoundVideoBitrateMbps(int bitrateMbps) {
-        return Math.max(1, Math.min(10, bitrateMbps));
+        if (bitrateMbps <= 1) {
+            return 1;
+        } else if (bitrateMbps <= 3) {
+            return 3;
+        }
+        return 5;
     }
 
     public static void toggleHideAllTab() {

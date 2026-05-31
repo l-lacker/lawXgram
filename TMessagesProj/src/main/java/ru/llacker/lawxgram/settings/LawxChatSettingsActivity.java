@@ -189,7 +189,13 @@ public class LawxChatSettingsActivity extends BaseLawxSettingsActivity implement
 
     private String getVideoMessagesQualityText() {
         int side = RoundVideoQualityHelper.getConfiguredSide(currentAccount);
-        return side + "x" + side + ", " + LawxConfig.roundVideoFpsCap + " FPS, " + LawxConfig.roundVideoBitrateMbps + " Mbit/s";
+        int preset = RoundVideoQualityHelper.presetIndexForBitrate(LawxConfig.roundVideoBitrateMbps);
+        String bitrate = switch (preset) {
+            case 0 -> LocaleController.getString(R.string.VideoMessagesQualityBitrateStandard);
+            case 1 -> LocaleController.getString(R.string.VideoMessagesQualityBitrateMedium);
+            default -> LocaleController.getString(R.string.VideoMessagesQualityBitrateHigh);
+        };
+        return side + "x" + side + ", " + LawxConfig.roundVideoFpsCap + " FPS, " + bitrate;
     }
 
     @Override

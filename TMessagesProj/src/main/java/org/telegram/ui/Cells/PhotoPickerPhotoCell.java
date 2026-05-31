@@ -105,12 +105,12 @@ public class PhotoPickerPhotoCell extends FrameLayout {
         };
         roundVideoBadgeContainer.setWillNotDraw(false);
         roundVideoBadgeContainer.setVisibility(GONE);
-        addView(roundVideoBadgeContainer, LayoutHelper.createFrame(28, 28, Gravity.LEFT | Gravity.TOP, 4, 4, 0, 0));
+        addView(roundVideoBadgeContainer, LayoutHelper.createFrame(36, 36, Gravity.LEFT | Gravity.TOP, 4, 4, 0, 0));
 
         roundVideoBadgeImageView = new ImageView(context);
         roundVideoBadgeImageView.setImageResource(R.drawable.msg_minvideo);
         roundVideoBadgeImageView.setScaleType(ImageView.ScaleType.CENTER);
-        roundVideoBadgeContainer.addView(roundVideoBadgeImageView, LayoutHelper.createFrame(20, 20, Gravity.CENTER));
+        roundVideoBadgeContainer.addView(roundVideoBadgeImageView, LayoutHelper.createFrame(26, 26, Gravity.CENTER));
 
         checkBox = new CheckBox2(context, 24);
         checkBox.setDrawBackgroundAsArc(11);

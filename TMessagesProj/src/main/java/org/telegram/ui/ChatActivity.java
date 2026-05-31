@@ -14201,6 +14201,9 @@ public class ChatActivity extends BaseFragment implements
             }
             if (info.videoEditedInfo == null || TextUtils.isEmpty(info.path)) {
                 FileLog.e("unable to prepare round video conversion for " + info.path);
+                if (BulletinFactory.canShowBulletin(this)) {
+                    BulletinFactory.of(this).createErrorBulletin(LocaleController.getString(R.string.ErrorOccurred), themeDelegate).show();
+                }
                 continue;
             }
             info.videoEditedInfo.roundVideo = true;

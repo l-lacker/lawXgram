@@ -14,7 +14,10 @@ public final class RoundVideoQualityHelper {
     public static final int TELEGRAM_MAX_FPS = 60;
     public static final int DEFAULT_FPS_CAP = 30;
     public static final int MIN_BITRATE_MBPS = 1;
-    public static final int MAX_BITRATE_MBPS = 10;
+    public static final int STANDARD_BITRATE_MBPS = 1;
+    public static final int MEDIUM_BITRATE_MBPS = 3;
+    public static final int HIGH_BITRATE_MBPS = 5;
+    public static final int MAX_BITRATE_MBPS = HIGH_BITRATE_MBPS;
     public static final long TELEGRAM_MAX_SIZE_BYTES = 10L * 1024L * 1024L;
     public static final long MAX_RECORDING_DURATION_MS = 60_000L;
 
@@ -49,7 +52,31 @@ public final class RoundVideoQualityHelper {
     }
 
     public static int clampBitrateMbps(int value) {
-        return Math.max(MIN_BITRATE_MBPS, Math.min(MAX_BITRATE_MBPS, value));
+        if (value <= STANDARD_BITRATE_MBPS) {
+            return STANDARD_BITRATE_MBPS;
+        } else if (value <= MEDIUM_BITRATE_MBPS) {
+            return MEDIUM_BITRATE_MBPS;
+        }
+        return HIGH_BITRATE_MBPS;
+    }
+
+    public static int presetIndexForBitrate(int value) {
+        value = clampBitrateMbps(value);
+        if (value == STANDARD_BITRATE_MBPS) {
+            return 0;
+        } else if (value == MEDIUM_BITRATE_MBPS) {
+            return 1;
+        }
+        return 2;
+    }
+
+    public static int bitrateForPresetIndex(int index) {
+        if (index <= 0) {
+            return STANDARD_BITRATE_MBPS;
+        } else if (index == 1) {
+            return MEDIUM_BITRATE_MBPS;
+        }
+        return HIGH_BITRATE_MBPS;
     }
 
     public static int encoderSafeSide(int side) {
@@ -126,10 +153,9 @@ public final class RoundVideoQualityHelper {
         if (info.cropState != null) {
             info.cropState.transformWidth = outputSide;
             info.cropState.transformHeight = outputSide;
-        } else {
-            info.resultWidth = outputSide;
-            info.resultHeight = outputSide;
         }
+        info.resultWidth = outputSide;
+        info.resultHeight = outputSide;
         info.framerate = chooseFps(info.framerate);
         info.bitrate = calculateTargetVideoBitrate(account, info, outputSide);
         info.estimatedSize = estimateRoundVideoSize(account, info.bitrate, getDurationMs(info));
@@ -141,6 +167,7 @@ public final class RoundVideoQualityHelper {
         }
         side = encoderSafeSide(side);
         info.roundVideo = true;
+        info.fromCamera = true;
         info.framerate = chooseFps(fps);
         info.originalWidth = side;
         info.originalHeight = side;

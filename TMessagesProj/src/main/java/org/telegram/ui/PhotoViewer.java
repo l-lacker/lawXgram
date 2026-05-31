@@ -7057,7 +7057,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             }
             roundVideoCropPending = true;
             roundVideoCropPreviousValue = false;
-            setCurrentMediaRoundVideo(true);
             updateRoundVideoButton();
             updateMuteButton();
             updateVideoInfo();
@@ -12799,7 +12798,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
                     final Bitmap bitmap = centerImage.getBitmap();
                     if (bitmap != null || isCurrentVideo) {
-                        photoCropView.setBitmap(bitmap, centerImage.getOrientation(), sendPhotoType != SELECT_TYPE_AVATAR && !isCurrentMediaRoundVideo(), false, paintingOverlay, cropTransform, isCurrentVideo ? (VideoEditTextureView) videoTextureView : null, editState.cropState);
+                        photoCropView.setBitmap(bitmap, centerImage.getOrientation(), sendPhotoType != SELECT_TYPE_AVATAR && !isCurrentMediaRoundVideoOrPending(), false, paintingOverlay, cropTransform, isCurrentVideo ? (VideoEditTextureView) videoTextureView : null, editState.cropState);
                         photoCropView.onDisappear();
                         int bitmapWidth = centerImage.getBitmapWidth();
                         int bitmapHeight = centerImage.getBitmapHeight();
@@ -12819,7 +12818,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         float newScaleY = (float) getContainerViewHeight(1) / (float) bitmapHeight;
                         float scale = Math.min(scaleX, scaleY);
                         float newScale = Math.min(newScaleX, newScaleY);
-                        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo()) {
+                        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideoOrPending()) {
                             float minSide = Math.min(getContainerViewWidth(1), getContainerViewHeight(1));
                             newScaleX = minSide / (float) bitmapWidth;
                             newScaleY = minSide / (float) bitmapHeight;
@@ -20471,7 +20470,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
                     canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
                 }
-                if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
+                if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideoOrPending() || cropTransform.hasViewTransform()) {
                     float cropScale;
                     if (currentEditMode == EDIT_MODE_CROP || sendPhotoType == SELECT_TYPE_AVATAR) {
                         if (videoTextureView != null) {
@@ -20968,7 +20967,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
             canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
         }
-        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
+        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideoOrPending() || cropTransform.hasViewTransform()) {
             float cropScale;
             if (currentEditMode == EDIT_MODE_CROP || sendPhotoType == SELECT_TYPE_AVATAR) {
                 float trueScale = 1.0f + (cropTransform.getTrueCropScale() - 1.0f) * (1.0f - cropAnimationValue);
@@ -21670,6 +21669,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         return object instanceof MediaController.MediaEditState && ((MediaController.MediaEditState) object).sendAsRoundVideo;
     }
 
+    private boolean isCurrentMediaRoundVideoOrPending() {
+        return roundVideoCropPending || isCurrentMediaRoundVideo();
+    }
+
     private boolean canShowRoundVideoButton() {
         if (!isCurrentVideo || !videoConvertSupported || centerImageIsLivePhoto || sendPhotoTypeIsGif || sendPhotoTypeIsPollMedia || isDocumentsPicker || sendPhotoType == SELECT_TYPE_AVATAR || sendPhotoType == SELECT_TYPE_STICKER || sendPhotoType == SELECT_TYPE_NO_SELECT || placeProvider != null && placeProvider.isEditingMessage()) {
             return false;
@@ -21698,7 +21701,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         boolean show = canShowRoundVideoButton();
         roundVideoButton.setTag(show ? 1 : null);
         roundVideoButton.setVisibility(show ? View.VISIBLE : View.GONE);
-        boolean selected = isCurrentMediaRoundVideo();
+        boolean selected = isCurrentMediaRoundVideoOrPending();
         int color = selected ? getThemedColor(Theme.key_chat_editMediaButton) : 0xFFFFFFFF;
         roundVideoButton.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
         roundVideoButton.setSelected(selected);
@@ -21712,7 +21715,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (muteVideo && sendPhotoType == SELECT_TYPE_AVATAR) {
             videoTimelineView.setMaxProgressDiff(9600.0f / videoDuration);
             videoTimelineView.setMode(VideoTimelinePlayView.MODE_AVATAR);
-        } else if (isCurrentMediaRoundVideo()) {
+        } else if (isCurrentMediaRoundVideoOrPending()) {
             videoTimelineView.setMaxProgressDiff(Math.min(1.0f, ROUND_VIDEO_MAX_DURATION / videoDuration));
             videoTimelineView.setMode(VideoTimelinePlayView.MODE_VIDEO);
         } else {
@@ -23020,7 +23023,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
                     canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
                 }
-                if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
+                if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideoOrPending() || cropTransform.hasViewTransform()) {
                     float cropScale;
                     if (currentEditMode == EDIT_MODE_CROP || sendPhotoType == SELECT_TYPE_AVATAR) {
                         if (videoTextureView != null) {
@@ -23412,7 +23415,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
             canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
         }
-        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
+        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideoOrPending() || cropTransform.hasViewTransform()) {
             float cropScale;
             if (videoTextureView != null) {
                 videoTextureView.setScaleX(editState.cropState != null && editState.cropState.mirrored ? -1.0f : 1.0f);
@@ -23528,7 +23531,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 //
 //            canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
 //        }
-        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
+        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideoOrPending() || cropTransform.hasViewTransform()) {
             float cropScale;
             if (videoTextureView != null) {
                 videoTextureView.setScaleX(editState.cropState != null && editState.cropState.mirrored ? -1.0f : 1.0f);

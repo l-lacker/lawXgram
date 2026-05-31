@@ -11406,6 +11406,12 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             videoEditedInfo.bitrate = 0;
         }
 
+        if (videoEditedInfo.fromCamera && videoEditedInfo.cropState == null) {
+            int side = RoundVideoQualityHelper.chooseOutputSide(account, videoEditedInfo.resultWidth, videoEditedInfo.resultHeight);
+            RoundVideoQualityHelper.applyQuality(videoEditedInfo, account, side);
+            return;
+        }
+
         ensureRoundVideoCropState(videoEditedInfo);
         MediaController.CropState cropState = videoEditedInfo.cropState;
 

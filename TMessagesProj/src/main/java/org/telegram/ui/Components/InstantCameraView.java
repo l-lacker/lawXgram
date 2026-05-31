@@ -49,6 +49,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
@@ -187,7 +188,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
     private Size aspectRatio = SharedConfig.roundCamera16to9 ? new Size(16, 9) : new Size(4, 3);
     private TextureView textureView;
     private BackupImageView textureOverlayView;
-    private final boolean useCamera2 = SharedConfig.isUsingCamera2(currentAccount);
+    private boolean useCamera2 = SharedConfig.isUsingCamera2(currentAccount);
     private CameraSession cameraSession;
     private boolean bothCameras;
     private Camera2Session[] camera2Sessions = new Camera2Session[2];
@@ -244,6 +245,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
     float pinchStartDistance;
 
     float pinchScale;
+    float pinchStartZoom = 1f;
 
     boolean isInPinchToZoomTouchMode;
     boolean maybePinchToZoomTouchMode;
@@ -266,6 +268,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
     private final LinearLayout rearCamerasLayout;
     private final int buttonsSizePx;
     private ArrayList<Camera2Session.CameraModule> rearCameraModules = new ArrayList<>();
+    private ArrayList<CameraInfo> rearCamera1Modules = new ArrayList<>();
     private float activeRearFocalLength;
 
 
@@ -746,6 +749,10 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         }
         cameraReady = false;
         selectedCamera = null;
+        useCamera2 = SharedConfig.isUsingCamera2(currentAccount);
+        if (BuildVars.LOGS_ENABLED) {
+            FileLog.d("InstantCamera using " + (useCamera2 ? "Camera2" : "Camera1") + " for round video");
+        }
         if (!fromPaused) {
             isFrontface = !LawxConfig.rearVideoMessages;
             updateFlash();
@@ -761,6 +768,9 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
 
         if (!initCamera()) {
             return;
+        }
+        if (!useCamera2) {
+            updateRearCamerasLayout();
         }
         if (MediaController.getInstance().getPlayingMessageObject() != null) {
             if (MediaController.getInstance().getPlayingMessageObject().isVideo() || MediaController.getInstance().getPlayingMessageObject().isRoundVideo()) {
@@ -978,6 +988,8 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 videoEditedInfo.startTime = -1;
                 videoEditedInfo.endTime = -1;
             }
+            videoEditedInfo.roundVideo = true;
+            videoEditedInfo.fromCamera = true;
             boolean needConvert = videoEditedInfo.needConvert();
             long durationForQuality = videoEditedInfo.estimatedDuration > 0 ? videoEditedInfo.estimatedDuration : recordedTime;
             if (needConvert) {
@@ -1143,8 +1155,21 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         int side = RoundVideoQualityHelper.getConfiguredSide(currentAccount);
         rearCameraModules = Camera2Session.getCameraModules(false, side, side);
         Camera2Session.CameraModule selected = getSelectedRearModule();
-        if (selected != null && !selected.cameraId.equals(LawxConfig.roundVideoRearCameraId)) {
-            LawxConfig.setRoundVideoRearCameraId(selected.cameraId);
+        if (selected != null && !selected.id.equals(LawxConfig.roundVideoRearCameraId)) {
+            LawxConfig.setRoundVideoRearCameraId(selected.id);
+        }
+    }
+
+    private void updateCamera1RearModules(ArrayList<CameraInfo> cameraInfos) {
+        rearCamera1Modules.clear();
+        if (cameraInfos == null) {
+            return;
+        }
+        for (int a = 0; a < cameraInfos.size(); a++) {
+            CameraInfo cameraInfo = cameraInfos.get(a);
+            if (cameraInfo != null && !cameraInfo.isFrontface()) {
+                rearCamera1Modules.add(cameraInfo);
+            }
         }
     }
 
@@ -1170,7 +1195,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             Camera2Session.CameraModule module = getSelectedRearModule();
             if (module != null) {
                 activeRearFocalLength = module.focalLength;
-                session = Camera2Session.create(module.cameraId, side, side);
+                session = Camera2Session.create(module, side, side);
             } else {
                 activeRearFocalLength = 0f;
                 session = Camera2Session.create(false, side, side);
@@ -1189,7 +1214,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             return null;
         }
         for (Camera2Session.CameraModule module : rearCameraModules) {
-            if (module.cameraId.equals(LawxConfig.roundVideoRearCameraId)) {
+            if (module.id.equals(LawxConfig.roundVideoRearCameraId)) {
                 return module;
             }
         }
@@ -1201,73 +1226,115 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         if (rearCameraModules == null || rearCameraModules.isEmpty()) {
             return null;
         }
-        Camera2Session.CameraModule best = null;
-        float bestDistance = Float.MAX_VALUE;
         for (Camera2Session.CameraModule module : rearCameraModules) {
-            if (module.focalLength <= 0) {
-                continue;
-            }
-            float distance = Math.abs(module.focalLength - 5.0f);
-            if (best == null || distance < bestDistance) {
-                best = module;
-                bestDistance = distance;
+            if (module.main) {
+                return module;
             }
         }
-        return best != null ? best : rearCameraModules.get(0);
+        for (Camera2Session.CameraModule module : rearCameraModules) {
+            if (module.zoomRatio > 0 && Math.abs(module.zoomRatio - 1f) < 0.05f) {
+                return module;
+            }
+        }
+        for (Camera2Session.CameraModule module : rearCameraModules) {
+            if (module.physicalCameraId == null) {
+                return module;
+            }
+        }
+        return rearCameraModules.get(0);
     }
 
     private void updateRearCamerasLayout() {
         rearCamerasLayout.removeAllViews();
-        if (!useCamera2 || isFrontface || rearCameraModules == null || rearCameraModules.size() <= 1) {
+        if (isFrontface) {
+            rearCamerasLayout.setVisibility(GONE);
+            return;
+        }
+        if (!useCamera2) {
+            updateRearCamera1Layout();
+            return;
+        }
+        if (rearCameraModules == null || rearCameraModules.size() <= 1) {
             rearCamerasLayout.setVisibility(GONE);
             return;
         }
         Camera2Session.CameraModule selected = getSelectedRearModule();
-        Camera2Session.CameraModule main = getMainRearModule();
-        float mainFocal = main != null ? main.focalLength : 0f;
         for (Camera2Session.CameraModule module : rearCameraModules) {
             TextView button = new TextView(getContext());
             button.setGravity(Gravity.CENTER);
             button.setTextSize(11);
             button.setLines(2);
             button.setIncludeFontPadding(false);
-            boolean checked = selected != null && selected.cameraId.equals(module.cameraId);
+            boolean checked = selected != null && selected.id.equals(module.id);
             button.setTextColor(checked ? 0xff111111 : 0xffffffff);
             button.setBackground(Theme.createRoundRectDrawable(dp(16), checked ? 0xffffffff : 0x00000000));
-            button.setText(getRearCameraModuleText(module, mainFocal));
+            button.setText(getRearCameraModuleText(module));
             button.setOnClickListener(v -> selectRearCameraModule(module));
             rearCamerasLayout.addView(button, LayoutHelper.createLinear(58, 40, 2, 0, 2, 0));
         }
         rearCamerasLayout.setVisibility(VISIBLE);
     }
 
-    private String getRearCameraModuleText(Camera2Session.CameraModule module, float mainFocal) {
-        String label;
-        if (module.focalLength > 0 && mainFocal > 0) {
-            float zoom = module.focalLength / mainFocal;
-            if (zoom > 0.85f && zoom < 1.25f) {
-                label = "1x";
-            } else if (zoom < 0.75f) {
-                label = String.format(Locale.US, "%.1fx", zoom);
-            } else {
-                label = zoom >= 10 ? String.format(Locale.US, "%.0fx", zoom) : String.format(Locale.US, "%.1fx", zoom);
-            }
-            return label + "\n" + String.format(Locale.US, "%.1f mm", module.focalLength);
+    private void updateRearCamera1Layout() {
+        if (rearCamera1Modules == null || rearCamera1Modules.size() <= 1) {
+            rearCamerasLayout.setVisibility(GONE);
+            return;
+        }
+        CameraInfo selected = selectedCamera;
+        for (int a = 0; a < rearCamera1Modules.size(); a++) {
+            CameraInfo cameraInfo = rearCamera1Modules.get(a);
+            TextView button = new TextView(getContext());
+            button.setGravity(Gravity.CENTER);
+            button.setTextSize(11);
+            button.setLines(2);
+            button.setIncludeFontPadding(false);
+            boolean checked = selected != null && selected.getCameraId() == cameraInfo.getCameraId();
+            button.setTextColor(checked ? 0xff111111 : 0xffffffff);
+            button.setBackground(Theme.createRoundRectDrawable(dp(16), checked ? 0xffffffff : 0x00000000));
+            button.setText("ID\n" + cameraInfo.getCameraId());
+            button.setOnClickListener(v -> selectRearCamera1Module(cameraInfo));
+            rearCamerasLayout.addView(button, LayoutHelper.createLinear(58, 40, 2, 0, 2, 0));
+        }
+        rearCamerasLayout.setVisibility(VISIBLE);
+    }
+
+    private String getRearCameraModuleText(Camera2Session.CameraModule module) {
+        if (module.focalLength > 0) {
+            return formatRearCameraFocalLength(module.focalLength);
+        }
+        if (module.zoomRatio > 0) {
+            return formatRearCameraZoomRatio(module.zoomRatio);
+        }
+        if (!TextUtils.isEmpty(module.physicalCameraId)) {
+            return "ID\n" + module.physicalCameraId;
+        }
+        if (!TextUtils.isEmpty(module.cameraId)) {
+            return "ID\n" + module.cameraId;
         }
         int index = rearCameraModules.indexOf(module) + 1;
-        return "Camera " + index + "\nID " + module.cameraId;
+        return "ID\n" + index;
+    }
+
+    private String formatRearCameraFocalLength(float focalLength) {
+        return String.format(Locale.US, "%.1f\nmm", focalLength);
+    }
+
+    private String formatRearCameraZoomRatio(float zoomRatio) {
+        return Math.abs(zoomRatio - Math.round(zoomRatio)) < 0.05f
+                ? String.format(Locale.US, "%.0f\nx", zoomRatio)
+                : String.format(Locale.US, "%.1f\nx", zoomRatio);
     }
 
     private void selectRearCameraModule(Camera2Session.CameraModule module) {
         if (module == null) {
             return;
         }
-        if (module.cameraId.equals(LawxConfig.roundVideoRearCameraId)) {
+        if (module.id.equals(LawxConfig.roundVideoRearCameraId)) {
             return;
         }
         float previousFocal = activeRearFocalLength;
         String previousCameraId = LawxConfig.roundVideoRearCameraId;
-        LawxConfig.setRoundVideoRearCameraId(module.cameraId);
+        LawxConfig.setRoundVideoRearCameraId(module.id);
         updateRearCamerasLayout();
         if (isFrontface || cameraThread == null) {
             return;
@@ -1293,6 +1360,32 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         previewSize[0] = new Size(camera2SessionCurrent.getPreviewWidth(), camera2SessionCurrent.getPreviewHeight());
         animateCameraSwitchScale(previousFocal, activeRearFocalLength);
         cameraThread.setCurrentSession(camera2SessionCurrent);
+        cameraReady = false;
+        cameraThread.reinitForNewCamera();
+    }
+
+    private void selectRearCamera1Module(CameraInfo cameraInfo) {
+        if (cameraInfo == null || cameraInfo.isFrontface()) {
+            return;
+        }
+        if (selectedCamera != null && selectedCamera.getCameraId() == cameraInfo.getCameraId()) {
+            return;
+        }
+        LawxConfig.setRoundVideoRearCameraId("camera1:" + cameraInfo.getCameraId());
+        if (!LawxConfig.roundVideoSmoothCameraSwitch) {
+            saveLastCameraBitmap();
+        }
+        if (cameraSession != null) {
+            cameraSession.destroy();
+            CameraController.getInstance().close(cameraSession, null, null);
+            cameraSession = null;
+        }
+        selectedCamera = null;
+        if (!initCamera() || cameraThread == null) {
+            updateRearCamerasLayout();
+            return;
+        }
+        updateRearCamerasLayout();
         cameraReady = false;
         cameraThread.reinitForNewCamera();
     }
@@ -1371,6 +1464,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             }
         }
         initCamera();
+        updateRearCamerasLayout();
         cameraReady = false;
         cameraThread.reinitForNewCamera();
     }
@@ -1385,13 +1479,28 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         if (cameraInfos == null) {
             return false;
         }
+        updateCamera1RearModules(cameraInfos);
         CameraInfo notFrontface = null;
+        CameraInfo preferredRearCamera = null;
+        if (!isFrontface && !TextUtils.isEmpty(LawxConfig.roundVideoRearCameraId) && LawxConfig.roundVideoRearCameraId.startsWith("camera1:")) {
+            int preferredId = Utilities.parseInt(LawxConfig.roundVideoRearCameraId.substring("camera1:".length()));
+            for (int a = 0; a < rearCamera1Modules.size(); a++) {
+                CameraInfo cameraInfo = rearCamera1Modules.get(a);
+                if (cameraInfo.getCameraId() == preferredId) {
+                    preferredRearCamera = cameraInfo;
+                    break;
+                }
+            }
+        }
         for (int a = 0; a < cameraInfos.size(); a++) {
             CameraInfo cameraInfo = cameraInfos.get(a);
             if (!cameraInfo.isFrontface()) {
                 notFrontface = cameraInfo;
             }
-            if (isFrontface && cameraInfo.isFrontface() || !isFrontface && !cameraInfo.isFrontface()) {
+            if (!isFrontface && preferredRearCamera != null) {
+                selectedCamera = preferredRearCamera;
+                break;
+            } else if (isFrontface && cameraInfo.isFrontface() || !isFrontface && !cameraInfo.isFrontface()) {
                 selectedCamera = cameraInfo;
                 break;
             } else {
@@ -3111,7 +3220,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
 
         private void handleStopRecording(final int send, final SendOptions sendOptions) {
             final boolean runDone;
-            if (send == ENCODER_SEND_SEND && (videoEditedInfo == null || !videoEditedInfo.needConvert()) && !delegate.isInScheduleMode()) {
+            if (send == ENCODER_SEND_SEND && videoEditedInfo != null && !videoEditedInfo.needConvert() && !delegate.isInScheduleMode()) {
                 runDone = false;
                 if (!sentMedia) {
                     sentMedia = true;
@@ -3247,6 +3356,8 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                             videoEditedInfo.startTime = -1;
                             videoEditedInfo.endTime = -1;
                         }
+                        videoEditedInfo.roundVideo = true;
+                        videoEditedInfo.fromCamera = true;
                         boolean needConvert = videoEditedInfo.needConvert();
                         long durationForQuality = recordedTime;
                         if (needConvert) {
@@ -3261,7 +3372,6 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                             videoEditedInfo.estimatedDuration = durationForQuality;
                             videoEditedInfo.estimatedSize = Math.max(1, (long) (size * (durationForQuality / totalDuration)));
                         }
-                        videoEditedInfo.roundVideo = true;
                         videoEditedInfo.file = file;
                         videoEditedInfo.encryptedFile = encryptedFile;
                         videoEditedInfo.key = key;
@@ -3951,6 +4061,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 pinchStartDistance = (float) Math.hypot(ev.getX(1) - ev.getX(0), ev.getY(1) - ev.getY(0));
 
                 pinchScale = 1f;
+                pinchStartZoom = useCamera2 && camera2SessionCurrent != null ? camera2SessionCurrent.getZoom() : 1f;
 
                 pointerId1 = ev.getPointerId(0);
                 pointerId2 = ev.getPointerId(1);
@@ -3981,7 +4092,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             pinchScale = (float) Math.hypot(ev.getX(index2) - ev.getX(index1), ev.getY(index2) - ev.getY(index1)) / pinchStartDistance;
             if (useCamera2) {
                 if (camera2SessionCurrent != null) {
-                    float zoom = Utilities.clamp(pinchScale, camera2SessionCurrent.getMaxZoom(), camera2SessionCurrent.getMinZoom());
+                    float zoom = Utilities.clamp(pinchStartZoom * pinchScale, camera2SessionCurrent.getMaxZoom(), camera2SessionCurrent.getMinZoom());
                     camera2SessionCurrent.setZoom(zoom);
                 }
             } else {
@@ -4003,15 +4114,17 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         }
 
         float zoom;
+        float zoomTarget = 0f;
         if (useCamera2) {
             if (camera2SessionCurrent == null) return;
-            zoom = Utilities.clamp(pinchScale, camera2SessionCurrent.getMaxZoom(), camera2SessionCurrent.getMinZoom());
+            zoom = Utilities.clamp(pinchStartZoom * pinchScale, camera2SessionCurrent.getMaxZoom(), camera2SessionCurrent.getMinZoom());
+            zoomTarget = Utilities.clamp(pinchStartZoom, camera2SessionCurrent.getMaxZoom(), camera2SessionCurrent.getMinZoom());
         } else {
             zoom = Math.min(1f, Math.max(0, pinchScale - 1f));
         }
 
-        if (zoom > 0f) {
-            finishZoomTransition = ValueAnimator.ofFloat(zoom, 0);
+        if (Math.abs(zoom - zoomTarget) > 0.01f) {
+            finishZoomTransition = ValueAnimator.ofFloat(zoom, zoomTarget);
             finishZoomTransition.addUpdateListener(valueAnimator -> {
                 if (useCamera2) {
                     if (camera2SessionCurrent != null) {

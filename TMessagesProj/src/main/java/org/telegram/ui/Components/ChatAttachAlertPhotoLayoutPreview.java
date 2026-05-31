@@ -2356,7 +2356,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                     if (photoEntry == null || !photoEntry.isVideo || !photoEntry.sendAsRoundVideo) {
                         return;
                     }
-                    final float size = AndroidUtilities.dp(28) * scale;
+                    final float size = AndroidUtilities.dp(36) * scale;
                     if (size <= 0) {
                         return;
                     }
@@ -2367,7 +2367,7 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
 
                     int oldDrawableAlpha = roundVideoImage.getAlpha();
                     roundVideoImage.setAlpha((int) (255 * alpha));
-                    int iconSize = (int) (AndroidUtilities.dp(20) * scale);
+                    int iconSize = (int) (AndroidUtilities.dp(26) * scale);
                     int iconLeft = (int) (left + (size - iconSize) / 2f);
                     int iconTop = (int) (top + (size - iconSize) / 2f);
                     roundVideoImage.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize);

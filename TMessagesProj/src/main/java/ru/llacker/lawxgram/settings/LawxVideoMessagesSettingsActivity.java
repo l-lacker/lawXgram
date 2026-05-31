@@ -37,14 +37,11 @@ public class LawxVideoMessagesSettingsActivity extends BaseLawxSettingsActivity 
         items.add(UItem.asShadow(LocaleController.getString(R.string.VideoMessagesQualityFpsAbout)));
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.VideoMessagesQualityBitrate)));
-        UItem bitrateItem = UItem.asIntSlideView(
-                0,
-                RoundVideoQualityHelper.MIN_BITRATE_MBPS,
-                LawxConfig.roundVideoBitrateMbps,
-                RoundVideoQualityHelper.MAX_BITRATE_MBPS,
-                value -> value + " Mbit/s",
-                LawxConfig::setRoundVideoBitrateMbps
-        );
+        UItem bitrateItem = UItem.asSlideView(new String[] {
+                LocaleController.getString(R.string.VideoMessagesQualityBitrateStandard),
+                LocaleController.getString(R.string.VideoMessagesQualityBitrateMedium),
+                LocaleController.getString(R.string.VideoMessagesQualityBitrateHigh)
+        }, RoundVideoQualityHelper.presetIndexForBitrate(LawxConfig.roundVideoBitrateMbps), index -> LawxConfig.setRoundVideoBitrateMbps(RoundVideoQualityHelper.bitrateForPresetIndex(index)));
         bitrateItem.id = bitrateRow;
         items.add(bitrateItem);
         items.add(UItem.asShadow(getBitrateSummary()));
@@ -92,12 +89,23 @@ public class LawxVideoMessagesSettingsActivity extends BaseLawxSettingsActivity 
     private CharSequence getBitrateSummary() {
         StringBuilder builder = new StringBuilder(LocaleController.getString(R.string.VideoMessagesQualityBitrateAbout));
         builder.append('\n');
-        for (int mbps = RoundVideoQualityHelper.MIN_BITRATE_MBPS; mbps <= RoundVideoQualityHelper.MAX_BITRATE_MBPS; mbps++) {
+        int[] presets = new int[] {
+                RoundVideoQualityHelper.STANDARD_BITRATE_MBPS,
+                RoundVideoQualityHelper.MEDIUM_BITRATE_MBPS,
+                RoundVideoQualityHelper.HIGH_BITRATE_MBPS
+        };
+        String[] names = new String[] {
+                LocaleController.getString(R.string.VideoMessagesQualityBitrateStandard),
+                LocaleController.getString(R.string.VideoMessagesQualityBitrateMedium),
+                LocaleController.getString(R.string.VideoMessagesQualityBitrateHigh)
+        };
+        for (int i = 0; i < presets.length; i++) {
+            int mbps = presets[i];
             long size = RoundVideoQualityHelper.estimateRoundVideoSize(currentAccount, mbps * 1_000_000, RoundVideoQualityHelper.MAX_RECORDING_DURATION_MS);
-            if (mbps > RoundVideoQualityHelper.MIN_BITRATE_MBPS) {
-                builder.append("  ");
+            if (i > 0) {
+                builder.append('\n');
             }
-            builder.append(mbps).append(": ").append(RoundVideoQualityHelper.formatSizeMb(size));
+            builder.append(names[i]).append(": ").append(RoundVideoQualityHelper.formatSizeMb(size));
         }
         return builder;
     }

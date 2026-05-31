@@ -61,6 +61,9 @@
     <string name="VideoMessagesQualityFpsAbout">The client chooses the best supported camera FPS without exceeding this value.</string>
     <string name="VideoMessagesQualityBitrate">Bitrate</string>
     <string name="VideoMessagesQualityBitrateAbout">Actual bitrate is reduced automatically so the final video message fits into Telegram\'s 10 MB limit. Estimated max size for 60 seconds:</string>
+    <string name="VideoMessagesQualityBitrateStandard">Standard, up to 1 Mbit/s</string>
+    <string name="VideoMessagesQualityBitrateMedium">Medium, up to 3 Mbit/s</string>
+    <string name="VideoMessagesQualityBitrateHigh">High, up to 5 Mbit/s</string>
     <string name="VideoMessagesQualityCamera">Camera</string>
     <string name="VideoMessagesQualitySmoothCameraSwitch">Smooth camera transition</string>
     <string name="VideoMessagesQualityCameraAbout">Rear camera modules appear near the recording circle when the device exposes them through Camera2.</string>
