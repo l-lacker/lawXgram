@@ -961,6 +961,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private boolean roundVideoCropPending;
     private boolean roundVideoCropPreviousValue;
     private static final float ROUND_VIDEO_MAX_DURATION = 60000.0f;
+    private static final int ROUND_VIDEO_MAX_SIZE = 639;
+    private static final int ROUND_VIDEO_MAX_FRAMERATE = 60;
 
     private Runnable onUserLeaveHintListener = this::onUserLeaveHint;
 
@@ -10085,6 +10087,40 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         return result;
     }
 
+    private int clampRoundVideoSide(int side) {
+        side = Math.min(side, ROUND_VIDEO_MAX_SIZE);
+        MediaCodec encoder = null;
+        try {
+            encoder = MediaCodec.createEncoderByType(MediaController.VIDEO_MIME_TYPE);
+            MediaCodecInfo.CodecCapabilities capabilities = encoder.getCodecInfo().getCapabilitiesForType(MediaController.VIDEO_MIME_TYPE);
+            MediaCodecInfo.VideoCapabilities videoCapabilities = capabilities.getVideoCapabilities();
+            int alignment = Math.max(2, Math.max(videoCapabilities.getWidthAlignment(), videoCapabilities.getHeightAlignment()));
+            int alignedSide = side - side % alignment;
+            while (alignedSide >= 2) {
+                if (videoCapabilities.isSizeSupported(alignedSide, alignedSide)) {
+                    return alignedSide;
+                }
+                alignedSide -= alignment;
+            }
+        } catch (Exception ignore) {
+        } finally {
+            try {
+                if (encoder != null) {
+                    encoder.release();
+                }
+            } catch (Exception ignore) {
+            }
+        }
+        if ((side & 1) != 0) {
+            side--;
+        }
+        return Math.max(2, side);
+    }
+
+    private int getRoundVideoSide(int width, int height) {
+        return clampRoundVideoSide(Math.min(width, height));
+    }
+
     private VideoEditedInfo getCurrentVideoEditedInfo() {
         if (!isCurrentVideo && hasAnimatedMediaEntities() && centerImage.getBitmapWidth() > 0) {
             float maxSize = 854;
@@ -10166,9 +10202,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         videoEditedInfo.videoOffset = currentPathVideoOffset;
         videoEditedInfo.estimatedSize = estimatedSize != 0 ? estimatedSize : 1;
         videoEditedInfo.estimatedDuration = estimatedDuration;
-        videoEditedInfo.framerate = videoFramerate;
+        boolean roundVideo = isCurrentMediaRoundVideo();
+        videoEditedInfo.framerate = roundVideo ? Math.min(videoFramerate, ROUND_VIDEO_MAX_FRAMERATE) : videoFramerate;
         videoEditedInfo.originalDuration = (long) (videoDuration * 1000);
-        videoEditedInfo.roundVideo = isCurrentMediaRoundVideo();
+        videoEditedInfo.roundVideo = roundVideo;
         videoEditedInfo.filterState = editState.savedFilterState;
         if (editState.croppedPaintPath != null) {
             videoEditedInfo.paintPath = editState.croppedPaintPath;
@@ -10204,24 +10241,35 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 videoEditedInfo.cropState.transformWidth = (int) (videoEditedInfo.resultWidth * videoEditedInfo.cropState.cropPw);
                 videoEditedInfo.cropState.transformHeight = (int) (videoEditedInfo.resultHeight * videoEditedInfo.cropState.cropPh);
             }
-            if (sendPhotoType == SELECT_TYPE_AVATAR) {
-                if (videoEditedInfo.cropState.transformWidth > 800) {
-                    videoEditedInfo.cropState.transformWidth = 800;
+            if (sendPhotoType == SELECT_TYPE_AVATAR || videoEditedInfo.roundVideo) {
+                int maxSize = videoEditedInfo.roundVideo ? ROUND_VIDEO_MAX_SIZE : 800;
+                if (videoEditedInfo.cropState.transformWidth > maxSize) {
+                    videoEditedInfo.cropState.transformWidth = maxSize;
                 }
-                if (videoEditedInfo.cropState.transformHeight > 800) {
-                    videoEditedInfo.cropState.transformHeight = 800;
+                if (videoEditedInfo.cropState.transformHeight > maxSize) {
+                    videoEditedInfo.cropState.transformHeight = maxSize;
                 }
                 videoEditedInfo.cropState.transformWidth = videoEditedInfo.cropState.transformHeight = Math.min(videoEditedInfo.cropState.transformWidth, videoEditedInfo.cropState.transformHeight);
             }
             if (BuildVars.LOGS_ENABLED) {
                 FileLog.d("original transformed w = " + videoEditedInfo.cropState.transformWidth + " h = " + videoEditedInfo.cropState.transformHeight + " r = " + videoEditedInfo.rotationValue);
             }
-            int[] fixedSize = fixVideoWidthHeight(videoEditedInfo.cropState.transformWidth, videoEditedInfo.cropState.transformHeight);
-            videoEditedInfo.cropState.transformWidth = fixedSize[0];
-            videoEditedInfo.cropState.transformHeight = fixedSize[1];
+            if (videoEditedInfo.roundVideo) {
+                int side = getRoundVideoSide(videoEditedInfo.cropState.transformWidth, videoEditedInfo.cropState.transformHeight);
+                videoEditedInfo.cropState.transformWidth = side;
+                videoEditedInfo.cropState.transformHeight = side;
+            } else {
+                int[] fixedSize = fixVideoWidthHeight(videoEditedInfo.cropState.transformWidth, videoEditedInfo.cropState.transformHeight);
+                videoEditedInfo.cropState.transformWidth = fixedSize[0];
+                videoEditedInfo.cropState.transformHeight = fixedSize[1];
+            }
             if (BuildVars.LOGS_ENABLED) {
                 FileLog.d("fixed transformed w = " + videoEditedInfo.cropState.transformWidth + " h = " + videoEditedInfo.cropState.transformHeight);
             }
+        } else if (videoEditedInfo.roundVideo) {
+            int side = getRoundVideoSide(videoEditedInfo.resultWidth, videoEditedInfo.resultHeight);
+            videoEditedInfo.resultWidth = side;
+            videoEditedInfo.resultHeight = side;
         }
         if (sendPhotoType == SELECT_TYPE_AVATAR) {
             videoEditedInfo.avatarStartTime = avatarStartTime;
@@ -12758,7 +12806,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         float newScaleY = (float) getContainerViewHeight(1) / (float) bitmapHeight;
                         float scale = Math.min(scaleX, scaleY);
                         float newScale = Math.min(newScaleX, newScaleY);
-                        if (sendPhotoType == SELECT_TYPE_AVATAR) {
+                        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo()) {
                             float minSide = Math.min(getContainerViewWidth(1), getContainerViewHeight(1));
                             newScaleX = minSide / (float) bitmapWidth;
                             newScaleY = minSide / (float) bitmapHeight;
@@ -20410,7 +20458,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
                     canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
                 }
-                if (sendPhotoType == SELECT_TYPE_AVATAR || cropTransform.hasViewTransform()) {
+                if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
                     float cropScale;
                     if (currentEditMode == EDIT_MODE_CROP || sendPhotoType == SELECT_TYPE_AVATAR) {
                         if (videoTextureView != null) {
@@ -20907,7 +20955,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
             canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
         }
-        if (sendPhotoType == SELECT_TYPE_AVATAR || cropTransform.hasViewTransform()) {
+        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
             float cropScale;
             if (currentEditMode == EDIT_MODE_CROP || sendPhotoType == SELECT_TYPE_AVATAR) {
                 float trueScale = 1.0f + (cropTransform.getTrueCropScale() - 1.0f) * (1.0f - cropAnimationValue);
@@ -22981,7 +23029,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
                     canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
                 }
-                if (sendPhotoType == SELECT_TYPE_AVATAR || cropTransform.hasViewTransform()) {
+                if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
                     float cropScale;
                     if (currentEditMode == EDIT_MODE_CROP || sendPhotoType == SELECT_TYPE_AVATAR) {
                         if (videoTextureView != null) {
@@ -23373,7 +23421,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
             canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
         }
-        if (sendPhotoType == SELECT_TYPE_AVATAR || cropTransform.hasViewTransform()) {
+        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
             float cropScale;
             if (videoTextureView != null) {
                 videoTextureView.setScaleX(editState.cropState != null && editState.cropState.mirrored ? -1.0f : 1.0f);
@@ -23489,7 +23537,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 //
 //            canvas.clipRect(-w / 2, -h / 2, w / 2, h / 2);
 //        }
-        if (sendPhotoType == SELECT_TYPE_AVATAR || cropTransform.hasViewTransform()) {
+        if (sendPhotoType == SELECT_TYPE_AVATAR || isCurrentMediaRoundVideo() || cropTransform.hasViewTransform()) {
             float cropScale;
             if (videoTextureView != null) {
                 videoTextureView.setScaleX(editState.cropState != null && editState.cropState.mirrored ? -1.0f : 1.0f);
