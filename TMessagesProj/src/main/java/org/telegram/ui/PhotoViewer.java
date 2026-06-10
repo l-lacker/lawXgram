@@ -6426,8 +6426,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     state.resetEdit();
                     state.editedInfo = getCurrentVideoEditedInfo();
                 }
-                roundVideoCropPending = false;
-                updateRoundVideoButton();
+                cancelRoundVideoCropPending();
                 updateItemsState(true);
                 if ((sendPhotoType == 0 || sendPhotoType == 4) && placeProvider != null) {
                     placeProvider.updatePhotoAtIndex(currentIndex);
@@ -7061,6 +7060,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             updateMuteButton();
             updateVideoInfo();
             switchToEditMode(EDIT_MODE_CROP);
+            if (currentEditMode != EDIT_MODE_CROP && switchingToMode != EDIT_MODE_CROP) {
+                cancelRoundVideoCropPending();
+            }
         });
 
         livePhotoButton = new LivePhotoButton(containerView.getContext());
@@ -8037,13 +8039,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             }
             Runnable onEnd = () -> {
                 cropTransform.setViewTransform(previousHasTransform, previousCropPx, previousCropPy, previousCropRotation, previousCropOrientation, previousCropScale, scale1(), scale1(), previousCropPw, previousCropPh, 0, 0, previousCropMirrored);
-                if (roundVideoCropPending) {
-                    setCurrentMediaRoundVideo(roundVideoCropPreviousValue);
-                    roundVideoCropPending = false;
-                    updateRoundVideoButton();
-                    updateMuteButton();
-                    updateVideoInfo();
-                }
+                cancelRoundVideoCropPending();
 //                if (previousHasTransform) {
 //                    editState.cropState = new MediaController.CropState();
 //                    editState.cropState.cropPx = previousCropPx;
@@ -18551,6 +18547,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 closePaintMode();
                 return;
             }
+            cancelRoundVideoCropPending();
             if (currentEditMode == EDIT_MODE_CROP) {
                 cropTransform.setViewTransform(previousHasTransform, previousCropPx, previousCropPy, previousCropRotation, previousCropOrientation, previousCropScale, 1.0f, 1.0f, previousCropPw, previousCropPh, 0, 0, previousCropMirrored);
             }
@@ -21671,6 +21668,17 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
     private boolean isCurrentMediaRoundVideoOrPending() {
         return roundVideoCropPending || isCurrentMediaRoundVideo();
+    }
+
+    private void cancelRoundVideoCropPending() {
+        if (!roundVideoCropPending) {
+            return;
+        }
+        setCurrentMediaRoundVideo(roundVideoCropPreviousValue);
+        roundVideoCropPending = false;
+        updateRoundVideoButton();
+        updateMuteButton();
+        updateVideoInfo();
     }
 
     private boolean canShowRoundVideoButton() {

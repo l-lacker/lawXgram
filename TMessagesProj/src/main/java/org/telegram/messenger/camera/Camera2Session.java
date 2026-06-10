@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -94,19 +95,17 @@ public class Camera2Session {
         public final String physicalCameraId;
         public final boolean front;
         public final float focalLength;
-        public final float zoomRatio;
         public final boolean main;
         public final int maxFps;
         public final int previewWidth;
         public final int previewHeight;
 
-        private CameraModule(String id, String cameraId, String physicalCameraId, boolean front, float focalLength, float zoomRatio, boolean main, int maxFps, Size previewSize) {
+        private CameraModule(String id, String cameraId, String physicalCameraId, boolean front, float focalLength, boolean main, int maxFps, Size previewSize) {
             this.id = id;
             this.cameraId = cameraId;
             this.physicalCameraId = physicalCameraId;
             this.front = front;
             this.focalLength = focalLength;
-            this.zoomRatio = zoomRatio;
             this.main = main;
             this.maxFps = maxFps;
             this.previewWidth = previewSize.getWidth();
@@ -138,7 +137,7 @@ public class Camera2Session {
                 }
                 if (bestAspectRatio <= 0 || Math.abs((float) viewWidth / viewHeight - bestAspectRatio) > Math.abs((float) viewWidth / viewHeight - cameraAspectRatio)) {
                     if (confMap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        Size size = chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false);
+                        Size size = chooseOptimalSurfaceTextureSize(confMap, viewWidth, viewHeight);
                         if (size != null) {
                             bestAspectRatio = cameraAspectRatio;
                             cameraId = id;
@@ -174,7 +173,10 @@ public class Camera2Session {
             if (confMap == null) {
                 return null;
             }
-            Size bestSize = chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false);
+            Size bestSize = chooseOptimalSurfaceTextureSize(confMap, viewWidth, viewHeight);
+            if (bestSize == null) {
+                return null;
+            }
             Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
             return new Camera2Session(context, facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT, cameraId, null, 1f, bestSize);
         } catch (Exception e) {
@@ -198,9 +200,12 @@ public class Camera2Session {
             if (confMap == null) {
                 return null;
             }
-            Size bestSize = chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false);
+            Size bestSize = chooseOptimalSurfaceTextureSize(confMap, viewWidth, viewHeight);
+            if (bestSize == null) {
+                return null;
+            }
             Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-            return new Camera2Session(context, facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT, module.cameraId, module.physicalCameraId, module.zoomRatio > 0 ? module.zoomRatio : 1f, bestSize);
+            return new Camera2Session(context, facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT, module.cameraId, module.physicalCameraId, 1f, bestSize);
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -213,6 +218,7 @@ public class Camera2Session {
         final CameraManager cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         try {
             String[] cameraIds = cameraManager.getCameraIdList();
+            Set<String> publicCameraIds = new HashSet<>(Arrays.asList(cameraIds));
             String defaultCameraId = findDefaultCameraId(cameraManager, cameraIds, front, viewWidth, viewHeight);
             for (String id : cameraIds) {
                 CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(id);
@@ -227,21 +233,24 @@ public class Camera2Session {
                 if (confMap == null) {
                     continue;
                 }
-                Size size = chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false);
+                Size size = chooseOptimalSurfaceTextureSize(confMap, viewWidth, viewHeight);
                 if (size == null) {
                     continue;
                 }
                 boolean main = id.equals(defaultCameraId);
                 boolean addedLogical = false;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && isLogicalMultiCamera(characteristics)) {
-                    modules.add(new CameraModule(id, id, null, front, getFocalLength(characteristics), 0f, main, getMaxFps(characteristics), size));
+                    addCameraModule(modules, new CameraModule(id, id, null, front, getFocalLength(characteristics), main, getMaxFps(characteristics), size));
                     addedLogical = true;
                     Set<String> physicalIds = characteristics.getPhysicalCameraIds();
                     if (physicalIds != null && !physicalIds.isEmpty()) {
                         for (String physicalId : physicalIds) {
+                            if (publicCameraIds.contains(physicalId)) {
+                                continue;
+                            }
                             try {
                                 CameraCharacteristics physicalCharacteristics = getPhysicalCameraCharacteristics(cameraManager, id, physicalId, characteristics);
-                                modules.add(new CameraModule(id + ":" + physicalId, id, physicalId, front, getFocalLength(physicalCharacteristics), 0f, false, getMaxFps(physicalCharacteristics), size));
+                                addCameraModule(modules, new CameraModule(id + ":" + physicalId, id, physicalId, front, getFocalLength(physicalCharacteristics), false, getMaxFps(physicalCharacteristics), size));
                             } catch (Exception e) {
                                 FileLog.e(e);
                             }
@@ -249,25 +258,15 @@ public class Camera2Session {
                     }
                 }
                 if (!addedLogical) {
-                    modules.add(new CameraModule(id, id, null, front, getFocalLength(characteristics), 0f, main, getMaxFps(characteristics), size));
+                    addCameraModule(modules, new CameraModule(id, id, null, front, getFocalLength(characteristics), main, getMaxFps(characteristics), size));
                 }
             }
         } catch (Exception e) {
             FileLog.e(e);
         }
-        if (!front && modules.size() == 1) {
-            ArrayList<CameraModule> zoomModules = createZoomRatioModules(cameraManager, modules.get(0), viewWidth, viewHeight);
-            if (zoomModules.size() > 1) {
-                modules = zoomModules;
-            }
-        }
         Collections.sort(modules, (lhs, rhs) -> {
-            if (lhs.zoomRatio > 0 && rhs.zoomRatio > 0) {
-                return Float.compare(lhs.zoomRatio, rhs.zoomRatio);
-            } else if (lhs.zoomRatio > 0) {
-                return -1;
-            } else if (rhs.zoomRatio > 0) {
-                return 1;
+            if (lhs.main != rhs.main) {
+                return lhs.main ? -1 : 1;
             }
             if (lhs.focalLength > 0 && rhs.focalLength > 0) {
                 return Float.compare(lhs.focalLength, rhs.focalLength);
@@ -279,6 +278,18 @@ public class Camera2Session {
             return lhs.id.compareTo(rhs.id);
         });
         return modules;
+    }
+
+    private static void addCameraModule(ArrayList<CameraModule> modules, CameraModule module) {
+        if (module == null) {
+            return;
+        }
+        for (int i = 0; i < modules.size(); i++) {
+            if (modules.get(i).id.equals(module.id)) {
+                return;
+            }
+        }
+        modules.add(module);
     }
 
     private static String findDefaultCameraId(CameraManager cameraManager, String[] cameraIds, boolean front, int viewWidth, int viewHeight) {
@@ -301,7 +312,7 @@ public class Camera2Session {
                     cameraAspectRatio = 1f / cameraAspectRatio;
                 }
                 if (bestAspectRatio <= 0 || Math.abs((float) viewWidth / viewHeight - bestAspectRatio) > Math.abs((float) viewWidth / viewHeight - cameraAspectRatio)) {
-                    if (confMap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false) != null) {
+                    if (confMap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && chooseOptimalSurfaceTextureSize(confMap, viewWidth, viewHeight) != null) {
                         bestAspectRatio = cameraAspectRatio;
                         cameraId = id;
                     }
@@ -311,57 +322,6 @@ public class Camera2Session {
             FileLog.e(e);
         }
         return cameraId;
-    }
-
-    private static ArrayList<CameraModule> createZoomRatioModules(CameraManager cameraManager, CameraModule baseModule, int viewWidth, int viewHeight) {
-        ArrayList<CameraModule> modules = new ArrayList<>();
-        if (baseModule == null || baseModule.cameraId == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            return modules;
-        }
-        try {
-            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(baseModule.cameraId);
-            Range<Float> zoomRange = characteristics.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
-            if (zoomRange == null) {
-                return modules;
-            }
-            float minZoom = zoomRange.getLower() == null ? 1f : zoomRange.getLower();
-            float maxZoom = zoomRange.getUpper() == null ? 1f : zoomRange.getUpper();
-            if (maxZoom < 1.2f && minZoom > 0.95f) {
-                return modules;
-            }
-            StreamConfigurationMap confMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            Size size = confMap != null ? chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false) : null;
-            if (size == null) {
-                return modules;
-            }
-            int maxFps = getMaxFps(characteristics);
-            float baseFocal = baseModule.focalLength > 0 ? baseModule.focalLength : getFocalLength(characteristics);
-            if (minZoom < 0.95f) {
-                addZoomRatioModule(modules, baseModule, minZoom, baseFocal, maxFps, size);
-            }
-            addZoomRatioModule(modules, baseModule, 1f, baseFocal, maxFps, size);
-            if (maxZoom >= 1.8f) {
-                addZoomRatioModule(modules, baseModule, 2f, baseFocal, maxFps, size);
-            }
-            if (maxZoom >= 4f) {
-                addZoomRatioModule(modules, baseModule, 4f, baseFocal, maxFps, size);
-            }
-        } catch (Exception e) {
-            FileLog.e(e);
-        }
-        return modules;
-    }
-
-    private static void addZoomRatioModule(ArrayList<CameraModule> modules, CameraModule baseModule, float zoomRatio, float baseFocal, int maxFps, Size size) {
-        for (int i = 0; i < modules.size(); i++) {
-            if (Math.abs(modules.get(i).zoomRatio - zoomRatio) < 0.05f) {
-                return;
-            }
-        }
-        boolean main = Math.abs(zoomRatio - 1f) < 0.05f;
-        float focalLength = main && baseFocal > 0 ? baseFocal : 0f;
-        String id = baseModule.cameraId + ":zoom:" + Math.round(zoomRatio * 100f);
-        modules.add(new CameraModule(id, baseModule.cameraId, null, baseModule.front, focalLength, zoomRatio, main, maxFps, size));
     }
 
     private static boolean isLogicalMultiCamera(CameraCharacteristics characteristics) {
@@ -864,6 +824,17 @@ public class Camera2Session {
         }
     }
 
+
+    private static Size chooseOptimalSurfaceTextureSize(StreamConfigurationMap confMap, int width, int height) {
+        if (confMap == null) {
+            return null;
+        }
+        Size[] outputSizes = confMap.getOutputSizes(SurfaceTexture.class);
+        if (outputSizes == null || outputSizes.length == 0) {
+            return null;
+        }
+        return chooseOptimalSize(outputSizes, width, height, false);
+    }
 
     public static Size chooseOptimalSize(Size[] choices, int width, int height, boolean notBigger) {
         List<Size> bigEnoughWithAspectRatio = new ArrayList<>(choices.length);

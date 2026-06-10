@@ -11307,6 +11307,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     private static int getRoundVideoTransformWidth(VideoEditedInfo videoEditedInfo, MediaController.CropState cropState) {
+        if (cropState.transformWidth > 0) {
+            return cropState.transformWidth;
+        }
         int rotation = videoEditedInfo.rotationValue;
         while (rotation >= 360) {
             rotation -= 360;
@@ -11321,6 +11324,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     private static int getRoundVideoTransformHeight(VideoEditedInfo videoEditedInfo, MediaController.CropState cropState) {
+        if (cropState.transformHeight > 0) {
+            return cropState.transformHeight;
+        }
         int rotation = videoEditedInfo.rotationValue;
         while (rotation >= 360) {
             rotation -= 360;

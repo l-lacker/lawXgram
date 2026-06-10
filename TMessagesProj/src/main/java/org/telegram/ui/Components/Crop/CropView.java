@@ -375,6 +375,7 @@ public class CropView extends FrameLayout implements CropAreaView.AreaViewListen
     }
 
     public void setBitmap(Bitmap b, int rotation, boolean fform, boolean same, PaintingOverlay overlay, CropTransform transform, VideoEditTextureView videoView, MediaController.CropState restoreState) {
+        final boolean forceLockedSquare = !fform;
         freeform = fform;
         paintingOverlay = overlay;
         videoEditTextureView = videoView;
@@ -395,13 +396,16 @@ public class CropView extends FrameLayout implements CropAreaView.AreaViewListen
                     public boolean onPreDraw() {
                         reset();
                         if (restoreState != null) {
-                            if (restoreState.lockedAspectRatio > 0.0001f) {
+                            if (!forceLockedSquare && restoreState.lockedAspectRatio > 0.0001f) {
                                 areaView.setLockedAspectRatio(restoreState.lockedAspectRatio);
                                 if (listener != null) {
                                     listener.onAspectLock(true);
                                 }
                             }
-                            setFreeform(restoreState.freeform);
+                            setFreeform(!forceLockedSquare && restoreState.freeform);
+                            if (forceLockedSquare) {
+                                areaView.setLockedAspectRatio(1.0f);
+                            }
 
                             float aspect = areaView.getAspectRatio();
                             float stateWidth;
@@ -432,7 +436,7 @@ public class CropView extends FrameLayout implements CropAreaView.AreaViewListen
                             }
                             state.reset(orientation);
 
-                            areaView.setActualRect(aspect * restoreState.cropPw / restoreState.cropPh);
+                            areaView.setActualRect(forceLockedSquare ? 1.0f : aspect * restoreState.cropPw / restoreState.cropPh);
                             state.mirrored = restoreState.mirrored;
                             state.rotate(restoreState.cropRotate, 0, 0);
                             state.translate(restoreState.cropPx * rotatedW * state.minimumScale, restoreState.cropPy * rotatedH * state.minimumScale);
@@ -1256,6 +1260,8 @@ public class CropView extends FrameLayout implements CropAreaView.AreaViewListen
         cropState.cropPx = values[2] / sw / state.scale;
         cropState.cropPy = values[5] / sh / state.scale;
         cropState.cropRotate = state.rotation;
+        cropState.transformWidth = 0;
+        cropState.transformHeight = 0;
         cropState.stateScale = state.scale;
         cropState.mirrored = state.mirrored;
 

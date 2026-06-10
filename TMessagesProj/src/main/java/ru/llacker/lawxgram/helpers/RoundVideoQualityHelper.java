@@ -23,7 +23,6 @@ public final class RoundVideoQualityHelper {
 
     private static final float MUX_OVERHEAD = 1.05f;
     private static final int SIDE_STEP = 16;
-    private static final int FALLBACK_SOURCE_BITRATE = 1_000_000;
 
     private RoundVideoQualityHelper() {
     }
@@ -124,7 +123,7 @@ public final class RoundVideoQualityHelper {
 
     public static int calculateTargetVideoBitrate(int account, int originalWidth, int originalHeight, int originalBitrate, int side, long durationMs) {
         int userCap = getConfiguredBitrateCap();
-        int sourceScaledBitrate = calculateSourceScaledBitrate(originalWidth, originalHeight, originalBitrate, side, userCap);
+        int sourceScaledBitrate = calculateSourceScaledBitrate(originalBitrate, userCap);
         int durationCap = calculateDurationBitrateCap(account, durationMs);
         int bitrate = Math.min(userCap, Math.min(sourceScaledBitrate, durationCap));
         return Math.max(64_000, bitrate);
@@ -200,15 +199,11 @@ public final class RoundVideoQualityHelper {
         return String.format(Locale.US, "%.1f MB", bytes / 1024.0 / 1024.0);
     }
 
-    private static int calculateSourceScaledBitrate(int originalWidth, int originalHeight, int originalBitrate, int side, int userCap) {
-        int sourceBitrate = originalBitrate > 0 ? originalBitrate : Math.max(FALLBACK_SOURCE_BITRATE, userCap);
-        if (originalWidth <= 0 || originalHeight <= 0 || side <= 0) {
-            return Math.min(sourceBitrate, userCap);
+    private static int calculateSourceScaledBitrate(int originalBitrate, int userCap) {
+        if (originalBitrate <= 0) {
+            return userCap;
         }
-        long sourcePixels = Math.max(1L, (long) originalWidth * originalHeight);
-        long targetPixels = Math.max(1L, (long) side * side);
-        double scale = Math.min(1.0, targetPixels / (double) sourcePixels);
-        return Math.max(64_000, (int) Math.ceil(sourceBitrate * scale));
+        return Math.max(64_000, Math.min(originalBitrate, userCap));
     }
 
     private static int calculateDurationBitrateCap(int account, long durationMs) {

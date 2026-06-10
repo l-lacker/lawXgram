@@ -890,7 +890,12 @@ public class MediaCodecVideoConvertor {
                             error = true;
                         }
 
-                        extractor.unselectTrack(videoIndex);
+                        try {
+                            extractor.unselectTrack(videoIndex);
+                        } catch (Exception e) {
+                            // Some vendor extractors throw here after EOS even though conversion output is complete.
+                            FileLog.e(e);
+                        }
                         if (decoder != null) {
                             decoder.stop();
                             decoder.release();

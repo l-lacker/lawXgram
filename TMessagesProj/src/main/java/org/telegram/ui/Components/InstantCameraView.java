@@ -1232,11 +1232,6 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             }
         }
         for (Camera2Session.CameraModule module : rearCameraModules) {
-            if (module.zoomRatio > 0 && Math.abs(module.zoomRatio - 1f) < 0.05f) {
-                return module;
-            }
-        }
-        for (Camera2Session.CameraModule module : rearCameraModules) {
             if (module.physicalCameraId == null) {
                 return module;
             }
@@ -1302,9 +1297,6 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         if (module.focalLength > 0) {
             return formatRearCameraFocalLength(module.focalLength);
         }
-        if (module.zoomRatio > 0) {
-            return formatRearCameraZoomRatio(module.zoomRatio);
-        }
         if (!TextUtils.isEmpty(module.physicalCameraId)) {
             return "ID\n" + module.physicalCameraId;
         }
@@ -1317,12 +1309,6 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
 
     private String formatRearCameraFocalLength(float focalLength) {
         return String.format(Locale.US, "%.1f\nmm", focalLength);
-    }
-
-    private String formatRearCameraZoomRatio(float zoomRatio) {
-        return Math.abs(zoomRatio - Math.round(zoomRatio)) < 0.05f
-                ? String.format(Locale.US, "%.0f\nx", zoomRatio)
-                : String.format(Locale.US, "%.1f\nx", zoomRatio);
     }
 
     private void selectRearCameraModule(Camera2Session.CameraModule module) {
