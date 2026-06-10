@@ -131,6 +131,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
                     }
                 }
                 boolean value = LiteMode.isEnabledSetting(item.flags);
+                if (!value && SharedConfig.areChatEffectsAutoReduced() &&
+                        ((item.flags & LiteMode.FLAG_CHAT_BLUR) != 0 || (item.flags & LiteMode.FLAG_LIQUID_GLASS) != 0)) {
+                    SharedConfig.resetChatEffectsAutoReduced();
+                }
                 LiteMode.toggleFlag(item.flags, !value);
                 updateValues();
             } else if (item.viewType == VIEW_TYPE_SWITCH2) {
@@ -256,10 +260,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
                 items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsTopics"), LiteMode.FLAG_CHAT_FORUM_TWOCOLUMN));
             }
             items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsSpoiler"), LiteMode.FLAG_CHAT_SPOILER));
-            if (SharedConfig.canBlurChat()) {
+            if (SharedConfig.canBlurChatHardware()) {
                 items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsBlur2"), LiteMode.FLAG_CHAT_BLUR));
             }
-            if (SharedConfig.canUseLiquidGlass()) {
+            if (SharedConfig.canUseLiquidGlassHardware()) {
                 items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsLiquidGlass"), LiteMode.FLAG_LIQUID_GLASS));
             }
             items.add(Item.asCheckbox(LocaleController.getString("LiteOptionsScale"), LiteMode.FLAG_CHAT_SCALE));
@@ -619,10 +623,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
                 if ((flags & LiteMode.FLAG_ANIMATED_EMOJI_KEYBOARD_PREMIUM) > 0)
                     count--;
             }
-            if (!SharedConfig.canBlurChat() && (flags & LiteMode.FLAG_CHAT_BLUR) > 0) {
+            if (!SharedConfig.canBlurChatHardware() && (flags & LiteMode.FLAG_CHAT_BLUR) > 0) {
                 count--;
             }
-            if (!SharedConfig.canUseLiquidGlass() && (flags & LiteMode.FLAG_LIQUID_GLASS) > 0) {
+            if (!SharedConfig.canUseLiquidGlassHardware() && (flags & LiteMode.FLAG_LIQUID_GLASS) > 0) {
                 count--;
             }
             if (!ThanosEffect.supports() && (flags & LiteMode.FLAG_CHAT_THANOS) > 0) {

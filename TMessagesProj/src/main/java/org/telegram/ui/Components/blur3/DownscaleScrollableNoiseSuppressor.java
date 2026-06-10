@@ -366,6 +366,7 @@ public class DownscaleScrollableNoiseSuppressor {
 
     public boolean invalidateResultRenderNodes(IBlur3Capture capture, int width, int height) {
         if (recordingPos != null) {
+            org.telegram.messenger.FileLog.w("DownscaleScrollableNoiseSuppressor: skipped re-entrant invalidateResultRenderNodes");
             return false;
         }
 

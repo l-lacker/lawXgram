@@ -64,6 +64,8 @@ public class SharedConfig {
     private static final long CHAT_EFFECTS_AUTO_REDUCED_TTL = 7L * 24 * 60 * 60 * 1000;
     private static boolean chatOpenPerformanceProbeRunning;
     private static int chatEffectsBadProbeCount;
+    private static volatile boolean chatEffectsAutoReducedCached;
+    private static volatile long chatEffectsAutoReducedCacheDeadline;
 
     public static boolean loopStickers() {
         return LiteMode.isEnabled(LiteMode.FLAG_ANIMATED_STICKERS_CHAT);
@@ -1794,29 +1796,42 @@ public class SharedConfig {
         ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE).edit().putBoolean("dontAskManageStorage", dontAskManageStorage).apply();
     }
 
+    public static boolean canBlurChatHardware() {
+        return getDevicePerformanceClass() >= (Build.VERSION.SDK_INT >= 31 ? PERFORMANCE_CLASS_AVERAGE : PERFORMANCE_CLASS_HIGH) || BuildVars.DEBUG_PRIVATE_VERSION;
+    }
+
     public static boolean canBlurChat() {
-        return !areChatEffectsAutoReduced() && (getDevicePerformanceClass() >= PERFORMANCE_CLASS_HIGH || BuildVars.DEBUG_PRIVATE_VERSION);
+        return !areChatEffectsAutoReduced() && canBlurChatHardware();
     }
 
     public static boolean areChatEffectsAutoReduced() {
+        long now = System.currentTimeMillis();
+        if (now < chatEffectsAutoReducedCacheDeadline) {
+            return chatEffectsAutoReducedCached;
+        }
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
+        boolean result;
         if (!preferences.getBoolean("chat_effects_auto_reduced", false)) {
-            return false;
+            result = false;
+        } else {
+            long reducedAt = preferences.getLong("chat_effects_auto_reduced_at", 0);
+            result = reducedAt > 0 && Math.abs(now - reducedAt) <= CHAT_EFFECTS_AUTO_REDUCED_TTL;
         }
-        long reducedAt = preferences.getLong("chat_effects_auto_reduced_at", 0);
-        if (reducedAt <= 0 || Math.abs(System.currentTimeMillis() - reducedAt) > CHAT_EFFECTS_AUTO_REDUCED_TTL) {
-            preferences.edit().remove("chat_effects_auto_reduced").remove("chat_effects_auto_reduced_at").apply();
-            return false;
-        }
-        return true;
+        chatEffectsAutoReducedCached = result;
+        chatEffectsAutoReducedCacheDeadline = now + 5000;
+        return result;
     }
 
     public static boolean shouldUseLiteChatOpen() {
         return getDevicePerformanceClass() <= PERFORMANCE_CLASS_AVERAGE || areChatEffectsAutoReduced();
     }
 
+    public static boolean canUseLiquidGlassHardware() {
+        return Build.VERSION.SDK_INT >= 33 && getDevicePerformanceClass() >= PERFORMANCE_CLASS_HIGH;
+    }
+
     public static boolean canUseLiquidGlass() {
-        return Build.VERSION.SDK_INT >= 33 && getDevicePerformanceClass() >= PERFORMANCE_CLASS_HIGH && !areChatEffectsAutoReduced();
+        return canUseLiquidGlassHardware() && !areChatEffectsAutoReduced();
     }
 
     public static void startChatOpenPerformanceProbe() {
@@ -1865,7 +1880,7 @@ public class SharedConfig {
     }
 
     private static void finishChatOpenPerformanceProbe(int frames, int badFrames, int severeFrames) {
-        boolean badRun = severeFrames > 0 || badFrames >= Math.max(4, frames / 5);
+        boolean badRun = severeFrames >= 2 || badFrames >= Math.max(4, frames / 5);
         int performanceClass = getDevicePerformanceClass();
         if (!badRun) {
             chatEffectsBadProbeCount = 0;
@@ -1880,10 +1895,22 @@ public class SharedConfig {
     }
 
     private static void setChatEffectsAutoReduced() {
+        long now = System.currentTimeMillis();
         MessagesController.getGlobalMainSettings().edit()
             .putBoolean("chat_effects_auto_reduced", true)
-            .putLong("chat_effects_auto_reduced_at", System.currentTimeMillis())
+            .putLong("chat_effects_auto_reduced_at", now)
             .apply();
+        chatEffectsAutoReducedCached = true;
+        chatEffectsAutoReducedCacheDeadline = now + 5000;
+    }
+
+    public static void resetChatEffectsAutoReduced() {
+        MessagesController.getGlobalMainSettings().edit()
+            .remove("chat_effects_auto_reduced")
+            .remove("chat_effects_auto_reduced_at")
+            .apply();
+        chatEffectsAutoReducedCached = false;
+        chatEffectsAutoReducedCacheDeadline = System.currentTimeMillis() + 5000;
     }
 
     public static boolean chatBlurEnabled() {

@@ -42,6 +42,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import ru.llacker.lawxgram.LawxConfig;
@@ -526,7 +527,10 @@ public class EmojiHelper {
             return true;
         }
         try {
-            session.await();
+            boolean completed = session.await();
+            if (!completed) {
+                FileLog.e("EmojiHelper: waitForPendingDelete timed out after 30 seconds");
+            }
             return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -576,8 +580,8 @@ public class EmojiHelper {
             this.packId = packId;
         }
 
-        private void await() throws InterruptedException {
-            completionLatch.await();
+        private boolean await() throws InterruptedException {
+            return completionLatch.await(30, TimeUnit.SECONDS);
         }
 
         private void finish() {

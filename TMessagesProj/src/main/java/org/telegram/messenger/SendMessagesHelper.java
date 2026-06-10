@@ -1608,7 +1608,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     private boolean isSendContinuationCanceled(DelayedMessage parentMessage, DelayedMessage delayedMessage) {
-        return parentMessage != null && parentMessage.canceled || delayedMessage != null && delayedMessage.canceled;
+        return (parentMessage != null && parentMessage.canceled) || (delayedMessage != null && delayedMessage.canceled);
     }
 
     private void runIfSendContinuationActive(DelayedMessage parentMessage, DelayedMessage delayedMessage, Runnable runnable) {

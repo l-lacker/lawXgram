@@ -194,7 +194,7 @@ public class CloudSettingsHelper {
     }
 
     private boolean isValidAccount(int account) {
-        return account >= 0 && account < UserConfig.MAX_ACCOUNT_COUNT;
+        return account >= 0 && account < UserConfig.MAX_ACCOUNT_COUNT && UserConfig.getInstance(account).isClientActivated();
     }
 
     private void syncToCloud(Utilities.Callback2<Boolean, String> callback) {
