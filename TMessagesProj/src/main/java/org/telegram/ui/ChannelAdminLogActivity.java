@@ -1010,7 +1010,9 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
 
             @Override
             protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-                invalidateBlurredSourcesView.bringToFrontIfNeeded();
+                if (invalidateBlurredSourcesView != null) {
+                    invalidateBlurredSourcesView.bringToFrontIfNeeded();
+                }
 
                 int allHeight;
                 int widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -4374,6 +4376,9 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
 
     private void invalidateMergedVisibleBlurredPositionsAndSources(int flags) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || scrollableViewNoiseSuppressor == null) {
+            return;
+        }
+        if (invalidateBlurredSourcesView == null) {
             return;
         }
 
