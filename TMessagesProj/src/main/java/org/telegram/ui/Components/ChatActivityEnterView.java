@@ -5378,6 +5378,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                     info.masks = photoEntry.stickers;
                     info.ttl = photoEntry.ttl;
                     info.videoEditedInfo = videoEditedInfo;
+                    info.sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
+                    if (info.sendAsRoundVideo && info.videoEditedInfo != null) {
+                        info.videoEditedInfo.roundVideo = true;
+                    }
                     info.canDeleteAfter = true;
                     photos.add(info);
                     photoEntry.reset();

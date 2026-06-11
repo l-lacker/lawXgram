@@ -24,6 +24,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -11387,6 +11389,21 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         }
     }
 
+    private static void limitRoundVideoDuration(VideoEditedInfo videoEditedInfo) {
+        if (videoEditedInfo.fromCamera) {
+            return;
+        }
+        long duration = RoundVideoQualityHelper.getDurationMs(videoEditedInfo);
+        long maxDuration = RoundVideoQualityHelper.MAX_RECORDING_DURATION_MS;
+        if (duration <= maxDuration) {
+            return;
+        }
+        long startTime = videoEditedInfo.startTime >= 0 ? videoEditedInfo.startTime : 0;
+        videoEditedInfo.startTime = startTime;
+        videoEditedInfo.endTime = startTime + maxDuration * 1000L;
+        videoEditedInfo.estimatedDuration = maxDuration;
+    }
+
     public static void prepareRoundVideoEditedInfo(VideoEditedInfo videoEditedInfo) {
         prepareRoundVideoEditedInfo(videoEditedInfo, UserConfig.selectedAccount);
     }
@@ -11411,6 +11428,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         if (videoEditedInfo.bitrate == -2) {
             videoEditedInfo.bitrate = 0;
         }
+        limitRoundVideoDuration(videoEditedInfo);
 
         if (videoEditedInfo.fromCamera && videoEditedInfo.cropState == null) {
             int side = RoundVideoQualityHelper.chooseOutputSide(account, videoEditedInfo.resultWidth, videoEditedInfo.resultHeight);
@@ -11446,6 +11464,38 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             int width = Utilities.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
             int height = Utilities.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
             long duration = Utilities.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+            int extractorBitrate = 0;
+            int extractorFramerate = 0;
+            MediaExtractor mediaExtractor = null;
+            try {
+                mediaExtractor = new MediaExtractor();
+                mediaExtractor.setDataSource(videoPath);
+                int videoIndex = MediaController.findTrack(mediaExtractor, false);
+                if (videoIndex >= 0) {
+                    MediaFormat videoFormat = mediaExtractor.getTrackFormat(videoIndex);
+                    if (width <= 0 && videoFormat.containsKey(MediaFormat.KEY_WIDTH)) {
+                        width = videoFormat.getInteger(MediaFormat.KEY_WIDTH);
+                    }
+                    if (height <= 0 && videoFormat.containsKey(MediaFormat.KEY_HEIGHT)) {
+                        height = videoFormat.getInteger(MediaFormat.KEY_HEIGHT);
+                    }
+                    if (duration <= 0 && videoFormat.containsKey(MediaFormat.KEY_DURATION)) {
+                        duration = Math.max(1, videoFormat.getLong(MediaFormat.KEY_DURATION) / 1000);
+                    }
+                    if (videoFormat.containsKey(MediaFormat.KEY_BIT_RATE)) {
+                        extractorBitrate = videoFormat.getInteger(MediaFormat.KEY_BIT_RATE);
+                    }
+                    if (videoFormat.containsKey(MediaFormat.KEY_FRAME_RATE)) {
+                        extractorFramerate = videoFormat.getInteger(MediaFormat.KEY_FRAME_RATE);
+                    }
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            } finally {
+                if (mediaExtractor != null) {
+                    mediaExtractor.release();
+                }
+            }
             if (width <= 0 || height <= 0 || duration <= 0) {
                 MediaPlayer mediaPlayer = null;
                 try {
@@ -11478,7 +11528,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 bitrate = Utilities.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE));
             }
             if (bitrate <= 0) {
-                bitrate = 921600;
+                bitrate = extractorBitrate;
             }
 
             VideoEditedInfo videoEditedInfo = new VideoEditedInfo();
@@ -11488,7 +11538,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             videoEditedInfo.originalBitrate = bitrate;
             videoEditedInfo.originalPath = videoPath;
             videoEditedInfo.videoOffset = videoOffset;
-            videoEditedInfo.framerate = 30;
+            videoEditedInfo.framerate = extractorFramerate > 0 ? extractorFramerate : 30;
             videoEditedInfo.estimatedDuration = duration;
             videoEditedInfo.originalDuration = duration * 1000;
             videoEditedInfo.resultWidth = videoEditedInfo.originalWidth = width;
@@ -11536,6 +11586,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         videoEditedInfo.startTime = -1;
         videoEditedInfo.endTime = -1;
         videoEditedInfo.bitrate = bitrate;
+        videoEditedInfo.originalBitrate = originalBitrate;
         videoEditedInfo.originalPath = videoPath;
         videoEditedInfo.videoOffset = videoOffset;
         videoEditedInfo.framerate = videoFramerate;

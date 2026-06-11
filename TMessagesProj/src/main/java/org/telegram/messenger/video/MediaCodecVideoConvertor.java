@@ -107,7 +107,7 @@ public class MediaCodecVideoConvertor {
         String selectedEncoderName = null;
 
         final boolean isWebm = convertVideoParams.isSticker;
-        boolean shouldUseHevc = isStory;
+        boolean shouldUseHevc = isStory && !isRound;
         outputMimeType = isWebm ? "video/x-vnd.on2.vp9" : shouldUseHevc ? "video/hevc" : "video/avc";
 
         boolean canBeBrokenEncoder = false;
@@ -564,7 +564,7 @@ public class MediaCodecVideoConvertor {
 
                             if (audioIndex >= 0) {
                                 MediaFormat audioFormat = extractor.getTrackFormat(audioIndex);
-                                copyAudioBuffer = Math.abs(volume - 1f) < 0.001f && (convertVideoParams.soundInfos.isEmpty() && audioFormat.getString(MediaFormat.KEY_MIME).equals(MediaController.AUDIO_MIME_TYPE) || audioFormat.getString(MediaFormat.KEY_MIME).equals("audio/mpeg"));
+                                copyAudioBuffer = !isRound && Math.abs(volume - 1f) < 0.001f && (convertVideoParams.soundInfos.isEmpty() && audioFormat.getString(MediaFormat.KEY_MIME).equals(MediaController.AUDIO_MIME_TYPE) || audioFormat.getString(MediaFormat.KEY_MIME).equals("audio/mpeg"));
 
                                 if (audioFormat.getString(MediaFormat.KEY_MIME).equals("audio/unknown")) {
                                     audioIndex = -1;
