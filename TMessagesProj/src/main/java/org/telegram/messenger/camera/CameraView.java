@@ -68,6 +68,7 @@ import org.telegram.messenger.ImageLoader;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.video.MP4Builder;
 import org.telegram.messenger.video.MediaCodecVideoConvertor;
@@ -121,7 +122,7 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
     private int focusAreaSize;
     private Drawable thumbDrawable;
 
-    private final boolean useCamera2 = false;
+    private final boolean useCamera2 = SharedConfig.isUsingCamera2(UserConfig.selectedAccount);
     private final CameraSessionWrapper[] cameraSession = new CameraSessionWrapper[2];
     private CameraSessionWrapper cameraSessionRecording;
 
@@ -2316,11 +2317,22 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
             }
 
             if (useCamera2) {
-                Camera2Session session = Camera2Session.create(i == 0 ? isFrontface : !isFrontface, surfaceWidth, surfaceHeight);
-                if (session == null) return;
+                if (previewSize[i] == null) {
+                    updateCameraInfoSize(i);
+                }
+                int previewWidth = previewSize[i] != null ? previewSize[i].getWidth() : surfaceWidth;
+                int previewHeight = previewSize[i] != null ? previewSize[i].getHeight() : surfaceHeight;
+                int pictureWidth = pictureSize[i] != null ? pictureSize[i].getWidth() : previewWidth;
+                int pictureHeight = pictureSize[i] != null ? pictureSize[i].getHeight() : previewHeight;
+                Camera2Session session = Camera2Session.create(i == 0 ? isFrontface : !isFrontface, previewWidth, previewHeight, pictureWidth, pictureHeight);
+                if (session == null) {
+                    createCamera1Session(surfaceTexture, i);
+                    return;
+                }
                 cameraSession[i] = CameraSessionWrapper.of(session);
                 previewSize[i] = new Size(session.getPreviewWidth(), session.getPreviewHeight());
                 cameraThread.setCurrentSession(cameraSession[i], i);
+                session.setErrorCallback(() -> fallbackCamera2ToCamera1(surfaceTexture, i, session));
                 session.whenDone(() -> {
                     requestLayout();
                     if (dual && i == 1 && initFirstCameraAfterSecond) {
@@ -2334,38 +2346,64 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
                 });
                 session.open(surfaceTexture);
             } else {
-                if (previewSize[i] == null) {
-                    updateCameraInfoSize(i);
-                }
-                if (previewSize[i] == null) {
-                    return;
-                }
-                surfaceTexture.setDefaultBufferSize(previewSize[i].getWidth(), previewSize[i].getHeight());
-                CameraSession session = new CameraSession(info[i], previewSize[i], pictureSize[i], ImageFormat.JPEG, false);
-                session.setCurrentFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-                cameraSession[i] = CameraSessionWrapper.of(session);
-                cameraThread.setCurrentSession(cameraSession[i], i);
-                requestLayout();
-                CameraController.getInstance().open(session, surfaceTexture, () -> {
-                    if (cameraSession[i] != null) {
-                        if (BuildVars.LOGS_ENABLED) {
-                            FileLog.d("CameraView " + "camera initied " + i);
-                        }
-                        session.setInitied();
-                        requestLayout();
-                    }
-
-                    if (dual && i == 1 && initFirstCameraAfterSecond) {
-                        initFirstCameraAfterSecond = false;
-                        AndroidUtilities.runOnUIThread(() -> {
-                            updateCameraInfoSize(0);
-                            cameraThread.reinitForNewCamera();
-                            addToDualWait(350L);
-                        });
-                    }
-                }, () -> cameraThread.setCurrentSession(cameraSession[i], i));
+                createCamera1Session(surfaceTexture, i);
             }
         });
+    }
+
+    private void fallbackCamera2ToCamera1(SurfaceTexture surfaceTexture, int i, Camera2Session failedSession) {
+        CameraGLThread cameraThread = this.cameraThread;
+        if (cameraThread == null || surfaceTexture == null || cameraSession[i] == null || cameraSession[i].camera2Session != failedSession) {
+            return;
+        }
+        if (BuildVars.LOGS_ENABLED) {
+            FileLog.d("CameraView fallback camera2 session " + i + " to camera1");
+        }
+        cameraSession[i] = null;
+        previewSize[i] = null;
+        try {
+            failedSession.destroy(false);
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        createCamera1Session(surfaceTexture, i);
+    }
+
+    private void createCamera1Session(final SurfaceTexture surfaceTexture, int i) {
+        CameraGLThread cameraThread = this.cameraThread;
+        if (cameraThread == null || surfaceTexture == null) {
+            return;
+        }
+        if (previewSize[i] == null) {
+            updateCameraInfoSize(i);
+        }
+        if (previewSize[i] == null || info[i] == null) {
+            return;
+        }
+        surfaceTexture.setDefaultBufferSize(previewSize[i].getWidth(), previewSize[i].getHeight());
+        CameraSession session = new CameraSession(info[i], previewSize[i], pictureSize[i], ImageFormat.JPEG, false);
+        session.setCurrentFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+        cameraSession[i] = CameraSessionWrapper.of(session);
+        cameraThread.setCurrentSession(cameraSession[i], i);
+        requestLayout();
+        CameraController.getInstance().open(session, surfaceTexture, () -> {
+            if (cameraSession[i] != null) {
+                if (BuildVars.LOGS_ENABLED) {
+                    FileLog.d("CameraView " + "camera initied " + i);
+                }
+                session.setInitied();
+                requestLayout();
+            }
+
+            if (dual && i == 1 && initFirstCameraAfterSecond) {
+                initFirstCameraAfterSecond = false;
+                AndroidUtilities.runOnUIThread(() -> {
+                    updateCameraInfoSize(0);
+                    cameraThread.reinitForNewCamera();
+                    addToDualWait(350L);
+                });
+            }
+        }, () -> cameraThread.setCurrentSession(cameraSession[i], i));
     }
 
     protected void receivedAmplitude(double amplitude) {

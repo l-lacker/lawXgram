@@ -307,7 +307,7 @@ public class CameraController implements MediaRecorder.OnInfoListener {
         return cameraInfos;
     }
 
-    private static int getOrientation(byte[] jpeg) {
+    static int getOrientation(byte[] jpeg) {
         if (jpeg == null) {
             return -1;
         }
@@ -401,12 +401,20 @@ public class CameraController implements MediaRecorder.OnInfoListener {
         return value;
     }
 
+    private Object unwrapSessionObject(Object sessionObject) {
+        if (sessionObject instanceof CameraSessionWrapper) {
+            return ((CameraSessionWrapper) sessionObject).getObject();
+        }
+        return sessionObject;
+    }
+
     public boolean takePicture(final File path, final boolean ignoreOrientation, final Object sessionObject, final Utilities.Callback<Integer> callback) {
         if (sessionObject == null) {
             return false;
         }
-        if (sessionObject instanceof CameraSession) {
-            CameraSession session = (CameraSession) sessionObject;
+        Object realSessionObject = unwrapSessionObject(sessionObject);
+        if (realSessionObject instanceof CameraSession) {
+            CameraSession session = (CameraSession) realSessionObject;
             final CameraInfo info = session.cameraInfo;
             final boolean flipFront = session.isFlipFront();
             Camera camera = info.camera;
@@ -481,19 +489,24 @@ public class CameraController implements MediaRecorder.OnInfoListener {
                 FileLog.e(e);
             }
             return false;
-        } else if (sessionObject instanceof Camera2Session) {
-            Camera2Session session = (Camera2Session) sessionObject;
-            return session.takePicture(path, callback);
+        } else if (realSessionObject instanceof Camera2Session) {
+            Camera2Session session = (Camera2Session) realSessionObject;
+            return session.takePicture(path, ignoreOrientation, callback);
         } else {
             return false;
         }
     }
 
     public void startPreview(final Object sessionObject) {
-        if (sessionObject == null || !(sessionObject instanceof CameraSession)) {
+        Object realSessionObject = unwrapSessionObject(sessionObject);
+        if (realSessionObject instanceof Camera2Session) {
+            ((Camera2Session) realSessionObject).startPreview();
             return;
         }
-        CameraSession session = (CameraSession) sessionObject;
+        if (realSessionObject == null || !(realSessionObject instanceof CameraSession)) {
+            return;
+        }
+        CameraSession session = (CameraSession) realSessionObject;
         threadPool.execute(() -> {
             Camera camera = session.cameraInfo.camera;
             try {
@@ -513,10 +526,15 @@ public class CameraController implements MediaRecorder.OnInfoListener {
     }
 
     public void stopPreview(final Object sessionObject) {
-        if (sessionObject == null || !(sessionObject instanceof CameraSession)) {
+        Object realSessionObject = unwrapSessionObject(sessionObject);
+        if (realSessionObject instanceof Camera2Session) {
+            ((Camera2Session) realSessionObject).stopPreview();
             return;
         }
-        CameraSession session = (CameraSession) sessionObject;
+        if (realSessionObject == null || !(realSessionObject instanceof CameraSession)) {
+            return;
+        }
+        CameraSession session = (CameraSession) realSessionObject;
         threadPool.execute(() -> {
             Camera camera = session.cameraInfo.camera;
             if (camera == null) {
@@ -645,7 +663,8 @@ public class CameraController implements MediaRecorder.OnInfoListener {
     }
 
     public void recordVideo(final Object sessionObject, final File path, boolean mirror, final VideoTakeCallback callback, final Runnable onVideoStartRecord, ICameraView cameraView, boolean createThumbnail) {
-        if (sessionObject == null) {
+        final Object realSessionObject = unwrapSessionObject(sessionObject);
+        if (realSessionObject == null) {
             return;
         }
         if (cameraView != null) {
@@ -654,8 +673,8 @@ public class CameraController implements MediaRecorder.OnInfoListener {
             recordedFile = path.getAbsolutePath();
             threadPool.execute(() -> {
                 try {
-                    if (sessionObject instanceof CameraSession) {
-                        CameraSession session = (CameraSession) sessionObject;
+                    if (realSessionObject instanceof CameraSession) {
+                        CameraSession session = (CameraSession) realSessionObject;
                         final CameraInfo info = session.cameraInfo;
                         final Camera camera = info.camera;
                         if (camera != null) {
@@ -668,8 +687,8 @@ public class CameraController implements MediaRecorder.OnInfoListener {
                                 FileLog.e(e);
                             }
                         }
-                    } else if (sessionObject instanceof Camera2Session) {
-                        Camera2Session session = (Camera2Session) sessionObject;
+                    } else if (realSessionObject instanceof Camera2Session) {
+                        Camera2Session session = (Camera2Session) realSessionObject;
                         session.setRecordingVideo(true);
                     }
                     AndroidUtilities.runOnUIThread(() -> {
@@ -686,8 +705,8 @@ public class CameraController implements MediaRecorder.OnInfoListener {
             return;
         }
 
-        if (sessionObject instanceof CameraSession) {
-            CameraSession session = (CameraSession) sessionObject;
+        if (realSessionObject instanceof CameraSession) {
+            CameraSession session = (CameraSession) realSessionObject;
             final CameraInfo info = session.cameraInfo;
             final Camera camera = info.camera;
             threadPool.execute(() -> {
@@ -837,7 +856,11 @@ public class CameraController implements MediaRecorder.OnInfoListener {
     }
 
     public void stopVideoRecording(final Object sessionObject, final boolean abandon, final boolean createThumbnail) {
+        final Object realSessionObject = unwrapSessionObject(sessionObject);
         if (recordingCurrentCameraView != null) {
+            if (realSessionObject instanceof Camera2Session) {
+                ((Camera2Session) realSessionObject).setRecordingVideo(false);
+            }
             recordingCurrentCameraView.stopRecording();
             recordingCurrentCameraView = null;
             return;
@@ -858,8 +881,8 @@ public class CameraController implements MediaRecorder.OnInfoListener {
                         FileLog.e(e);
                     }
                 }
-                if (sessionObject instanceof CameraSession) {
-                    CameraSession session = (CameraSession) sessionObject;
+                if (realSessionObject instanceof CameraSession) {
+                    CameraSession session = (CameraSession) realSessionObject;
                     CameraInfo info = session.cameraInfo;
                     final Camera camera = info.camera;
                     if (camera != null) {
@@ -891,8 +914,8 @@ public class CameraController implements MediaRecorder.OnInfoListener {
                             FileLog.e(e);
                         }
                     });
-                } else if (sessionObject instanceof Camera2Session) {
-                    Camera2Session session = (Camera2Session) sessionObject;
+                } else if (realSessionObject instanceof Camera2Session) {
+                    Camera2Session session = (Camera2Session) realSessionObject;
                     session.setRecordingVideo(false);
                 }
                 if (!abandon && onVideoTakeCallback != null) {

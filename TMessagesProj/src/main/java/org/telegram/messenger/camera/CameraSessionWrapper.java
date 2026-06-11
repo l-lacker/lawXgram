@@ -1,7 +1,5 @@
 package org.telegram.messenger.camera;
 
-import android.hardware.Camera;
-
 import androidx.annotation.Nullable;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -82,7 +80,7 @@ public class CameraSessionWrapper {
 
     public void setCurrentFlashMode(String flashMode) {
         if (camera2Session != null) {
-            // TODO
+            camera2Session.setCurrentFlashMode(flashMode);
         } else if (camera1Session != null) {
             camera1Session.setCurrentFlashMode(flashMode);
         }
@@ -90,8 +88,7 @@ public class CameraSessionWrapper {
 
     public String getCurrentFlashMode() {
         if (camera2Session != null) {
-            // TODO
-            return Camera.Parameters.FLASH_MODE_OFF;
+            return camera2Session.getCurrentFlashMode();
         } else if (camera1Session != null) {
             return camera1Session.getCurrentFlashMode();
         }
@@ -100,8 +97,7 @@ public class CameraSessionWrapper {
 
     public String getNextFlashMode() {
         if (camera2Session != null) {
-            // TODO
-            return Camera.Parameters.FLASH_MODE_OFF;
+            return camera2Session.getNextFlashMode();
         } else if (camera1Session != null) {
             return camera1Session.getNextFlashMode();
         }
@@ -110,8 +106,7 @@ public class CameraSessionWrapper {
 
     public boolean hasFlashModes() {
         if (camera2Session != null) {
-            // TODO
-            return false;
+            return camera2Session.hasFlashModes();
         } else if (camera1Session != null) {
             return !camera1Session.availableFlashModes.isEmpty();
         }
@@ -120,7 +115,7 @@ public class CameraSessionWrapper {
 
     public void setFlipFront(boolean flip) {
         if (camera2Session != null) {
-            // TODO
+            camera2Session.setFlipFront(flip);
         } else if (camera1Session != null) {
             camera1Session.setFlipFront(flip);
         }
@@ -128,7 +123,7 @@ public class CameraSessionWrapper {
 
     public boolean isSameTakePictureOrientation() {
         if (camera2Session != null) {
-            // TODO
+            return camera2Session.isSameTakePictureOrientation();
         } else if (camera1Session != null) {
             return camera1Session.isSameTakePictureOrientation();
         }
@@ -137,7 +132,7 @@ public class CameraSessionWrapper {
 
     public void updateRotation() {
         if (camera2Session != null) {
-            // TODO
+            camera2Session.updateRotation();
         } else if (camera1Session != null) {
             camera1Session.updateRotation();
         }
@@ -153,7 +148,7 @@ public class CameraSessionWrapper {
 
     public void focusToRect(android.graphics.Rect focusRect, android.graphics.Rect meteringRect) {
         if (camera2Session != null) {
-            // TODO
+            camera2Session.focusToRect(focusRect, meteringRect);
         } else if (camera1Session != null) {
             camera1Session.focusToRect(focusRect, meteringRect);
         }
