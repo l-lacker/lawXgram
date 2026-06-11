@@ -990,7 +990,9 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             }
             videoEditedInfo.roundVideo = true;
             videoEditedInfo.fromCamera = true;
-            boolean needConvert = videoEditedInfo.needConvert();
+            long actualSize = Math.max(size, cameraFile != null && cameraFile.exists() ? cameraFile.length() : 0);
+            boolean needConvert = shouldConvertRecordedRoundVideo(videoEditedInfo, actualSize, recordedTime);
+            videoEditedInfo.roundVideoNoConvert = !needConvert;
             long durationForQuality = videoEditedInfo.estimatedDuration > 0 ? videoEditedInfo.estimatedDuration : recordedTime;
             if (needConvert) {
                 file = null;
@@ -1002,12 +1004,12 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 long endTime = videoEditedInfo.endTime >= 0 ? videoEditedInfo.endTime : (long) totalDuration;
                 durationForQuality = Math.max(1, endTime - startTime);
                 videoEditedInfo.estimatedDuration = durationForQuality;
-                videoEditedInfo.estimatedSize = Math.max(1, (long) (size * (durationForQuality / totalDuration)));
+                videoEditedInfo.estimatedSize = Math.max(1, (long) (actualSize * (durationForQuality / totalDuration)));
             }
             int side = videoEditedInfo.resultWidth > 0 ? videoEditedInfo.resultWidth : RoundVideoQualityHelper.getConfiguredSide(currentAccount);
             int fps = videoEditedInfo.framerate > 0 ? videoEditedInfo.framerate : RoundVideoQualityHelper.getConfiguredFpsCap();
             int sourceBitrate = videoEditedInfo.originalBitrate > 0 ? videoEditedInfo.originalBitrate : videoEditedInfo.bitrate;
-            RoundVideoQualityHelper.applyRecordingMetadata(videoEditedInfo, currentAccount, side, fps, sourceBitrate, durationForQuality, size);
+            RoundVideoQualityHelper.applyRecordingMetadata(videoEditedInfo, currentAccount, side, fps, sourceBitrate, durationForQuality, actualSize);
             videoEditedInfo.originalPath = cameraFile.getAbsolutePath();
             SendMessagesHelper.prepareRoundVideoEditedInfo(videoEditedInfo, currentAccount);
             if (needConvert) {
@@ -1341,6 +1343,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 updateRearCamerasLayout();
                 return;
             }
+            updateRearCamerasLayout();
         }
         camera2Sessions[0] = camera2SessionCurrent;
         previewSize[0] = new Size(camera2SessionCurrent.getPreviewWidth(), camera2SessionCurrent.getPreviewHeight());
@@ -1400,6 +1403,32 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             return camera2SessionCurrent.getBestSupportedFps(cap);
         }
         return cap;
+    }
+
+    private boolean shouldConvertRecordedRoundVideo(VideoEditedInfo info, long actualSize, long fallbackDuration) {
+        if (info == null) {
+            return false;
+        }
+        if (!info.roundVideo || !info.fromCamera) {
+            return info.needConvert();
+        }
+        if (actualSize <= 0 || actualSize > RoundVideoQualityHelper.TELEGRAM_MAX_SIZE_BYTES) {
+            return true;
+        }
+        if (!info.mixedSoundInfos.isEmpty()
+                || info.mediaEntities != null && !info.mediaEntities.isEmpty()
+                || info.paintPath != null
+                || info.blurPath != null
+                || info.filterState != null
+                || info.cropState != null && !info.cropState.isEmpty()) {
+            return true;
+        }
+        long duration = info.estimatedDuration > 0 ? info.estimatedDuration : fallbackDuration;
+        if (info.startTime > 0 || info.endTime != -1 && (duration <= 0 || info.endTime != duration)) {
+            return true;
+        }
+        return info.originalWidth > 0 && info.resultWidth > 0 && info.originalWidth != info.resultWidth
+                || info.originalHeight > 0 && info.resultHeight > 0 && info.originalHeight != info.resultHeight;
     }
 
     private void switchCamera() {
@@ -3344,7 +3373,9 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                         }
                         videoEditedInfo.roundVideo = true;
                         videoEditedInfo.fromCamera = true;
-                        boolean needConvert = videoEditedInfo.needConvert();
+                        long actualSize = Math.max(size, videoFile != null && videoFile.exists() ? videoFile.length() : 0);
+                        boolean needConvert = shouldConvertRecordedRoundVideo(videoEditedInfo, actualSize, recordedTime);
+                        videoEditedInfo.roundVideoNoConvert = !needConvert;
                         long durationForQuality = recordedTime;
                         if (needConvert) {
                             file = null;
@@ -3356,13 +3387,13 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                             long endTime = videoEditedInfo.endTime >= 0 ? videoEditedInfo.endTime : (long) totalDuration;
                             durationForQuality = Math.max(1, endTime - startTime);
                             videoEditedInfo.estimatedDuration = durationForQuality;
-                            videoEditedInfo.estimatedSize = Math.max(1, (long) (size * (durationForQuality / totalDuration)));
+                            videoEditedInfo.estimatedSize = Math.max(1, (long) (actualSize * (durationForQuality / totalDuration)));
                         }
                         videoEditedInfo.file = file;
                         videoEditedInfo.encryptedFile = encryptedFile;
                         videoEditedInfo.key = key;
                         videoEditedInfo.iv = iv;
-                        applyRoundVideoMetadata(videoEditedInfo, videoFile, size, durationForQuality);
+                        applyRoundVideoMetadata(videoEditedInfo, videoFile, actualSize, durationForQuality);
                         if (needConvert) {
                             if (videoEditedInfo.startTime > 0) {
                                 videoEditedInfo.startTime *= 1000;

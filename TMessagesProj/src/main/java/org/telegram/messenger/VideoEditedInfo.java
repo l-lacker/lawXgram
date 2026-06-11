@@ -96,6 +96,7 @@ public class VideoEditedInfo {
     public boolean needUpdateProgress = false;
     public boolean shouldLimitFps = true;
     public boolean fromCamera;
+    public boolean roundVideoNoConvert;
 
     public ArrayList<MediaCodecVideoConvertor.MixedSoundInfo> mixedSoundInfos = new ArrayList<>();
 
@@ -419,7 +420,7 @@ public class VideoEditedInfo {
 
     public String getString() {
         String filters;
-        if (avatarStartTime != -1 || filterState != null || paintPath != null || blurPath != null || mediaEntities != null && !mediaEntities.isEmpty() || cropState != null) {
+        if (avatarStartTime != -1 || filterState != null || paintPath != null || blurPath != null || mediaEntities != null && !mediaEntities.isEmpty() || cropState != null || fromCamera || roundVideoNoConvert) {
             int len = 10;
             if (filterState != null) {
                 len += 160;
@@ -439,7 +440,7 @@ public class VideoEditedInfo {
                 blurPathBytes = null;
             }
             SerializedData serializedData = new SerializedData(len);
-            serializedData.writeInt32(11);
+            serializedData.writeInt32(12);
             serializedData.writeInt64(avatarStartTime);
             serializedData.writeInt32(originalBitrate);
             if (filterState != null) {
@@ -524,6 +525,7 @@ public class VideoEditedInfo {
             serializedData.writeInt32(0);
             serializedData.writeBool(isStory);
             serializedData.writeBool(fromCamera);
+            serializedData.writeBool(roundVideoNoConvert);
             if (blurPathBytes != null) {
                 serializedData.writeByte(1);
                 serializedData.writeByteArray(blurPathBytes);
@@ -664,6 +666,9 @@ public class VideoEditedInfo {
                             isStory = serializedData.readBool(false);
                             fromCamera = serializedData.readBool(false);
                         }
+                        if (version >= 12) {
+                            roundVideoNoConvert = serializedData.readBool(false);
+                        }
                         if (version >= 8) {
                             has = serializedData.readByte(false);
                             if (has != 0) {
@@ -713,6 +718,9 @@ public class VideoEditedInfo {
 
     public boolean needConvert() {
         if (roundVideo) {
+            if (roundVideoNoConvert && fromCamera) {
+                return hasRoundVideoConversionChanges();
+            }
             return true;
         }
         if (bitrate == -2) {
@@ -725,6 +733,19 @@ public class VideoEditedInfo {
             return !mixedSoundInfos.isEmpty() || mediaEntities != null || paintPath != null || blurPath != null || filterState != null || (cropState != null && !cropState.isEmpty()) || startTime > 0 || endTime != -1 && endTime != estimatedDuration || originalHeight != resultHeight || originalWidth != resultWidth;
         }
         return !mixedSoundInfos.isEmpty() || mediaEntities != null || paintPath != null || blurPath != null || filterState != null || cropState != null || !roundVideo || startTime > 0 || endTime != -1 && endTime != estimatedDuration;
+    }
+
+    private boolean hasRoundVideoConversionChanges() {
+        return !mixedSoundInfos.isEmpty()
+                || mediaEntities != null && !mediaEntities.isEmpty()
+                || paintPath != null
+                || blurPath != null
+                || filterState != null
+                || cropState != null && !cropState.isEmpty()
+                || startTime > 0
+                || endTime != -1 && endTime != estimatedDuration
+                || originalHeight != resultHeight
+                || originalWidth != resultWidth;
     }
 
     public boolean canAutoPlaySourceVideo() {

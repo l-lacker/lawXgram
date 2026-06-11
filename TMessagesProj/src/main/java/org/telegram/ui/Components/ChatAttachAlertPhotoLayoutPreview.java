@@ -1458,18 +1458,20 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                     return -1;
                 }
                 MediaController.PhotoEntry photoEntry = photos.get(index);
-                photoEntry.editedInfo = videoEditedInfo;
-                photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
                 Object imageId = photoEntry.imageId;
                 int orderIndex = photosOrder.indexOf((Integer) imageId);
                 if (orderIndex >= 0) {
                     if (photosOrder.size() <= 1) {
                         return -1;
                     }
+                    photoEntry.editedInfo = null;
+                    photoEntry.sendAsRoundVideo = false;
                     photosOrder.remove(orderIndex);
                     fromPhotoArrays();
                     return orderIndex;
                 } else {
+                    photoEntry.editedInfo = videoEditedInfo;
+                    photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
                     photosOrder.add(imageId);
                     fromPhotoArrays();
                     return photosOrder.size() - 1;
@@ -1485,6 +1487,8 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                 }
                 int index = photosOrder.indexOf((Integer) imageId);
                 if (index >= 0) {
+                    photoEntry.editedInfo = null;
+                    photoEntry.sendAsRoundVideo = false;
                     photosOrder.remove(index);
                     fromPhotoArrays();
                     return index;

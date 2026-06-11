@@ -14199,6 +14199,9 @@ public class ChatActivity extends BaseFragment implements
             if (info.videoEditedInfo == null && !TextUtils.isEmpty(info.path)) {
                 info.videoEditedInfo = SendMessagesHelper.createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset, currentAccount);
             }
+            if (TextUtils.isEmpty(info.path) && info.videoEditedInfo != null && !TextUtils.isEmpty(info.videoEditedInfo.originalPath)) {
+                info.path = info.videoEditedInfo.originalPath;
+            }
             if (info.videoEditedInfo == null || TextUtils.isEmpty(info.path)) {
                 FileLog.e("unable to prepare round video conversion for " + info.path);
                 if (BulletinFactory.canShowBulletin(this)) {

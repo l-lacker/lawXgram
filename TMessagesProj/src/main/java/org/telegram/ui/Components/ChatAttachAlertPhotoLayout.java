@@ -289,13 +289,13 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             int num;
             if ((num = addToSelectedPhotos(photoEntry, -1)) == -1) {
                 num = selectedPhotosOrder.indexOf(photoEntry.imageId);
+                photoEntry.editedInfo = videoEditedInfo;
+                photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
             } else {
                 add = false;
                 photoEntry.editedInfo = null;
                 photoEntry.sendAsRoundVideo = false;
             }
-            photoEntry.editedInfo = videoEditedInfo;
-            photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
 
             int count = gridView.getChildCount();
             for (int a = 0; a < count; a++) {
