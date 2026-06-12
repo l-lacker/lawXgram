@@ -22074,9 +22074,15 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         }
         itemsLayout.requestLayout();
 
+        boolean roundVideo = isCurrentMediaRoundVideoOrPending();
         estimatedDuration = (long) Math.ceil((videoTimelineView.getRightProgress() - videoTimelineView.getLeftProgress()) * videoDuration);
         videoCutStart = videoTimelineView.getLeftProgress();
         videoCutEnd = videoTimelineView.getRightProgress();
+        if (roundVideo && videoDuration > 0 && estimatedDuration > ROUND_VIDEO_MAX_DURATION) {
+            estimatedDuration = (long) ROUND_VIDEO_MAX_DURATION;
+            videoCutEnd = Math.min(1.0f, videoCutStart + ROUND_VIDEO_MAX_DURATION / videoDuration);
+            videoTimelineView.setLeftRightProgress(videoCutStart, videoCutEnd);
+        }
 
         int width = rotationValue == 90 || rotationValue == 270 ? resultHeight : resultWidth;
         int height = rotationValue == 90 || rotationValue == 270 ? resultWidth : resultHeight;

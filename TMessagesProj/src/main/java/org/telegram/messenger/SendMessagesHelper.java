@@ -11526,18 +11526,10 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     private static void limitRoundVideoDuration(VideoEditedInfo videoEditedInfo) {
-        if (videoEditedInfo.fromCamera) {
+        if (videoEditedInfo == null || videoEditedInfo.fromCamera) {
             return;
         }
-        long duration = RoundVideoQualityHelper.getDurationMs(videoEditedInfo);
-        long maxDuration = RoundVideoQualityHelper.MAX_RECORDING_DURATION_MS;
-        if (duration <= maxDuration) {
-            return;
-        }
-        long startTime = videoEditedInfo.startTime >= 0 ? videoEditedInfo.startTime : 0;
-        videoEditedInfo.startTime = startTime;
-        videoEditedInfo.endTime = startTime + maxDuration * 1000L;
-        videoEditedInfo.estimatedDuration = maxDuration;
+        RoundVideoQualityHelper.limitDuration(videoEditedInfo);
     }
 
     public static void prepareRoundVideoEditedInfo(VideoEditedInfo videoEditedInfo) {

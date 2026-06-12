@@ -19,7 +19,8 @@ public final class RoundVideoQualityHelper {
     public static final int HIGH_BITRATE_MBPS = 5;
     public static final int MAX_BITRATE_MBPS = HIGH_BITRATE_MBPS;
     public static final long TELEGRAM_MAX_SIZE_BYTES = 10L * 1024L * 1024L;
-    public static final long MAX_RECORDING_DURATION_MS = 59_500L;
+    public static final long MAX_RECORDING_DURATION_MS = 59_000L;
+    public static final long OUTPUT_DURATION_TOLERANCE_MS = 900L;
     public static final int PICKER_SIDE_SMALL = 360;
     public static final int PICKER_SIDE_MEDIUM = 480;
     public static final int PICKER_SIDE_LARGE = 639;
@@ -235,19 +236,48 @@ public final class RoundVideoQualityHelper {
     }
 
     public static long getDurationMs(VideoEditedInfo info) {
+        return getDurationMs(info, true);
+    }
+
+    public static long getRawDurationMs(VideoEditedInfo info) {
+        return getDurationMs(info, false, false);
+    }
+
+    private static long getDurationMs(VideoEditedInfo info, boolean clamp) {
+        return getDurationMs(info, clamp, true);
+    }
+
+    private static long getDurationMs(VideoEditedInfo info, boolean clamp, boolean preferEstimate) {
         if (info == null) {
             return 0;
         }
-        if (info.estimatedDuration > 0) {
-            return info.estimatedDuration;
+        long duration;
+        if (preferEstimate && info.estimatedDuration > 0) {
+            duration = info.estimatedDuration;
+        } else if (info.startTime >= 0 && info.endTime > info.startTime) {
+            duration = normalizeDurationMs(info.endTime - info.startTime);
+        } else if (!preferEstimate && info.estimatedDuration > 0) {
+            duration = info.estimatedDuration;
+        } else if (info.originalDuration > 0) {
+            duration = normalizeDurationMs(info.originalDuration);
+        } else {
+            duration = 0;
         }
-        if (info.startTime >= 0 && info.endTime > info.startTime) {
-            return normalizeDurationMs(info.endTime - info.startTime);
+        if (clamp && duration > MAX_RECORDING_DURATION_MS) {
+            return MAX_RECORDING_DURATION_MS;
         }
-        if (info.originalDuration > 0) {
-            return normalizeDurationMs(info.originalDuration);
+        return duration;
+    }
+
+    public static void limitDuration(VideoEditedInfo info) {
+        long duration = getRawDurationMs(info);
+        if (info == null || duration <= MAX_RECORDING_DURATION_MS) {
+            return;
         }
-        return 0;
+        long startTimeUs = info.startTime > 0 ? info.startTime : 0;
+        info.startTime = startTimeUs;
+        info.endTime = startTimeUs + MAX_RECORDING_DURATION_MS * 1000L;
+        info.estimatedDuration = MAX_RECORDING_DURATION_MS;
     }
 
     public static String formatSizeMb(long bytes) {
