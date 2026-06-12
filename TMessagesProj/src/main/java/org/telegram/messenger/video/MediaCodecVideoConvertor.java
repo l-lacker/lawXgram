@@ -399,6 +399,7 @@ public class MediaCodecVideoConvertor {
                             long minPresentationTime = Integer.MIN_VALUE;
                             long frameDelta = Math.max(1, 1_000_000L / Math.max(1, framerate));
                             long firstRoundRenderedFramePts = -1;
+                            long lastRoundRenderedOutputPts = -1;
                             long frameDeltaFroSkipFrames;
                             if (framerate < 30) {
                                 frameDeltaFroSkipFrames = Math.round(1_000_000d / Math.max(1, framerate + 5));
@@ -846,6 +847,7 @@ public class MediaCodecVideoConvertor {
                                             if (flushed) {
                                                 videoTime = -1;
                                                 firstRoundRenderedFramePts = -1;
+                                                lastRoundRenderedOutputPts = -1;
                                             } else {
                                                 if (avatarStartTime == -1 && additionalPresentationTime != 0) {
                                                     info.presentationTimeUs += additionalPresentationTime;
@@ -871,6 +873,10 @@ public class MediaCodecVideoConvertor {
                                                             firstRoundRenderedFramePts = outputPresentationTimeUs;
                                                         }
                                                         outputPresentationTimeUs = Math.max(0, outputPresentationTimeUs - firstRoundRenderedFramePts);
+                                                        if (outputPresentationTimeUs <= lastRoundRenderedOutputPts) {
+                                                            outputPresentationTimeUs = lastRoundRenderedOutputPts + 1;
+                                                        }
+                                                        lastRoundRenderedOutputPts = outputPresentationTimeUs;
                                                     }
                                                     outputSurface.drawImage(outputPresentationTimeUs * 1000);
                                                     inputSurface.setPresentationTime(outputPresentationTimeUs * 1000);

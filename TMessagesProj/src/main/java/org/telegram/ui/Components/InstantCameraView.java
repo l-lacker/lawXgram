@@ -1427,7 +1427,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         if (info.startTime > 0 || info.endTime != -1 && (duration <= 0 || info.endTime != duration)) {
             return true;
         }
-        return true;
+        return false;
     }
 
     private void switchCamera() {
