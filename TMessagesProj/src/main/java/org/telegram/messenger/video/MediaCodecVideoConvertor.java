@@ -397,12 +397,15 @@ public class MediaCodecVideoConvertor {
                             int audioTrackIndex = -5;
                             long additionalPresentationTime = 0;
                             long minPresentationTime = Integer.MIN_VALUE;
-                            long frameDelta = 1000 / framerate * 1000;
+                            long frameDelta = Math.round(1_000_000d / Math.max(1, framerate));
+                            long firstRoundFramePts = -1;
+                            long lastRoundFrameIndex = -1;
+                            long roundOutputPresentationTimeUs = -1;
                             long frameDeltaFroSkipFrames;
                             if (framerate < 30) {
-                                frameDeltaFroSkipFrames = 1000 / (framerate + 5) * 1000;
+                                frameDeltaFroSkipFrames = Math.round(1_000_000d / Math.max(1, framerate + 5));
                             } else {
-                                frameDeltaFroSkipFrames = 1000 / (framerate + 1) * 1000;
+                                frameDeltaFroSkipFrames = Math.round(1_000_000d / Math.max(1, framerate + 1));
                             }
 
                             extractor.selectTrack(videoIndex);
@@ -591,7 +594,7 @@ public class MediaCodecVideoConvertor {
                                         }
                                     } else {
                                         ArrayList<AudioInput> audioInputs = new ArrayList<>();
-                                        GeneralAudioInput mainInput = new GeneralAudioInput(videoPath, audioIndex);
+                                        GeneralAudioInput mainInput = convertVideoParams.videoOffset > 0 ? new GeneralAudioInput(videoPath, convertVideoParams.videoOffset, audioIndex) : new GeneralAudioInput(videoPath, audioIndex);
                                         if (endTime > 0) {
                                             mainInput.setEndTimeUs(endTime);
                                         }
@@ -824,7 +827,7 @@ public class MediaCodecVideoConvertor {
                                                 decoder.flush();
                                                 flushed = true;
                                             }
-                                            if (lastFramePts > 0 && info.presentationTimeUs - lastFramePts < frameDeltaFroSkipFrames && (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) == 0) {
+                                            if (!isRound && lastFramePts > 0 && info.presentationTimeUs - lastFramePts < frameDeltaFroSkipFrames && (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) == 0) {
                                                 doRender = false;
                                             }
                                             trueStartTime = avatarStartTime >= 0 ? avatarStartTime : startTime;
@@ -843,9 +846,25 @@ public class MediaCodecVideoConvertor {
                                             }
                                             if (flushed) {
                                                 videoTime = -1;
+                                                firstRoundFramePts = -1;
+                                                lastRoundFrameIndex = -1;
+                                                roundOutputPresentationTimeUs = -1;
                                             } else {
                                                 if (avatarStartTime == -1 && additionalPresentationTime != 0) {
                                                     info.presentationTimeUs += additionalPresentationTime;
+                                                }
+                                                if (isRound && doRender) {
+                                                    if (firstRoundFramePts < 0) {
+                                                        firstRoundFramePts = info.presentationTimeUs;
+                                                    }
+                                                    long elapsedTimeUs = Math.max(0, info.presentationTimeUs - firstRoundFramePts);
+                                                    long frameIndex = Math.round(elapsedTimeUs * Math.max(1, framerate) / 1_000_000d);
+                                                    if (frameIndex <= lastRoundFrameIndex) {
+                                                        doRender = false;
+                                                    } else {
+                                                        lastRoundFrameIndex = frameIndex;
+                                                        roundOutputPresentationTimeUs = Math.round(frameIndex * 1_000_000d / Math.max(1, framerate));
+                                                    }
                                                 }
                                                 decoder.releaseOutputBuffer(decoderStatus, doRender);
                                             }
@@ -862,8 +881,9 @@ public class MediaCodecVideoConvertor {
                                                     FileLog.e(e);
                                                 }
                                                 if (!errorWait) {
+                                                    long outputPresentationTimeUs = isRound ? roundOutputPresentationTimeUs : info.presentationTimeUs;
                                                     outputSurface.drawImage(info.presentationTimeUs * 1000);
-                                                    inputSurface.setPresentationTime(info.presentationTimeUs * 1000);
+                                                    inputSurface.setPresentationTime(outputPresentationTimeUs * 1000);
                                                     inputSurface.swapBuffers();
                                                 }
                                             }

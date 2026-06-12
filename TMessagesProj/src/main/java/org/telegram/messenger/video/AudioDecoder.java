@@ -14,6 +14,7 @@ import org.telegram.messenger.FileLog;
 
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class AudioDecoder {
     private static final int TIMEOUT_USEC = 0000;
 
     private final MediaExtractor extractor;
+    private FileInputStream fileInputStream;
     private MediaCodec decoder;
     private int trackIndex;
 
@@ -42,6 +44,14 @@ public class AudioDecoder {
     public AudioDecoder(String sourcePath, int audioIndex) throws IOException {
         extractor = new MediaExtractor();
         extractor.setDataSource(sourcePath);
+        this.audioIndex = audioIndex;
+        init();
+    }
+
+    public AudioDecoder(String sourcePath, long videoOffset, int audioIndex) throws IOException {
+        extractor = new MediaExtractor();
+        fileInputStream = new FileInputStream(sourcePath);
+        extractor.setDataSource(fileInputStream.getFD(), videoOffset, Long.MAX_VALUE);
         this.audioIndex = audioIndex;
         init();
     }
@@ -304,14 +314,40 @@ public class AudioDecoder {
     }
 
     public void stop() {
+        if (decodingDone) {
+            return;
+        }
         decoder.stop();
         decodingDone = true;
     }
 
     public void release() {
-        stop();
-        decoder.release();
-        extractor.release();
+        try {
+            try {
+                stop();
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+            try {
+                decoder.release();
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        } finally {
+            try {
+                extractor.release();
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+                fileInputStream = null;
+            }
+        }
     }
 
     public static class DecodedBufferData {

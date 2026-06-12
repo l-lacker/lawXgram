@@ -35,6 +35,11 @@ public class GeneralAudioInput extends AudioInput {
         init();
     }
 
+    public GeneralAudioInput(String sourcePath, long videoOffset, int audioIndex) throws IOException {
+        decoder = new AudioDecoder(sourcePath, videoOffset, audioIndex);
+        init();
+    }
+
     private void init() {
         audioBufferConverter = new AudioBufferConverter();
     }

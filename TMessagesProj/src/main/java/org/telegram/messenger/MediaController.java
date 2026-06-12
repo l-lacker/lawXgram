@@ -6873,7 +6873,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         return true;
     }
 
-    private static boolean isValidRoundVideoOutput(File file) {
+    public static boolean isValidRoundVideoOutput(File file) {
         if (file == null || !file.exists() || file.length() <= 0) {
             return false;
         }
@@ -6899,15 +6899,29 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                     return false;
                 }
                 int frames = 0;
+                long previousSampleTimeUs = -1;
+                long lastVideoTimeUs = -1;
+                long minFrameDeltaUs = Long.MAX_VALUE;
                 extractor.selectTrack(videoIndex);
                 while (extractor.getSampleTrackIndex() == videoIndex) {
+                    long sampleTime = extractor.getSampleTime();
+                    if (sampleTime >= 0) {
+                        if (previousSampleTimeUs >= 0 && sampleTime > previousSampleTimeUs) {
+                            minFrameDeltaUs = Math.min(minFrameDeltaUs, sampleTime - previousSampleTimeUs);
+                        }
+                        previousSampleTimeUs = sampleTime;
+                        lastVideoTimeUs = sampleTime;
+                    }
                     frames++;
                     if (!extractor.advance()) {
                         break;
                     }
                 }
                 double averageFps = frames * 1000.0 / duration;
-                return frames > 0 && averageFps <= RoundVideoQualityHelper.TELEGRAM_MAX_FPS + 1.0;
+                double maxFps = minFrameDeltaUs != Long.MAX_VALUE ? 1_000_000.0 / minFrameDeltaUs : averageFps;
+                long lastFrameDurationUs = minFrameDeltaUs != Long.MAX_VALUE ? minFrameDeltaUs : Math.max(1, duration * 1000L / Math.max(1, frames));
+                long videoDurationMs = lastVideoTimeUs >= 0 ? (lastVideoTimeUs + lastFrameDurationUs) / 1000L : duration;
+                return frames > 0 && averageFps <= RoundVideoQualityHelper.TELEGRAM_MAX_FPS + 1.0 && maxFps <= RoundVideoQualityHelper.TELEGRAM_MAX_FPS + 1.0 && Math.abs(duration - videoDurationMs) <= 250;
             } finally {
                 extractor.release();
             }

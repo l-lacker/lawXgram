@@ -1427,8 +1427,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         if (info.startTime > 0 || info.endTime != -1 && (duration <= 0 || info.endTime != duration)) {
             return true;
         }
-        return info.originalWidth > 0 && info.resultWidth > 0 && info.originalWidth != info.resultWidth
-                || info.originalHeight > 0 && info.resultHeight > 0 && info.originalHeight != info.resultHeight;
+        return true;
     }
 
     private void switchCamera() {
@@ -3566,6 +3565,9 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
                 format.setInteger(MediaFormat.KEY_BIT_RATE, videoBitrate);
                 format.setInteger(MediaFormat.KEY_FRAME_RATE, videoFramerate);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    format.setFloat(MediaFormat.KEY_MAX_FPS_TO_ENCODER, videoFramerate);
+                }
                 format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
 
                 videoEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);

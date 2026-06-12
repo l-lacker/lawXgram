@@ -8425,6 +8425,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             if (sentMedia.ttl_seconds == 0 && (newMsgObj.videoEditedInfo == null || newMsgObj.videoEditedInfo.mediaEntities == null && TextUtils.isEmpty(newMsgObj.videoEditedInfo.paintPath) && newMsgObj.videoEditedInfo.cropState == null)) {
                 boolean isVideo = MessageObject.isVideoMessage(sentMessage);
                 boolean intendedRoundVideo = newMsgObj.videoEditedInfo != null && newMsgObj.videoEditedInfo.roundVideo;
+                if (intendedRoundVideo && !MessageObject.isRoundVideoDocument(sentMedia.document)) {
+                    FileLog.e("server returned non-round document for intended round video");
+                }
                 if ((isVideo || MessageObject.isGifMessage(sentMessage)) && MessageObject.isGifDocument(sentMedia.document) == MessageObject.isGifDocument(newMedia.document)) {
                     if (!newMsgObj.scheduled && (!intendedRoundVideo || MessageObject.isRoundVideoDocument(sentMedia.document))) {
                         MessageObject messageObject = new MessageObject(currentAccount, sentMessage, false, false);
@@ -10534,6 +10537,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             videoEditedInfo = info.videoEditedInfo != null ? info.videoEditedInfo : sendAsRoundVideo ? createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset, accountInstance.getCurrentAccount()) : createCompressionSettings(info.path, info.livePhotoVideoOffset);
                             if (sendAsRoundVideo && videoEditedInfo != null) {
                                 videoEditedInfo.roundVideo = true;
+                                normalizeRoundVideoTrackDuration(videoEditedInfo, info.path);
                                 prepareRoundVideoEditedInfo(videoEditedInfo, accountInstance.getCurrentAccount());
                             }
                         }
@@ -10666,7 +10670,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                     attributeVideo = new TLRPC.TL_documentAttributeVideo_layer159();
                                 } else {
                                     attributeVideo = new TLRPC.TL_documentAttributeVideo();
-                                    attributeVideo.supports_streaming = true;
+                                    attributeVideo.supports_streaming = !sendAsRoundVideo;
                                 }
                                 attributeVideo.round_message = sendAsRoundVideo;
                                 document.attributes.add(attributeVideo);
@@ -11293,10 +11297,65 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             videoEditedInfo = createCompressionSettingsFromMetadata(videoPath, videoOffset);
         }
         if (videoEditedInfo != null) {
+            normalizeRoundVideoTrackDuration(videoEditedInfo, videoPath);
             videoEditedInfo.roundVideo = true;
             prepareRoundVideoEditedInfo(videoEditedInfo, account);
         }
         return videoEditedInfo;
+    }
+
+    private static void normalizeRoundVideoTrackDuration(VideoEditedInfo videoEditedInfo, String videoPath) {
+        if (videoEditedInfo == null || TextUtils.isEmpty(videoPath)) {
+            return;
+        }
+        MediaExtractor mediaExtractor = null;
+        FileInputStream fileInputStream = null;
+        try {
+            mediaExtractor = new MediaExtractor();
+            if (videoEditedInfo.videoOffset > 0) {
+                fileInputStream = new FileInputStream(videoPath);
+                mediaExtractor.setDataSource(fileInputStream.getFD(), videoEditedInfo.videoOffset, Long.MAX_VALUE);
+            } else {
+                mediaExtractor.setDataSource(videoPath);
+            }
+            int videoIndex = MediaController.findTrack(mediaExtractor, false);
+            if (videoIndex < 0) {
+                return;
+            }
+            MediaFormat videoFormat = mediaExtractor.getTrackFormat(videoIndex);
+            if (!videoFormat.containsKey(MediaFormat.KEY_DURATION)) {
+                return;
+            }
+            long videoDurationUs = Math.max(1000, videoFormat.getLong(MediaFormat.KEY_DURATION));
+            long startTimeUs = videoEditedInfo.startTime > 0 ? Math.min(videoEditedInfo.startTime, videoDurationUs - 1000) : 0;
+            long endTimeUs = videoEditedInfo.endTime > 0 ? Math.min(videoEditedInfo.endTime, videoDurationUs) : videoDurationUs;
+            if (endTimeUs <= startTimeUs) {
+                endTimeUs = videoDurationUs;
+            }
+            long videoDurationMs = Math.max(1, (endTimeUs - startTimeUs) / 1000L);
+            long currentDurationMs = RoundVideoQualityHelper.getDurationMs(videoEditedInfo);
+            if (currentDurationMs <= 0 || videoDurationMs < currentDurationMs - 250 || videoEditedInfo.endTime > videoDurationUs) {
+                if (startTimeUs > 0) {
+                    videoEditedInfo.startTime = startTimeUs;
+                }
+                videoEditedInfo.estimatedDuration = videoDurationMs;
+                videoEditedInfo.originalDuration = videoDurationUs;
+                videoEditedInfo.endTime = endTimeUs;
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
+        } finally {
+            if (mediaExtractor != null) {
+                mediaExtractor.release();
+            }
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+            }
+        }
     }
 
     private static int roundEven(float value) {
@@ -11696,6 +11755,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         new Thread(() -> {
             final VideoEditedInfo videoEditedInfo = info != null ? info : createCompressionSettings(videoPath, 0);
             if (videoEditedInfo != null && videoEditedInfo.roundVideo) {
+                normalizeRoundVideoTrackDuration(videoEditedInfo, videoPath);
                 prepareRoundVideoEditedInfo(videoEditedInfo, accountInstance.getCurrentAccount());
             }
 
@@ -11784,9 +11844,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         attributeVideo = new TLRPC.TL_documentAttributeVideo_layer159();
                     } else {
                         attributeVideo = new TLRPC.TL_documentAttributeVideo();
-                        attributeVideo.supports_streaming = true;
                     }
                     attributeVideo.round_message = isRound;
+                    attributeVideo.supports_streaming = !isRound;
                     document.attributes.add(attributeVideo);
                     if (videoEditedInfo != null && videoEditedInfo.notReadyYet) {
                         attributeVideo.w = videoEditedInfo.resultWidth;

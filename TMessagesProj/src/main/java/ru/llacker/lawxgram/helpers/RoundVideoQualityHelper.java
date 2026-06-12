@@ -10,7 +10,7 @@ import ru.llacker.lawxgram.LawxConfig;
 
 public final class RoundVideoQualityHelper {
 
-    public static final int TELEGRAM_MAX_SIDE = 640;
+    public static final int TELEGRAM_MAX_SIDE = 639;
     public static final int TELEGRAM_MAX_FPS = 60;
     public static final int DEFAULT_FPS_CAP = 30;
     public static final int MIN_BITRATE_MBPS = 1;
@@ -90,7 +90,11 @@ public final class RoundVideoQualityHelper {
     }
 
     public static int chooseOutputSide(int account, int transformedWidth, int transformedHeight) {
-        return getConfiguredSide(account);
+        int sourceSide = Math.min(transformedWidth, transformedHeight);
+        if (sourceSide <= 0) {
+            return getConfiguredSide(account);
+        }
+        return encoderSafeSide(Math.min(sourceSide, getConfiguredSide(account)));
     }
 
     public static int chooseFps(int sourceFps) {
