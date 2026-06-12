@@ -255,11 +255,11 @@ public final class RoundVideoQualityHelper {
         if (preferEstimate && info.estimatedDuration > 0) {
             duration = info.estimatedDuration;
         } else if (info.startTime >= 0 && info.endTime > info.startTime) {
-            duration = normalizeDurationMs(info.endTime - info.startTime);
+            duration = durationUsToMs(info.endTime - info.startTime);
         } else if (!preferEstimate && info.estimatedDuration > 0) {
             duration = info.estimatedDuration;
         } else if (info.originalDuration > 0) {
-            duration = normalizeDurationMs(info.originalDuration);
+            duration = durationUsToMs(info.originalDuration);
         } else {
             duration = 0;
         }
@@ -301,11 +301,8 @@ public final class RoundVideoQualityHelper {
         return Math.max(64_000, (int) Math.floor((totalBitsBudget - audioBits) / seconds));
     }
 
-    private static long normalizeDurationMs(long duration) {
-        if (duration > MAX_RECORDING_DURATION_MS * 10L) {
-            return Math.max(1, duration / 1000L);
-        }
-        return duration;
+    private static long durationUsToMs(long durationUs) {
+        return Math.max(1, durationUs / 1000L);
     }
 
     private static int getAudioBitrate(int account) {

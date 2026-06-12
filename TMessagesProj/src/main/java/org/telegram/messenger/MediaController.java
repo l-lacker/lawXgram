@@ -6871,9 +6871,12 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("time=" + (System.currentTimeMillis() - time) + " canceled=" + canceled);
         }
-        if (!error && !canceled && info.roundVideo && !isValidRoundVideoOutput(cacheFile)) {
-            FileLog.e("round video conversion produced invalid output " + cacheFile.getAbsolutePath());
-            error = true;
+        if (!error && !canceled && info.roundVideo) {
+            String roundVideoOutputError = getRoundVideoOutputHardError(cacheFile);
+            if (roundVideoOutputError != null) {
+                FileLog.e("round video conversion produced invalid output " + cacheFile.getAbsolutePath() + " reason=" + roundVideoOutputError);
+                error = true;
+            }
         }
 
         preferences.edit().putBoolean("isPreviousOk", true).apply();
@@ -6883,8 +6886,12 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
     }
 
     public static boolean isValidRoundVideoOutput(File file) {
+        return getRoundVideoOutputHardError(file) == null;
+    }
+
+    private static String getRoundVideoOutputHardError(File file) {
         if (file == null || !file.exists() || file.length() <= 0) {
-            return false;
+            return "empty";
         }
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
@@ -6892,20 +6899,32 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             int width = Utilities.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
             int height = Utilities.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
             long duration = Utilities.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-            if (width <= 0 || width != height || width > RoundVideoQualityHelper.TELEGRAM_MAX_SIDE || duration <= 0 || duration > RoundVideoQualityHelper.MAX_RECORDING_DURATION_MS + RoundVideoQualityHelper.OUTPUT_DURATION_TOLERANCE_MS) {
-                return false;
+            if (width <= 0 || height <= 0) {
+                return "empty";
+            }
+            if (width != height) {
+                return "non_square";
+            }
+            if (width > RoundVideoQualityHelper.TELEGRAM_MAX_SIDE) {
+                return "side_too_large";
+            }
+            if (duration <= 0) {
+                return "duration_invalid";
+            }
+            if (duration > RoundVideoQualityHelper.MAX_RECORDING_DURATION_MS + RoundVideoQualityHelper.OUTPUT_DURATION_TOLERANCE_MS) {
+                return "duration_invalid";
             }
             MediaExtractor extractor = new MediaExtractor();
             try {
                 extractor.setDataSource(file.getAbsolutePath());
                 int videoIndex = findTrack(extractor, false);
                 if (videoIndex < 0) {
-                    return false;
+                    return "no_avc";
                 }
                 MediaFormat videoFormat = extractor.getTrackFormat(videoIndex);
                 String mime = videoFormat.getString(MediaFormat.KEY_MIME);
                 if (!VIDEO_MIME_TYPE.equals(mime)) {
-                    return false;
+                    return "no_avc";
                 }
                 int frames = 0;
                 long previousSampleTimeUs = -1;
@@ -6926,11 +6945,20 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                         break;
                     }
                 }
+                if (frames <= 0) {
+                    return "empty";
+                }
                 double averageFps = frames * 1000.0 / duration;
                 double maxFps = minFrameDeltaUs != Long.MAX_VALUE ? 1_000_000.0 / minFrameDeltaUs : averageFps;
                 long lastFrameDurationUs = minFrameDeltaUs != Long.MAX_VALUE ? minFrameDeltaUs : Math.max(1, duration * 1000L / Math.max(1, frames));
                 long videoDurationMs = lastVideoTimeUs >= 0 ? (lastVideoTimeUs + lastFrameDurationUs) / 1000L : duration;
-                return frames > 0 && averageFps <= RoundVideoQualityHelper.TELEGRAM_MAX_FPS + 1.0 && maxFps <= RoundVideoQualityHelper.TELEGRAM_MAX_FPS + 10.0 && Math.abs(duration - videoDurationMs) <= RoundVideoQualityHelper.OUTPUT_DURATION_TOLERANCE_MS;
+                if (averageFps > RoundVideoQualityHelper.TELEGRAM_MAX_FPS + 1.0 || maxFps > RoundVideoQualityHelper.TELEGRAM_MAX_FPS + 10.0) {
+                    FileLog.w("round video output fps warning file=" + file.getAbsolutePath() + " average=" + averageFps + " max=" + maxFps);
+                }
+                if (Math.abs(duration - videoDurationMs) > RoundVideoQualityHelper.OUTPUT_DURATION_TOLERANCE_MS) {
+                    FileLog.w("round video output timestamp warning file=" + file.getAbsolutePath() + " metadataDuration=" + duration + " sampleDuration=" + videoDurationMs);
+                }
+                return null;
             } finally {
                 extractor.release();
             }
@@ -6943,7 +6971,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 FileLog.e(throwable);
             }
         }
-        return false;
+        return "duration_invalid";
     }
 
     public static int getVideoBitrate(String path) {
