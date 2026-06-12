@@ -23,9 +23,6 @@
         <item name="android:navigationBarColor">#000000</item>
         <item name="android:textViewStyle">@style/MyTextViewStyle</item>
         <item name="android:forceDarkAllowed">false</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">@color/ic_launcher_intro_circle</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_animated</item>
-        <item name="android:windowSplashScreenAnimationDuration">@integer/splash_screen_duration</item>
         <item name="android:windowSplashScreenBackground">@color/ic_launcher_intro_background</item>
     </style>
 
@@ -54,8 +51,6 @@
         <item name="android:textViewStyle">@style/MyTextViewStyle</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:forceDarkAllowed">false</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_animated</item>
-        <item name="android:windowSplashScreenAnimationDuration">@integer/splash_screen_duration</item>
         <item name="android:windowSplashScreenBackground">?android:windowBackground</item>
     </style>
 
@@ -94,8 +89,6 @@
         <item name="android:colorPrimaryDark">#99000000</item>
         <item name="android:navigationBarColor">#000000</item>
         <item name="android:forceDarkAllowed">false</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_animated</item>
-        <item name="android:windowSplashScreenAnimationDuration">@integer/splash_screen_duration</item>
         <item name="android:windowSplashScreenBackground">?android:windowBackground</item>
     </style>
 

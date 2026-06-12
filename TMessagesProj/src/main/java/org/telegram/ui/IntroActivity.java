@@ -802,13 +802,13 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
             loadTexture(R.drawable.intro_private_door, 19);
             loadTexture(R.drawable.intro_private_screw, 20);
             loadTexture(v -> {
-                // ic_launcher_animated has a transparent background, unlike the raster intro icon
+                // The launcher foreground has a transparent background, unlike the raster intro icon
                 // whose baked-in white background covered the logo circle behind it.
                 int size = dp(ICON_HEIGHT_DP);
                 Bitmap bm = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
                 Canvas c = new Canvas(bm);
-                Drawable icon = getParentActivity().getResources().getDrawable(R.drawable.ic_launcher_animated).mutate();
-                // The vector keeps its artwork inside the central 200/320 circle safe zone;
+                Drawable icon = getParentActivity().getResources().getDrawable(R.mipmap.ic_launcher_foreground).mutate();
+                // The adaptive foreground keeps its artwork inside a safe zone;
                 // expand bounds so that safe zone fills the whole texture.
                 int inset = (int) (size * 0.3f);
                 icon.setBounds(-inset, -inset, size + inset, size + inset);
