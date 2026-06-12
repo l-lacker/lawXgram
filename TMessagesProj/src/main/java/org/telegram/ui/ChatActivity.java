@@ -14179,7 +14179,7 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private boolean isRoundVideoInfo(SendMessagesHelper.SendingMediaInfo info) {
-        return info != null && info.isVideo && (info.sendAsRoundVideo || info.videoEditedInfo != null && info.videoEditedInfo.roundVideo);
+        return info != null && (info.sendAsRoundVideo || info.videoEditedInfo != null && info.videoEditedInfo.roundVideo);
     }
 
     private void prepareSendingMediaWithRoundVideos(ArrayList<SendMessagesHelper.SendingMediaInfo> photos, MessageObject replyToMsg, MessageObject editingObject, boolean forceDocument, boolean groupMedia, boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean updateStickersOrder, long effectId, boolean invertMedia, long payStars, MessageSuggestionParams suggestionParams) {
@@ -35767,7 +35767,7 @@ public class ChatActivity extends BaseFragment implements
 
         animatorRoundMessageCameraVisibility.setValue(false, true);
 
-        boolean sendAsRoundVideo = photoEntry.isVideo && (photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo);
+        boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
         if (sendAsRoundVideo) {
             if (videoEditedInfo == null) {
                 videoEditedInfo = photoEntry.editedInfo;
@@ -35805,13 +35805,14 @@ public class ChatActivity extends BaseFragment implements
             }, 3000);
         }
         boolean forceVideoDocument = forceDocument && (videoEditedInfo == null || !videoEditedInfo.roundVideo);
+        boolean sendAsVideo = photoEntry.isVideo || sendAsRoundVideo;
         final VideoEditedInfo finalVideoEditedInfo = videoEditedInfo;
         fillEditingMediaWithCaption(photoEntry.caption, photoEntry.entities);
         AlertsCreator.ensurePaidMessageConfirmation(currentAccount, getDialogId(), 1, payStars -> {
             if (editingMessageObject != null && editingMessageObject.needResendWhenEdit()) {
                 MessageSuggestionParams params = messageSuggestionParams != null ?
                     messageSuggestionParams : MessageSuggestionParams.of(editingMessageObject.messageOwner.suggested_post);
-                if (photoEntry.isVideo) {
+                if (sendAsVideo) {
                     SendMessagesHelper.prepareSendingVideo(getAccountInstance(), photoEntry.path, finalVideoEditedInfo, photoEntry.coverPath, photoEntry.coverPhoto, dialog_id, editingMessageObject, getThreadMessage(), null, replyingQuote, photoEntry.entities, photoEntry.ttl, null, notify, scheduleDate, scheduleRepeatPeriod, forceVideoDocument, photoEntry.hasSpoiler, photoEntry.caption, quickReplyShortcut, getQuickReplyId(), photoEntry.effectId, payStars, getSendMonoForumPeerId(), params);
                 } else {
                     if (photoEntry.imagePath != null) {
@@ -35821,7 +35822,7 @@ public class ChatActivity extends BaseFragment implements
                     }
                 }
             } else {
-                if (photoEntry.isVideo) {
+                if (sendAsVideo) {
                     SendMessagesHelper.prepareSendingVideo(getAccountInstance(), photoEntry.path, finalVideoEditedInfo, photoEntry.coverPath, photoEntry.coverPhoto, dialog_id, replyingMessageObject, getThreadMessage(), null, replyingQuote, photoEntry.entities, photoEntry.ttl, editingMessageObject, notify, scheduleDate, scheduleRepeatPeriod, forceVideoDocument, photoEntry.hasSpoiler, photoEntry.caption, quickReplyShortcut, getQuickReplyId(), photoEntry.effectId, payStars, getSendMonoForumPeerId(), getSendMessageSuggestionParams());
                 } else {
                     if (photoEntry.imagePath != null) {

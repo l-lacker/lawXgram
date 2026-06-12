@@ -8424,8 +8424,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         } else if (sentMedia instanceof TLRPC.TL_messageMediaDocument && sentMedia.document != null && newMedia instanceof TLRPC.TL_messageMediaDocument && newMedia.document != null) {
             if (sentMedia.ttl_seconds == 0 && (newMsgObj.videoEditedInfo == null || newMsgObj.videoEditedInfo.mediaEntities == null && TextUtils.isEmpty(newMsgObj.videoEditedInfo.paintPath) && newMsgObj.videoEditedInfo.cropState == null)) {
                 boolean isVideo = MessageObject.isVideoMessage(sentMessage);
+                boolean intendedRoundVideo = newMsgObj.videoEditedInfo != null && newMsgObj.videoEditedInfo.roundVideo;
                 if ((isVideo || MessageObject.isGifMessage(sentMessage)) && MessageObject.isGifDocument(sentMedia.document) == MessageObject.isGifDocument(newMedia.document)) {
-                    if (!newMsgObj.scheduled) {
+                    if (!newMsgObj.scheduled && (!intendedRoundVideo || MessageObject.isRoundVideoDocument(sentMedia.document))) {
                         MessageObject messageObject = new MessageObject(currentAccount, sentMessage, false, false);
                         getMessagesStorage().putSentFile(originalPath, sentMedia.document, 2, "sent_" + sentMessage.peer_id.channel_id + "_" + sentMessage.id + "_" + DialogObject.getPeerDialogId(sentMessage.peer_id) + "_" + messageObject.type + "_" + messageObject.getSize());
                     }
@@ -10520,7 +10521,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         }
                     }
                 } else {
-                    if ((info.isVideo || info.videoEditedInfo != null) && !(info.isLivePhoto && info.discardLivePhoto)) {
+                    if ((info.isVideo || info.videoEditedInfo != null || info.sendAsRoundVideo) && !(info.isLivePhoto && info.discardLivePhoto)) {
                         Bitmap thumb = null;
                         String thumbKey = null;
                         TLRPC.PhotoSize cover = null;
@@ -10575,7 +10576,12 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                 if (sentData != null && sentData[0] instanceof TLRPC.TL_document) {
                                     document = (TLRPC.TL_document) sentData[0];
                                     parentObject = (String) sentData[1];
-                                    ensureMediaThumbExists(accountInstance, isEncrypted, document, info.path, null, startTime);
+                                    if (sendAsRoundVideo != MessageObject.isRoundVideoDocument(document)) {
+                                        document = null;
+                                        parentObject = null;
+                                    } else {
+                                        ensureMediaThumbExists(accountInstance, isEncrypted, document, info.path, null, startTime);
+                                    }
                                 }
                             }
                             if (document == null) {
@@ -11724,7 +11730,12 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     if (sentData != null && sentData[0] instanceof TLRPC.TL_document) {
                         document = (TLRPC.TL_document) sentData[0];
                         parentObject = (String) sentData[1];
-                        ensureMediaThumbExists(accountInstance, isEncrypted, document, videoPath, null, startTime);
+                        if (isRound != MessageObject.isRoundVideoDocument(document)) {
+                            document = null;
+                            parentObject = null;
+                        } else {
+                            ensureMediaThumbExists(accountInstance, isEncrypted, document, videoPath, null, startTime);
+                        }
                     }
                 }
                 if (document == null) {

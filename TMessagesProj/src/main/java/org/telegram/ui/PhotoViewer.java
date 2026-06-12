@@ -8071,26 +8071,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 return;
             }
             applyCurrentEditMode();
-            if (roundVideoCropPending) {
-                setCurrentMediaRoundVideo(true);
-                Object object = imagesArrLocals.get(currentIndex);
-                if (object instanceof MediaController.MediaEditState) {
-                    ((MediaController.MediaEditState) object).editedInfo = getCurrentVideoEditedInfo();
-                }
-                roundVideoCropPending = false;
-                updateRoundVideoButton();
-                updateMuteButton();
-                updateVideoInfo();
-                if ((sendPhotoType == 0 || sendPhotoType == 4) && placeProvider != null) {
-                    placeProvider.updatePhotoAtIndex(currentIndex);
-                    if (selectedPhotosAdapter != null) {
-                        selectedPhotosAdapter.notifyDataSetChanged();
-                    }
-                    if (!placeProvider.isPhotoChecked(currentIndex)) {
-                        setPhotoChecked();
-                    }
-                }
-            }
+            applyRoundVideoCropPending();
             switchToEditMode(EDIT_MODE_NONE);
         });
 
@@ -8444,6 +8425,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 }
                 applyCurrentEditMode();
             }
+            applyRoundVideoCropPending();
             if (!replace && parentChatActivity != null) {
                 TLRPC.Chat chat = parentChatActivity.getCurrentChat();
                 TLRPC.User user = parentChatActivity.getCurrentUser();
@@ -21679,6 +21661,34 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         updateRoundVideoButton();
         updateMuteButton();
         updateVideoInfo();
+    }
+
+    private void applyRoundVideoCropPending() {
+        if (!roundVideoCropPending) {
+            return;
+        }
+        if (currentIndex < 0 || currentIndex >= imagesArrLocals.size()) {
+            roundVideoCropPending = false;
+            return;
+        }
+        setCurrentMediaRoundVideo(true);
+        Object object = imagesArrLocals.get(currentIndex);
+        if (object instanceof MediaController.MediaEditState) {
+            ((MediaController.MediaEditState) object).editedInfo = getCurrentVideoEditedInfo();
+        }
+        roundVideoCropPending = false;
+        updateRoundVideoButton();
+        updateMuteButton();
+        updateVideoInfo();
+        if ((sendPhotoType == 0 || sendPhotoType == 4) && placeProvider != null) {
+            placeProvider.updatePhotoAtIndex(currentIndex);
+            if (selectedPhotosAdapter != null) {
+                selectedPhotosAdapter.notifyDataSetChanged();
+            }
+            if (!placeProvider.isPhotoChecked(currentIndex)) {
+                setPhotoChecked();
+            }
+        }
     }
 
     private boolean canShowRoundVideoButton() {
