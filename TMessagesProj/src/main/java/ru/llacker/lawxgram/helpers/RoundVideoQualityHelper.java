@@ -98,11 +98,10 @@ public final class RoundVideoQualityHelper {
     }
 
     public static int chooseFps(int sourceFps) {
-        int cap = getConfiguredFpsCap();
-        if (sourceFps <= 0) {
-            return Math.min(DEFAULT_FPS_CAP, cap);
+        if (sourceFps > DEFAULT_FPS_CAP && getConfiguredFpsCap() >= TELEGRAM_MAX_FPS) {
+            return TELEGRAM_MAX_FPS;
         }
-        return Math.max(1, Math.min(sourceFps, cap));
+        return DEFAULT_FPS_CAP;
     }
 
     public static int chooseCameraFps(int supportedFps) {

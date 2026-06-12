@@ -10173,6 +10173,34 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             return videoEditedInfo;
         }
         if (!isCurrentVideo || currentPlayingVideoFile == null && currentPlayingVideoQualityFiles == null || compressionsCount == 0) {
+            if (isCurrentMediaRoundVideo() && !TextUtils.isEmpty(currentPathObject)) {
+                VideoEditedInfo videoEditedInfo = SendMessagesHelper.createRoundVideoEditedInfo(currentPathObject, currentPathVideoOffset, currentAccount);
+                if (videoEditedInfo != null) {
+                    videoEditedInfo.start = videoCutStart;
+                    videoEditedInfo.end = videoCutEnd;
+                    if (videoCutStart > 0) {
+                        videoEditedInfo.startTime = startTime;
+                    }
+                    if (videoCutEnd < 1f) {
+                        videoEditedInfo.endTime = endTime;
+                    }
+                    if (estimatedDuration > 0 && (videoCutStart > 0 || videoCutEnd < 1f)) {
+                        videoEditedInfo.estimatedDuration = estimatedDuration;
+                    }
+                    videoEditedInfo.filterState = editState.savedFilterState;
+                    if (editState.croppedPaintPath != null) {
+                        videoEditedInfo.paintPath = editState.croppedPaintPath;
+                        videoEditedInfo.mediaEntities = editState.croppedMediaEntities != null && !editState.croppedMediaEntities.isEmpty() ? editState.croppedMediaEntities : null;
+                    } else {
+                        videoEditedInfo.paintPath = editState.paintPath;
+                        videoEditedInfo.mediaEntities = editState.mediaEntities != null && !editState.mediaEntities.isEmpty() ? editState.mediaEntities : null;
+                    }
+                    videoEditedInfo.cropState = editState.cropState;
+                    SendMessagesHelper.prepareRoundVideoEditedInfo(videoEditedInfo, currentAccount);
+                    videoEditedInfo.muted = muteVideo || sendPhotoType == SELECT_TYPE_AVATAR;
+                    return videoEditedInfo;
+                }
+            }
             return null;
         }
         VideoEditedInfo videoEditedInfo = new VideoEditedInfo();
@@ -21692,7 +21720,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     }
 
     private boolean canShowRoundVideoButton() {
-        if (!isCurrentVideo || !videoConvertSupported || centerImageIsLivePhoto || sendPhotoTypeIsGif || sendPhotoTypeIsPollMedia || isDocumentsPicker || sendPhotoType == SELECT_TYPE_AVATAR || sendPhotoType == SELECT_TYPE_STICKER || sendPhotoType == SELECT_TYPE_NO_SELECT || placeProvider != null && placeProvider.isEditingMessage()) {
+        if (!isCurrentVideo || TextUtils.isEmpty(currentPathObject) || centerImageIsLivePhoto || sendPhotoTypeIsGif || sendPhotoTypeIsPollMedia || isDocumentsPicker || sendPhotoType == SELECT_TYPE_AVATAR || sendPhotoType == SELECT_TYPE_STICKER || sendPhotoType == SELECT_TYPE_NO_SELECT || placeProvider != null && placeProvider.isEditingMessage()) {
             return false;
         }
         return parentChatActivity == null || parentChatActivity.getCurrentChat() == null || ChatObject.canSendRoundVideo(parentChatActivity.getCurrentChat());

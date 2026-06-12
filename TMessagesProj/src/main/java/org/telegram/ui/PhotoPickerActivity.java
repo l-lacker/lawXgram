@@ -351,8 +351,9 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                 }
                 MediaController.PhotoEntry photoEntry = selectedAlbum.photos.get(index);
                 if ((num = addToSelectedPhotos(photoEntry, -1)) == -1) {
+                    boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
                     photoEntry.editedInfo = videoEditedInfo;
-                    photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
+                    photoEntry.sendAsRoundVideo = sendAsRoundVideo;
                     num = selectedPhotosOrder.indexOf(photoEntry.imageId);
                 } else {
                     add = false;
@@ -365,8 +366,9 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                 }
                 MediaController.SearchImage photoEntry = searchResult.get(index);
                 if ((num = addToSelectedPhotos(photoEntry, -1)) == -1) {
+                    boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
                     photoEntry.editedInfo = videoEditedInfo;
-                    photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
+                    photoEntry.sendAsRoundVideo = sendAsRoundVideo;
                     num = selectedPhotosOrder.indexOf(photoEntry.id);
                 } else {
                     add = false;
@@ -415,16 +417,18 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                         return;
                     }
                     MediaController.PhotoEntry photoEntry = selectedAlbum.photos.get(index);
+                    boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
                     photoEntry.editedInfo = videoEditedInfo;
-                    photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
+                    photoEntry.sendAsRoundVideo = sendAsRoundVideo;
                     addToSelectedPhotos(photoEntry, -1);
                 } else {
                     if (index < 0 || index >= searchResult.size()) {
                         return;
                     }
                     MediaController.SearchImage searchImage = searchResult.get(index);
+                    boolean sendAsRoundVideo = searchImage.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
                     searchImage.editedInfo = videoEditedInfo;
-                    searchImage.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
+                    searchImage.sendAsRoundVideo = sendAsRoundVideo;
                     addToSelectedPhotos(searchImage, -1);
                 }
             }
