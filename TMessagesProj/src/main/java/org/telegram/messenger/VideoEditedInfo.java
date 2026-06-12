@@ -421,7 +421,7 @@ public class VideoEditedInfo {
 
     public String getString() {
         String filters;
-        if (avatarStartTime != -1 || filterState != null || paintPath != null || blurPath != null || mediaEntities != null && !mediaEntities.isEmpty() || cropState != null || fromCamera || roundVideoNoConvert || roundVideoQualitySide > 0) {
+        if (avatarStartTime != -1 || filterState != null || paintPath != null || blurPath != null || mediaEntities != null && !mediaEntities.isEmpty() || cropState != null || fromCamera || roundVideoNoConvert || roundVideoQualitySide > 0 || roundVideo) {
             int len = 10;
             if (filterState != null) {
                 len += 160;
@@ -441,7 +441,7 @@ public class VideoEditedInfo {
                 blurPathBytes = null;
             }
             SerializedData serializedData = new SerializedData(len);
-            serializedData.writeInt32(13);
+            serializedData.writeInt32(14);
             serializedData.writeInt64(avatarStartTime);
             serializedData.writeInt32(originalBitrate);
             if (filterState != null) {
@@ -545,6 +545,7 @@ public class VideoEditedInfo {
                 serializedData.writeInt32(TLRPC.TL_null.constructor);
             }
             serializedData.writeInt32(roundVideoQualitySide);
+            serializedData.writeBool(roundVideo);
             filters = Utilities.bytesToHex(serializedData.toByteArray());
             serializedData.cleanup();
         } else {
@@ -699,6 +700,9 @@ public class VideoEditedInfo {
                         }
                         if (version >= 13) {
                             roundVideoQualitySide = serializedData.readInt32(false);
+                        }
+                        if (version >= 14) {
+                            roundVideo = serializedData.readBool(false);
                         }
                         serializedData.cleanup();
                     }

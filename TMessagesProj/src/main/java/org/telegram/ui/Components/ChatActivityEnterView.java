@@ -11617,10 +11617,11 @@ public class ChatActivityEnterView extends FrameLayout implements
 
                                 final VideoEditedInfo videoEditedInfo = entry != null ? entry.editedInfo : null;
                                 if (videoEditedInfo != null && entry != null) {
+                                    boolean originalRoundVideo = videoEditedInfo.roundVideo || entry.sendAsRoundVideo;
                                     videoEditedInfo.roundVideo = true;
                                     applyEdit = videoEditedInfo.needConvert();
-                                    videoEditedInfo.roundVideo = false;
-                                    videoEditedInfo.muted = true;
+                                    videoEditedInfo.roundVideo = originalRoundVideo;
+                                    videoEditedInfo.muted = originalRoundVideo ? videoEditedInfo.muted : true;
                                 }
                                 if (applyEdit) {
                                     ArrayList<SendMessagesHelper.SendingMediaInfo> photos = new ArrayList<>();
@@ -11646,6 +11647,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                                     info.masks = entry.stickers;
                                     info.ttl = entry.ttl;
                                     info.videoEditedInfo = entry.editedInfo;
+                                    info.sendAsRoundVideo = entry.sendAsRoundVideo || info.videoEditedInfo != null && info.videoEditedInfo.roundVideo;
+                                    info.roundVideoQualitySide = entry.roundVideoQualitySide;
                                     info.canDeleteAfter = entry.canDeleteAfter;
                                     info.updateStickersOrder = SendMessagesHelper.checkUpdateStickersOrder(entry.caption);
                                     info.hasMediaSpoilers = entry.hasSpoiler;

@@ -3303,9 +3303,11 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             serializedData.cleanup();
                         }
                     }
+                    ensureRoundVideoDocumentAttribute(document, videoEditedInfo);
                     uploadedDocument.mime_type = document.mime_type;
                     uploadedDocument.attributes = document.attributes;
-                    if (!messageObject.isGif() && (videoEditedInfo == null || !videoEditedInfo.muted)) {
+                    boolean intendedRoundVideo = isIntendedRoundVideo(videoEditedInfo, document);
+                    if (!intendedRoundVideo && !messageObject.isGif() && (videoEditedInfo == null || !videoEditedInfo.muted)) {
                         uploadedDocument.nosound_video = true;
                         if (BuildVars.DEBUG_VERSION) {
                             FileLog.d("nosound_video = true");
@@ -4611,6 +4613,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         newMsg.media.flags |= 4;
                     }
                     newMsg.media.document = document;
+                    ensureRoundVideoDocumentAttribute(document, videoEditedInfo);
                     if (sendMessageParams.cover instanceof ImageLoader.PhotoSizeFromPhoto) {
                         ImageLoader.PhotoSizeFromPhoto s = (ImageLoader.PhotoSizeFromPhoto) sendMessageParams.cover;
                         newMsg.media.video_cover = s.photo;
@@ -5339,6 +5342,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         }
                     } else if (type == 3) {
                         TLRPC.TL_inputMediaUploadedDocument uploadedDocument = new TLRPC.TL_inputMediaUploadedDocument();
+                        ensureRoundVideoDocumentAttribute(document, videoEditedInfo);
                         uploadedDocument.mime_type = document.mime_type;
                         uploadedDocument.attributes = document.attributes;
                         uploadedDocument.spoiler = hasMediaSpoilers;
@@ -5347,7 +5351,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             uploadedDocument.flags |= 128;
                             uploadedDocument.video_timestamp = (int) (sendMessageParams.livePhotoTimestamp / 1000.0);
                         }
-                        if (forceNoSoundVideo || !MessageObject.isRoundVideoDocument(document) && (videoEditedInfo == null || !videoEditedInfo.muted && !videoEditedInfo.roundVideo)) {
+                        boolean intendedRoundVideo = isIntendedRoundVideo(videoEditedInfo, document);
+                        if (!intendedRoundVideo && (forceNoSoundVideo || videoEditedInfo == null || !videoEditedInfo.muted)) {
                             uploadedDocument.nosound_video = true;
                             if (BuildVars.DEBUG_VERSION) {
                                 FileLog.d("nosound_video = true");
@@ -5439,10 +5444,12 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                 newMsg.ttl = uploadedMedia.ttl_seconds = ttl;
                                 uploadedMedia.flags |= 2;
                             }
-                            if (forceNoSoundVideo || !TextUtils.isEmpty(path) && path.toLowerCase().endsWith("mp4") && (params == null || params.containsKey("forceDocument"))) {
+                            boolean intendedRoundVideo = isIntendedRoundVideo(videoEditedInfo, document);
+                            if (!intendedRoundVideo && (forceNoSoundVideo || !TextUtils.isEmpty(path) && path.toLowerCase().endsWith("mp4") && (params == null || params.containsKey("forceDocument")))) {
                                 uploadedMedia.nosound_video = true;
                             }
-                            uploadedMedia.force_file = params != null && params.containsKey("forceDocument");
+                            uploadedMedia.force_file = !intendedRoundVideo && params != null && params.containsKey("forceDocument");
+                            ensureRoundVideoDocumentAttribute(document, videoEditedInfo);
                             uploadedMedia.mime_type = document.mime_type;
                             uploadedMedia.attributes = document.attributes;
                         } else {
@@ -10679,7 +10686,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                 attributeVideo.round_message = sendAsRoundVideo;
                                 document.attributes.add(attributeVideo);
                                 if (videoEditedInfo != null && (videoEditedInfo.needConvert() || !info.isVideo)) {
-                                    if (info.isVideo && videoEditedInfo.muted) {
+                                    if (info.isVideo && videoEditedInfo.muted && !sendAsRoundVideo) {
                                         fillVideoAttribute(info.path, attributeVideo, videoEditedInfo);
                                         videoEditedInfo.originalWidth = attributeVideo.w;
                                         videoEditedInfo.originalHeight = attributeVideo.h;
@@ -10739,7 +10746,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             if (cover == null && info.coverPhoto != null) {
                                 cover = new ImageLoader.PhotoSizeFromPhoto(info.coverPhoto);
                             }
-                            if (videoEditedInfo != null && videoEditedInfo.muted) {
+                            if (videoEditedInfo != null && videoEditedInfo.muted && !videoEditedInfo.roundVideo) {
                                 boolean found = false;
                                 for (int b = 0, N = document.attributes.size(); b < N; b++) {
                                     if (document.attributes.get(b) instanceof TLRPC.TL_documentAttributeAnimated) {
@@ -10758,6 +10765,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                 SharedConfig.saveConfig();
                                 path = cacheFile.getAbsolutePath();
                             }
+                            ensureRoundVideoDocumentAttribute(document, videoEditedInfo);
                             final TLRPC.TL_document videoFinal = document;
                             final String parentFinal = parentObject;
                             final String originalPathFinal = originalPath;
@@ -11362,6 +11370,65 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         }
     }
 
+    private static boolean isIntendedRoundVideo(VideoEditedInfo videoEditedInfo, TLRPC.Document document) {
+        return videoEditedInfo != null && videoEditedInfo.roundVideo || MessageObject.isRoundVideoDocument(document);
+    }
+
+    private static void ensureRoundVideoDocumentAttribute(TLRPC.Document document, VideoEditedInfo videoEditedInfo) {
+        if (document == null || videoEditedInfo == null || !videoEditedInfo.roundVideo) {
+            return;
+        }
+        document.mime_type = "video/mp4";
+
+        TLRPC.DocumentAttribute videoAttribute = null;
+        for (int a = document.attributes.size() - 1; a >= 0; a--) {
+            TLRPC.DocumentAttribute attribute = document.attributes.get(a);
+            if (attribute instanceof TLRPC.TL_documentAttributeAnimated) {
+                document.attributes.remove(a);
+            } else if (attribute instanceof TLRPC.TL_documentAttributeVideo) {
+                if (videoAttribute == null) {
+                    videoAttribute = attribute;
+                } else {
+                    document.attributes.remove(a);
+                }
+            }
+        }
+        if (videoAttribute == null) {
+            videoAttribute = new TLRPC.TL_documentAttributeVideo();
+            document.attributes.add(videoAttribute);
+        }
+
+        videoAttribute.round_message = true;
+        videoAttribute.supports_streaming = false;
+        videoAttribute.nosound = videoEditedInfo.muted;
+        long durationMs = RoundVideoQualityHelper.getDurationMs(videoEditedInfo);
+        if (durationMs > 0) {
+            videoAttribute.duration = durationMs / 1000.0;
+        }
+
+        int width = videoEditedInfo.resultWidth;
+        int height = videoEditedInfo.resultHeight;
+        if (videoEditedInfo.cropState != null && videoEditedInfo.cropState.transformWidth > 0 && videoEditedInfo.cropState.transformHeight > 0) {
+            width = videoEditedInfo.cropState.transformWidth;
+            height = videoEditedInfo.cropState.transformHeight;
+        }
+        if (width <= 0) {
+            width = videoAttribute.w;
+        }
+        if (height <= 0) {
+            height = videoAttribute.h;
+        }
+        int side = Math.min(width, height);
+        if (side <= 0 && videoEditedInfo.roundVideoQualitySide > 0) {
+            side = RoundVideoQualityHelper.getPickerOutputSide(videoEditedInfo.roundVideoQualitySide);
+        }
+        if (side > 0) {
+            side = RoundVideoQualityHelper.encoderSafeSide(side);
+            videoAttribute.w = side;
+            videoAttribute.h = side;
+        }
+    }
+
     private static int roundEven(float value) {
         return Math.max(2, Math.round(value / 2.0f) * 2);
     }
@@ -11871,7 +11938,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         attributeVideo.duration = videoEditedInfo.estimatedDuration / 1000.0;
                         document.size = videoEditedInfo.estimatedSize;
                     } else if (videoEditedInfo != null && videoEditedInfo.needConvert()) {
-                        if (videoEditedInfo.muted) {
+                        if (videoEditedInfo.muted && !isRound) {
                             document.attributes.add(new TLRPC.TL_documentAttributeAnimated());
                             fillVideoAttribute(videoPath, attributeVideo, videoEditedInfo);
                             videoEditedInfo.originalWidth = attributeVideo.w;
@@ -11951,6 +12018,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     path = cacheFile.getAbsolutePath();
                 }
 
+                ensureRoundVideoDocumentAttribute(document, videoEditedInfo);
                 final TLRPC.TL_document videoFinal = document;
                 final String parentFinal = parentObject;
                 final String originalPathFinal = originalPath;

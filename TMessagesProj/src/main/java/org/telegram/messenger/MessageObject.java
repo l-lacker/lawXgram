@@ -4384,7 +4384,7 @@ public class MessageObject {
                 if (!videoEditedInfo.parseString(param)) {
                     videoEditedInfo = null;
                 } else {
-                    videoEditedInfo.roundVideo = isRoundVideo();
+                    videoEditedInfo.roundVideo = videoEditedInfo.roundVideo || isRoundVideo();
                     videoEditedInfo.notReadyYet = notReadyYet;
                 }
             }

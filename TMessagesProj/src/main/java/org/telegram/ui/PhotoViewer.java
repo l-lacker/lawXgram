@@ -12184,6 +12184,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 }
                 return;
             }
+            applyRoundVideoCropPending(false);
             int num = placeProvider.setPhotoChecked(currentIndex, getCurrentVideoEditedInfo());
             boolean checked = placeProvider.isPhotoChecked(currentIndex);
             checkImageView.setChecked(checked, true);
@@ -21515,8 +21516,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private volatile int selectedCompression;
     private volatile int compressionsCount = -1;
     private int previousCompression;
-    private int selectedRoundVideoQualitySide = RoundVideoQualityHelper.PICKER_SIDE_SMALL;
-    private int previousRoundVideoQualitySide = RoundVideoQualityHelper.PICKER_SIDE_SMALL;
+    private int selectedRoundVideoQualitySide = RoundVideoQualityHelper.PICKER_SIDE_MEDIUM;
+    private int previousRoundVideoQualitySide = RoundVideoQualityHelper.PICKER_SIDE_MEDIUM;
 
     private int rotationValue;
     private volatile int originalWidth;
@@ -21770,7 +21771,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
     private int getSavedRoundVideoQualitySide() {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
-        return RoundVideoQualityHelper.normalizePickerSide(preferences.getInt(ROUND_VIDEO_QUALITY_SIDE_PREF, RoundVideoQualityHelper.PICKER_SIDE_SMALL));
+        return RoundVideoQualityHelper.normalizePickerSide(preferences.getInt(ROUND_VIDEO_QUALITY_SIDE_PREF, RoundVideoQualityHelper.PICKER_SIDE_MEDIUM));
     }
 
     private int getClampedRoundVideoQualitySide(int side) {
@@ -21849,6 +21850,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     }
 
     private void applyRoundVideoCropPending() {
+        applyRoundVideoCropPending(true);
+    }
+
+    private void applyRoundVideoCropPending(boolean checkIfNeeded) {
         if (!roundVideoCropPending) {
             return;
         }
@@ -21873,7 +21878,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             if (selectedPhotosAdapter != null) {
                 selectedPhotosAdapter.notifyDataSetChanged();
             }
-            if (!placeProvider.isPhotoChecked(currentIndex)) {
+            if (checkIfNeeded && !placeProvider.isPhotoChecked(currentIndex)) {
                 setPhotoChecked();
             }
         }
@@ -22607,6 +22612,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 Object photoEntry = ((View) v.getParent()).getTag();
                 int idx = imagesArrLocals.indexOf(photoEntry);
                 if (idx >= 0) {
+                    if (idx == currentIndex) {
+                        applyRoundVideoCropPending(false);
+                    }
                     int num = placeProvider.setPhotoChecked(idx, getCurrentVideoEditedInfo());
                     boolean checked = placeProvider.isPhotoChecked(idx);
                     if (idx == currentIndex) {
