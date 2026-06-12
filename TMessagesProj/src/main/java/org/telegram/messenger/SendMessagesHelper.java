@@ -130,6 +130,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     public static final int MEDIA_TYPE_STORY = 12;
     public static final int ROUND_VIDEO_MAX_SIZE = 640;
     public static final int ROUND_VIDEO_MAX_FRAMERATE = 60;
+    private static final int ROUND_VIDEO_MAX_SELECTOR_COMPRESSION = 3;
+    private static final int ROUND_VIDEO_MAX_SELECTOR_SIDE = 1920;
     private final HashMap<String, ArrayList<DelayedMessage>> delayedMessages = new HashMap<>();
     private final SparseArray<DelayedMessage> activeDelayedMessages = new SparseArray<>();
     private final SparseArray<MessageObject> unsentMessages = new SparseArray<>();
@@ -11362,6 +11364,27 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         return Math.max(2, Math.round(value / 2.0f) * 2);
     }
 
+    private static void clampRoundVideoSelectorQuality(VideoEditedInfo videoEditedInfo) {
+        if (videoEditedInfo == null || !videoEditedInfo.roundVideo) {
+            return;
+        }
+        if (videoEditedInfo.compressQuality == -2 || videoEditedInfo.compressQuality > ROUND_VIDEO_MAX_SELECTOR_COMPRESSION) {
+            videoEditedInfo.compressQuality = ROUND_VIDEO_MAX_SELECTOR_COMPRESSION;
+        }
+        int side = Math.max(videoEditedInfo.resultWidth, videoEditedInfo.resultHeight);
+        if (side <= ROUND_VIDEO_MAX_SELECTOR_SIDE && videoEditedInfo.bitrate != -2) {
+            return;
+        }
+        int width = Math.max(2, videoEditedInfo.originalWidth);
+        int height = Math.max(2, videoEditedInfo.originalHeight);
+        float scale = Math.min(1.0f, ROUND_VIDEO_MAX_SELECTOR_SIDE / (float) Math.max(width, height));
+        videoEditedInfo.resultWidth = roundEven(width * scale);
+        videoEditedInfo.resultHeight = roundEven(height * scale);
+        if (videoEditedInfo.bitrate == -2) {
+            videoEditedInfo.bitrate = 0;
+        }
+    }
+
     private static int clampRoundVideoSide(int side) {
         side = Math.min(side, ROUND_VIDEO_MAX_SIZE);
         if (side > 16) {
@@ -11490,6 +11513,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             videoEditedInfo.resultHeight = videoEditedInfo.originalHeight;
         }
         videoEditedInfo.framerate = RoundVideoQualityHelper.chooseFps(videoEditedInfo.framerate);
+        clampRoundVideoSelectorQuality(videoEditedInfo);
         if (videoEditedInfo.bitrate == -2) {
             videoEditedInfo.bitrate = 0;
         }

@@ -51,6 +51,14 @@ public class MediaCodecVideoConvertor {
     private static final int MAX_ROUND_DUPLICATE_FRAMES_WITHOUT_DRAIN = 8;
     private String outputMimeType;
 
+    private static long getCfrFrameTimeUs(long frameIndex, int framerate) {
+        return Math.round(frameIndex * 1_000_000d / Math.max(1, framerate));
+    }
+
+    private static long getCfrFrameIndex(long elapsedTimeUs, int framerate) {
+        return Math.round(elapsedTimeUs * Math.max(1, framerate) / 1_000_000d);
+    }
+
     public boolean convertVideo(ConvertVideoParams convertVideoParams) {
         if (convertVideoParams.isSticker) {
             return WebmEncoder.convert(convertVideoParams, 0);
@@ -861,7 +869,7 @@ public class MediaCodecVideoConvertor {
                                                         firstRoundFramePts = info.presentationTimeUs;
                                                     }
                                                     long elapsedTimeUs = Math.max(0, info.presentationTimeUs - firstRoundFramePts);
-                                                    long frameIndex = Math.round(elapsedTimeUs / (double) frameDelta);
+                                                    long frameIndex = getCfrFrameIndex(elapsedTimeUs, framerate);
                                                     if (frameIndex <= lastRoundFrameIndex) {
                                                         doRender = false;
                                                     } else {
@@ -869,7 +877,7 @@ public class MediaCodecVideoConvertor {
                                                             long duplicateFrameIndex = lastRoundFrameIndex + 1;
                                                             long maxDuplicateFrameIndex = Math.min(frameIndex - 1, lastRoundFrameIndex + MAX_ROUND_DUPLICATE_FRAMES_WITHOUT_DRAIN);
                                                             while (duplicateFrameIndex <= maxDuplicateFrameIndex) {
-                                                                long duplicatePresentationTimeUs = duplicateFrameIndex * frameDelta;
+                                                                long duplicatePresentationTimeUs = getCfrFrameTimeUs(duplicateFrameIndex, framerate);
                                                                 outputSurface.drawImage(duplicatePresentationTimeUs * 1000);
                                                                 inputSurface.setPresentationTime(duplicatePresentationTimeUs * 1000);
                                                                 inputSurface.swapBuffers();
@@ -878,7 +886,7 @@ public class MediaCodecVideoConvertor {
                                                             }
                                                         }
                                                         roundTargetFrameIndex = frameIndex;
-                                                        roundOutputPresentationTimeUs = frameIndex * frameDelta;
+                                                        roundOutputPresentationTimeUs = getCfrFrameTimeUs(frameIndex, framerate);
                                                     }
                                                 }
                                                 decoder.releaseOutputBuffer(decoderStatus, doRender);
@@ -908,11 +916,11 @@ public class MediaCodecVideoConvertor {
                                             if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                                                 decoderOutputAvailable = false;
                                                 if (isRound && lastRoundFrameIndex >= 0 && duration > frameDelta) {
-                                                    long expectedLastFrameIndex = Math.round((duration - frameDelta) / (double) frameDelta);
+                                                    long expectedLastFrameIndex = Math.max(0, getCfrFrameIndex(duration, framerate) - 1);
                                                     long maxTailFrameIndex = Math.min(expectedLastFrameIndex, lastRoundFrameIndex + MAX_ROUND_DUPLICATE_FRAMES_WITHOUT_DRAIN);
                                                     while (lastRoundFrameIndex < maxTailFrameIndex) {
                                                         lastRoundFrameIndex++;
-                                                        long tailPresentationTimeUs = lastRoundFrameIndex * frameDelta;
+                                                        long tailPresentationTimeUs = getCfrFrameTimeUs(lastRoundFrameIndex, framerate);
                                                         outputSurface.drawImage(tailPresentationTimeUs * 1000);
                                                         inputSurface.setPresentationTime(tailPresentationTimeUs * 1000);
                                                         inputSurface.swapBuffers();
