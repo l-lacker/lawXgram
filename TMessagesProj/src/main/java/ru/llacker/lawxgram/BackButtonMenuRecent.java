@@ -24,6 +24,7 @@ import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.SerializedData;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
@@ -51,25 +52,32 @@ public class BackButtonMenuRecent {
     private static final SharedPreferences preferences = PreferencesMigrationHelper.getSharedPreferences(ApplicationLoader.applicationContext, PREFS_NAME, LEGACY_PREFS_NAME);
     private static final SparseArray<LinkedList<Long>> recentDialogs = new SparseArray<>();
 
-    public static void show(int currentAccount, BaseFragment fragment, View button, DialogsActivity.DialogsActivityDelegate delegate) {
+    public static boolean show(int currentAccount, BaseFragment fragment, View button, DialogsActivity.DialogsActivityDelegate delegate) {
+        return show(currentAccount, fragment, button, delegate, 0, null, null);
+    }
+
+    public static boolean show(int currentAccount, BaseFragment fragment, View button, DialogsActivity.DialogsActivityDelegate delegate, int switchIconResId, CharSequence switchText, Runnable switchAction) {
         var context = fragment.getParentActivity();
         if (context == null) {
-            return;
+            return false;
         }
         var dialogs = getRecentDialogs(fragment.getCurrentAccount());
-        if (dialogs.isEmpty()) {
-            return;
+        boolean hasSwitchAction = switchAction != null && switchText != null;
+        if (dialogs.isEmpty() && !hasSwitchAction) {
+            return false;
         }
         var options = ItemOptions.makeOptions(fragment, button);
-        options.add(R.drawable.menu_clear_recent, LocaleController.getString(R.string.ClearButton), () -> {
-            var builder = new AlertDialog.Builder(context);
-            builder.setTitle(LocaleController.getString(R.string.ClearRecentChats));
-            builder.setMessage(LocaleController.getString(R.string.ClearRecentChatAlert));
-            builder.setPositiveButton(LocaleController.getString(R.string.ClearButton).toUpperCase(), (dialogInterface, i) -> clearRecentDialogs(currentAccount));
-            builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-            fragment.showDialog(builder.create());
-        });
-        options.addGap();
+        if (!dialogs.isEmpty()) {
+            options.add(R.drawable.menu_clear_recent, LocaleController.getString(R.string.ClearButton), () -> {
+                var builder = new AlertDialog.Builder(context);
+                builder.setTitle(LocaleController.getString(R.string.ClearRecentChats));
+                builder.setMessage(LocaleController.getString(R.string.ClearRecentChatAlert));
+                builder.setPositiveButton(LocaleController.getString(R.string.ClearButton).toUpperCase(), (dialogInterface, i) -> clearRecentDialogs(currentAccount));
+                builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
+                fragment.showDialog(builder.create());
+            });
+            options.addGap();
+        }
         for (var dialogId : dialogs) {
             final TLRPC.Chat chat;
             final TLRPC.User user;
@@ -163,6 +171,19 @@ public class BackButtonMenuRecent {
             });
             options.addView(cell, LayoutHelper.createLinear(230, 48));
         }
+        if (hasSwitchAction) {
+            if (!dialogs.isEmpty()) {
+                options.addGap();
+            }
+            var switchItem = new ActionBarMenuSubItem(context, false, false, fragment.getResourceProvider());
+            switchItem.setPadding(AndroidUtilities.dp(18), 0, AndroidUtilities.dp(18), 0);
+            switchItem.setTextAndIcon(switchText, switchIconResId);
+            switchItem.setOnClickListener(e -> {
+                options.dismiss();
+                AndroidUtilities.runOnUIThread(switchAction);
+            });
+            options.addView(switchItem, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        }
 
         if (fragment instanceof MainTabsActivity) {
             options.setBlur(true);
@@ -174,6 +195,7 @@ public class BackButtonMenuRecent {
             options.setScrimViewBackground(Theme.createCircleDrawable(AndroidUtilities.dp(40), Theme.getColor(Theme.key_windowBackgroundWhite)));
         }
         options.show();
+        return true;
     }
 
     private static LinkedList<Long> getRecentDialogs(int currentAccount) {

@@ -44,6 +44,8 @@ public class LawxConfig {
     public static final int MAIN_TAB_SETTINGS = 2;
     public static final int MAIN_TAB_PROFILE = 3;
     public static final int MAIN_TABS_COUNT = 4;
+    public static final int MAIN_CHATS_LONG_PRESS_RECENTS = 0;
+    public static final int MAIN_CHATS_LONG_PRESS_FOLDERS = 1;
 
     private static final int DEFAULT_MAIN_TABS_VISIBLE_MASK =
             (1 << MAIN_TAB_CHATS) |
@@ -176,6 +178,7 @@ public class LawxConfig {
     public static boolean bottomFilterTabs = false;
     public static int mainTabsVisibleMask = DEFAULT_MAIN_TABS_VISIBLE_MASK;
     public static int[] mainTabsOrder = DEFAULT_MAIN_TABS_ORDER.clone();
+    public static int mainChatsLongPressMenuMode = MAIN_CHATS_LONG_PRESS_RECENTS;
     public static boolean strokeOnViews = true;
 
     public static boolean shouldNOTTrustMe = false;
@@ -294,6 +297,7 @@ public class LawxConfig {
             bottomFilterTabs = preferences.getBoolean("bottomFilterTabs", false);
             mainTabsVisibleMask = sanitizeMainTabsVisibleMask(preferences.getInt("mainTabsVisibleMask", DEFAULT_MAIN_TABS_VISIBLE_MASK));
             mainTabsOrder = parseMainTabsOrder(preferences.getString("mainTabsOrder", DEFAULT_MAIN_TABS_ORDER_VALUE));
+            mainChatsLongPressMenuMode = sanitizeMainChatsLongPressMenuMode(preferences.getInt("mainChatsLongPressMenuMode", MAIN_CHATS_LONG_PRESS_RECENTS));
             strokeOnViews = preferences.getBoolean("strokeOnViews", true);
 
             LensHelper.checkLensSupportAsync();
@@ -512,6 +516,22 @@ public class LawxConfig {
 
     private static boolean isKnownMainTab(int tab) {
         return tab >= 0 && tab < MAIN_TABS_COUNT;
+    }
+
+    public static void setMainChatsLongPressMenuMode(int mode) {
+        mode = sanitizeMainChatsLongPressMenuMode(mode);
+        if (mainChatsLongPressMenuMode == mode) {
+            return;
+        }
+        mainChatsLongPressMenuMode = mode;
+        SharedPreferences preferences = LawxConfig.getConfigPreferences();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("mainChatsLongPressMenuMode", mainChatsLongPressMenuMode);
+        editor.apply();
+    }
+
+    private static int sanitizeMainChatsLongPressMenuMode(int mode) {
+        return mode == MAIN_CHATS_LONG_PRESS_FOLDERS ? MAIN_CHATS_LONG_PRESS_FOLDERS : MAIN_CHATS_LONG_PRESS_RECENTS;
     }
 
     private static int sanitizeMainTabsVisibleMask(int mask) {

@@ -274,10 +274,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         tabs[INDEX_CALLS] = GlassTabView.createMainTab(context, resourceProvider, GlassTabView.TabAnimation.CALLS, R.string.MainTabsCalls);
         tabs[INDEX_PROFILE] = GlassTabView.createAvatar(context, resourceProvider, currentAccount, R.string.MainTabsProfile);
         tabs[INDEX_CHATS].setOnLongClickListener(v -> {
-            if (openFoldersSelector(v)) {
-                return true;
-            }
-            BackButtonMenuRecent.show(currentAccount, this, v, null);
+            openChatsLongPressMenu(v);
             return true;
         });
         tabs[INDEX_CONTACTS].setOnLongClickListener(this::openContactsSelector);
@@ -509,6 +506,34 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     private Integer pendingFolderId;
 
+    private void openChatsLongPressMenu(View anchor) {
+        if (LawxConfig.mainChatsLongPressMenuMode == LawxConfig.MAIN_CHATS_LONG_PRESS_FOLDERS && openFoldersSelector(anchor)) {
+            return;
+        }
+        openRecentChatsSelector(anchor);
+    }
+
+    private boolean openRecentChatsSelector(View anchor) {
+        final boolean hasFolders = hasFoldersSelector();
+        return BackButtonMenuRecent.show(
+                currentAccount,
+                this,
+                anchor,
+                null,
+                hasFolders ? R.drawable.msg2_folder : 0,
+                hasFolders ? getString(R.string.Filters) : null,
+                hasFolders ? () -> {
+                    LawxConfig.setMainChatsLongPressMenuMode(LawxConfig.MAIN_CHATS_LONG_PRESS_FOLDERS);
+                    openFoldersSelector(anchor);
+                } : null
+        );
+    }
+
+    private boolean hasFoldersSelector() {
+        final ArrayList<MessagesController.DialogFilter> filters = getMessagesController().getDialogFilters();
+        return filters != null && filters.size() > 1;
+    }
+
     private boolean openFoldersSelector(View anchor) {
         if (getContext() == null || getParentActivity() == null) return false;
         final ArrayList<MessagesController.DialogFilter> filters = getMessagesController().getDialogFilters();
@@ -535,6 +560,16 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             });
             o.addView(folderItem, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
         }
+        o.addGap();
+        final ActionBarMenuSubItem chatsItem = new ActionBarMenuSubItem(getParentActivity(), false, false, getResourceProvider());
+        chatsItem.setPadding(dp(18), 0, dp(18), 0);
+        chatsItem.setTextAndIcon(getString(R.string.MainTabsChats), R.drawable.settings_chat);
+        chatsItem.setOnClickListener(e -> {
+            o.dismiss();
+            LawxConfig.setMainChatsLongPressMenuMode(LawxConfig.MAIN_CHATS_LONG_PRESS_RECENTS);
+            AndroidUtilities.runOnUIThread(() -> openRecentChatsSelector(anchor));
+        });
+        o.addView(chatsItem, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 //        o.setBlur(true);
         o.translate(-dp(8), -dp(4));
         o.setMaxHeight(dp(400));
