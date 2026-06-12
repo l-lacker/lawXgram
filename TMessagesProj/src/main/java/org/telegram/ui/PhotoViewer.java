@@ -963,6 +963,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private static final float ROUND_VIDEO_MAX_DURATION = 60000.0f;
     private static final int ROUND_VIDEO_MAX_SIZE = SendMessagesHelper.ROUND_VIDEO_MAX_SIZE;
     private static final int ROUND_VIDEO_MAX_FRAMERATE = SendMessagesHelper.ROUND_VIDEO_MAX_FRAMERATE;
+    private static final int ROUND_VIDEO_MAX_SELECTOR_COMPRESSION = 2;
 
     private Runnable onUserLeaveHintListener = this::onUserLeaveHint;
 
@@ -6410,6 +6411,19 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             requestVideoPreview(2);
         });
         qualityPicker.originalButton.setOnClickListener(view -> {
+            if (isCurrentMediaRoundVideoOrPending()) {
+                if (ensureRoundVideoCompressionLevel(true)) {
+                    updateVideoInfo();
+                    if (currentIndex >= 0 && currentIndex < imagesArrLocals.size()) {
+                        Object object = imagesArrLocals.get(currentIndex);
+                        if (object instanceof MediaController.MediaEditState state) {
+                            state.editedInfo = getCurrentVideoEditedInfo();
+                        }
+                    }
+                    requestVideoPreview(1);
+                }
+                return;
+            }
             if (selectedCompression != -2) {
                 selectedCompression = -2;
                 muteVideo = false;
@@ -7050,10 +7064,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 }
                 return;
             }
-            if (selectedCompression == -2) {
-                selectedCompression = selectCompression();
-                updateWidthHeightBitrateForCompression();
-            }
+            ensureRoundVideoCompressionLevel(true);
             roundVideoCropPending = true;
             roundVideoCropPreviousValue = false;
             updateRoundVideoButton();
@@ -10218,6 +10229,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         videoEditedInfo.estimatedSize = estimatedSize != 0 ? estimatedSize : 1;
         videoEditedInfo.estimatedDuration = estimatedDuration;
         boolean roundVideo = isCurrentMediaRoundVideo();
+        if (roundVideo && ensureRoundVideoCompressionLevel(true)) {
+            videoEditedInfo.compressQuality = selectedCompression;
+            videoEditedInfo.bitrate = bitrate;
+        }
         videoEditedInfo.framerate = roundVideo ? Math.min(videoFramerate, ROUND_VIDEO_MAX_FRAMERATE) : videoFramerate;
         videoEditedInfo.originalDuration = (long) (videoDuration * 1000);
         videoEditedInfo.roundVideo = roundVideo;
@@ -15404,8 +15419,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     String coverPath = null;
                     TLRPC.Photo coverPhoto = null;
                     Object coverPhotoObject = null;
+                    boolean sendAsRoundVideo = false;
                     if (object instanceof MediaController.PhotoEntry) {
                         MediaController.PhotoEntry photoEntry = ((MediaController.PhotoEntry) object);
+                        sendAsRoundVideo = photoEntry.sendAsRoundVideo || photoEntry.editedInfo != null && photoEntry.editedInfo.roundVideo;
                         if (photoEntry.editedInfo != null) {
                             isMuted = photoEntry.editedInfo.muted;
                             start = photoEntry.editedInfo.start;
@@ -15415,6 +15432,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         }
                         coverPhoto = photoEntry.coverPhoto;
                         coverPhotoObject = photoEntry.coverPhotoParentObject;
+                    }
+                    if (sendAsRoundVideo && compressQuality == -2) {
+                        compressQuality = ROUND_VIDEO_MAX_SELECTOR_COMPRESSION;
                     }
                     if (sendPhotoType != SELECT_TYPE_NO_SELECT) {
                         processOpenVideo(currentPathObject, livePhotoVideoOffset, isMuted, start, end, compressQuality, livePhotoTimestampUs);
@@ -21567,6 +21587,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         return;
                     }
                     int clamped = Math.max(0, Math.min(compressionsCount - 1, progress));
+                    if (isCurrentMediaRoundVideoOrPending()) {
+                        clamped = clampCompressionForRoundVideo(clamped);
+                    }
                     if (clamped == selectedCompression) {
                         return;
                     }
@@ -21581,6 +21604,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
                 @Override
                 protected int getMaxValue() {
+                    if (isCurrentMediaRoundVideoOrPending()) {
+                        return getMaxRoundVideoCompression();
+                    }
                     return Math.max(0, compressionsCount - 1);
                 }
 
@@ -21610,8 +21636,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     int cx = sideSide + (lineSize + gapSize * 2 + circleSize) * a + circleSize / 2;
                     int diff = lineSize / 2 + circleSize / 2 + gapSize;
                     if (x > cx - diff && x < cx + diff) {
-                        if (selectedCompression != a) {
-                            selectedCompression = a;
+                        int compression = isCurrentMediaRoundVideoOrPending() ? clampCompressionForRoundVideo(a) : a;
+                        if (selectedCompression != compression) {
+                            selectedCompression = compression;
                             didChangedCompressionLevel(false);
                             invalidate();
                         }
@@ -21680,6 +21707,40 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         return roundVideoCropPending || isCurrentMediaRoundVideo();
     }
 
+    private int getMaxRoundVideoCompression() {
+        if (compressionsCount <= 0) {
+            return 0;
+        }
+        return Math.max(0, Math.min(ROUND_VIDEO_MAX_SELECTOR_COMPRESSION, compressionsCount - 1));
+    }
+
+    private int clampCompressionForRoundVideo(int compression) {
+        int maxCompression = getMaxRoundVideoCompression();
+        if (compression < 0 || compression > maxCompression) {
+            return maxCompression;
+        }
+        return compression;
+    }
+
+    private boolean ensureRoundVideoCompressionLevel(boolean forceRoundVideo) {
+        if ((!forceRoundVideo && !isCurrentMediaRoundVideoOrPending()) || compressionsCount <= 0) {
+            return false;
+        }
+        int clamped = clampCompressionForRoundVideo(selectedCompression);
+        if (clamped == selectedCompression) {
+            return false;
+        }
+        selectedCompression = clamped;
+        updateWidthHeightBitrateForCompression();
+        if (qualityChooseView != null) {
+            qualityChooseView.invalidate();
+        }
+        if (compressItem != null && !centerImageIsLivePhoto) {
+            compressItem.setState(videoConvertSupported && compressionsCount > 1, muteVideo, Math.min(resultWidth, resultHeight));
+        }
+        return true;
+    }
+
     private void cancelRoundVideoCropPending() {
         if (!roundVideoCropPending) {
             return;
@@ -21699,6 +21760,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             roundVideoCropPending = false;
             return;
         }
+        ensureRoundVideoCompressionLevel(true);
         setCurrentMediaRoundVideo(true);
         Object object = imagesArrLocals.get(currentIndex);
         if (object instanceof MediaController.MediaEditState) {
@@ -21736,6 +21798,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             state.sendAsRoundVideo = value;
             if (state.editedInfo != null) {
                 state.editedInfo.roundVideo = value;
+            }
+            if (value) {
+                ensureRoundVideoCompressionLevel(true);
             }
         }
     }
@@ -22295,6 +22360,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     if (videoConvertSupported) {
                         rotationValue = params[AnimatedFileDrawable.PARAM_NUM_ROTATION];
                         updateWidthHeightBitrateForCompression();
+                        ensureRoundVideoCompressionLevel(false);
 
                         if (selectedCompression > compressionsCount - 1) {
                             selectedCompression = compressionsCount - 1;

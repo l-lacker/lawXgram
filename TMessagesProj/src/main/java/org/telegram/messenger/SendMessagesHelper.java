@@ -130,8 +130,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     public static final int MEDIA_TYPE_STORY = 12;
     public static final int ROUND_VIDEO_MAX_SIZE = 640;
     public static final int ROUND_VIDEO_MAX_FRAMERATE = 60;
-    private static final int ROUND_VIDEO_MAX_SELECTOR_COMPRESSION = 3;
-    private static final int ROUND_VIDEO_MAX_SELECTOR_SIDE = 1920;
+    private static final int ROUND_VIDEO_MAX_SELECTOR_COMPRESSION = 2;
+    private static final int ROUND_VIDEO_MAX_SELECTOR_SIDE = 1280;
     private final HashMap<String, ArrayList<DelayedMessage>> delayedMessages = new HashMap<>();
     private final SparseArray<DelayedMessage> activeDelayedMessages = new SparseArray<>();
     private final SparseArray<MessageObject> unsentMessages = new SparseArray<>();
