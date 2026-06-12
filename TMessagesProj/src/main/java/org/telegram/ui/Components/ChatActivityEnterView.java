@@ -5379,8 +5379,14 @@ public class ChatActivityEnterView extends FrameLayout implements
                     info.ttl = photoEntry.ttl;
                     info.videoEditedInfo = videoEditedInfo;
                     info.sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
+                    info.roundVideoQualitySide = photoEntry.roundVideoQualitySide;
                     if (info.sendAsRoundVideo && info.videoEditedInfo != null) {
                         info.videoEditedInfo.roundVideo = true;
+                        if (info.videoEditedInfo.roundVideoQualitySide > 0) {
+                            info.roundVideoQualitySide = info.videoEditedInfo.roundVideoQualitySide;
+                        } else if (info.roundVideoQualitySide > 0) {
+                            info.videoEditedInfo.roundVideoQualitySide = info.roundVideoQualitySide;
+                        }
                     }
                     info.canDeleteAfter = true;
                     photos.add(info);

@@ -98,6 +98,19 @@ public class VideoCompressButton extends View {
         invalidate();
     }
 
+    public void setRoundState(boolean enabled, boolean muted, int side) {
+        this.disabled = !enabled || muted;
+        if (muted) {
+            textDrawable.setText("GIF");
+            sizeTextDrawable.setText("", true);
+        } else {
+            textDrawable.setText(side >= 640 ? "HD" : "SD");
+            sizeTextDrawable.setText(String.valueOf(side), TextUtils.isEmpty(sizeTextDrawable.getText()));
+        }
+        setClickable(!this.disabled);
+        invalidate();
+    }
+
     public void setPhotoState(boolean highQuality) {
         this.disabled = false;
         textDrawable.setText(highQuality ? "HD" : "SD");

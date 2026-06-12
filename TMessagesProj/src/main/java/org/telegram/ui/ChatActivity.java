@@ -12802,8 +12802,14 @@ public class ChatActivity extends BaseFragment implements
                                     info.ttl = photoEntry.ttl;
                                     info.videoEditedInfo = photoEntry.editedInfo;
                                     info.sendAsRoundVideo = photoEntry.sendAsRoundVideo;
+                                    info.roundVideoQualitySide = photoEntry.roundVideoQualitySide;
                                     if (info.sendAsRoundVideo && info.videoEditedInfo != null) {
                                         info.videoEditedInfo.roundVideo = true;
+                                        if (info.videoEditedInfo.roundVideoQualitySide > 0) {
+                                            info.roundVideoQualitySide = info.videoEditedInfo.roundVideoQualitySide;
+                                        } else if (info.roundVideoQualitySide > 0) {
+                                            info.videoEditedInfo.roundVideoQualitySide = info.roundVideoQualitySide;
+                                        }
                                     }
                                     info.canDeleteAfter = photoEntry.canDeleteAfter;
                                     info.updateStickersOrder = SendMessagesHelper.checkUpdateStickersOrder(photoEntry.caption);
@@ -14198,6 +14204,9 @@ public class ChatActivity extends BaseFragment implements
             }
             if (info.videoEditedInfo == null && !TextUtils.isEmpty(info.path)) {
                 info.videoEditedInfo = SendMessagesHelper.createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset, currentAccount);
+                if (info.videoEditedInfo != null && info.roundVideoQualitySide > 0) {
+                    info.videoEditedInfo.roundVideoQualitySide = info.roundVideoQualitySide;
+                }
             }
             if (TextUtils.isEmpty(info.path) && info.videoEditedInfo != null && !TextUtils.isEmpty(info.videoEditedInfo.originalPath)) {
                 info.path = info.videoEditedInfo.originalPath;
@@ -14210,6 +14219,9 @@ public class ChatActivity extends BaseFragment implements
                 continue;
             }
             info.videoEditedInfo.roundVideo = true;
+            if (info.videoEditedInfo.roundVideoQualitySide <= 0 && info.roundVideoQualitySide > 0) {
+                info.videoEditedInfo.roundVideoQualitySide = info.roundVideoQualitySide;
+            }
             SendMessagesHelper.prepareRoundVideoEditedInfo(info.videoEditedInfo, currentAccount);
             SendMessagesHelper.prepareSendingVideo(getAccountInstance(), info.path, info.videoEditedInfo, info.coverPath, info.coverPhoto, dialog_id, replyToMsg, getThreadMessage(), null, replyingQuote, info.entities, info.ttl, editingObject, notify, scheduleDate, scheduleRepeatPeriod, false, info.hasMediaSpoilers, info.caption, quickReplyShortcut, getQuickReplyId(), effectId, payStars, getSendMonoForumPeerId(), suggestionParams, invertMedia);
         }
@@ -20062,8 +20074,14 @@ public class ChatActivity extends BaseFragment implements
             MediaController.PhotoEntry entry = new MediaController.PhotoEntry(0, 0, 0, path, orientation.first, photoInfo.isVideo, 0, 0, 0).setOrientation(orientation);
             entry.sendAsRoundVideo = photoInfo.sendAsRoundVideo;
             entry.editedInfo = photoInfo.videoEditedInfo;
+            entry.roundVideoQualitySide = photoInfo.roundVideoQualitySide;
             if (entry.sendAsRoundVideo && entry.editedInfo != null) {
                 entry.editedInfo.roundVideo = true;
+                if (entry.editedInfo.roundVideoQualitySide > 0) {
+                    entry.roundVideoQualitySide = entry.editedInfo.roundVideoQualitySide;
+                } else if (entry.roundVideoQualitySide > 0) {
+                    entry.editedInfo.roundVideoQualitySide = entry.roundVideoQualitySide;
+                }
             }
             if (a == photoPathes.size() - 1 && caption != null) {
                 entry.caption = caption;
@@ -20134,6 +20152,7 @@ public class ChatActivity extends BaseFragment implements
         }
         entry.editedInfo = videoEditedInfo;
         entry.sendAsRoundVideo = videoEditedInfo.roundVideo;
+        entry.roundVideoQualitySide = videoEditedInfo.roundVideoQualitySide;
     }
 
     private void sendPhotosGroup(ArrayList<MediaController.PhotoEntry> entries, boolean notify, int scheduleDate, boolean forceDocument) {
@@ -20162,8 +20181,14 @@ public class ChatActivity extends BaseFragment implements
                 info.ttl = entry.ttl;
                 info.videoEditedInfo = entry.editedInfo;
                 info.sendAsRoundVideo = entry.sendAsRoundVideo;
+                info.roundVideoQualitySide = entry.roundVideoQualitySide;
                 if (info.sendAsRoundVideo && info.videoEditedInfo != null) {
                     info.videoEditedInfo.roundVideo = true;
+                    if (info.videoEditedInfo.roundVideoQualitySide > 0) {
+                        info.roundVideoQualitySide = info.videoEditedInfo.roundVideoQualitySide;
+                    } else if (info.roundVideoQualitySide > 0) {
+                        info.videoEditedInfo.roundVideoQualitySide = info.roundVideoQualitySide;
+                    }
                 }
                 info.canDeleteAfter = entry.canDeleteAfter;
                 info.hasMediaSpoilers = entry.hasSpoiler;
@@ -35769,11 +35794,18 @@ public class ChatActivity extends BaseFragment implements
 
         boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
         if (sendAsRoundVideo) {
+            int roundVideoQualitySide = videoEditedInfo != null && videoEditedInfo.roundVideoQualitySide > 0 ? videoEditedInfo.roundVideoQualitySide : photoEntry.roundVideoQualitySide;
             if (videoEditedInfo == null) {
                 videoEditedInfo = photoEntry.editedInfo;
             }
+            if (videoEditedInfo != null && videoEditedInfo.roundVideoQualitySide > 0) {
+                roundVideoQualitySide = videoEditedInfo.roundVideoQualitySide;
+            }
             if (videoEditedInfo == null && !TextUtils.isEmpty(photoEntry.path)) {
                 videoEditedInfo = SendMessagesHelper.createRoundVideoEditedInfo(photoEntry.path, photoEntry.livePhotoVideoOffset, currentAccount);
+                if (videoEditedInfo != null && roundVideoQualitySide > 0) {
+                    videoEditedInfo.roundVideoQualitySide = roundVideoQualitySide;
+                }
             }
             if (videoEditedInfo == null || TextUtils.isEmpty(photoEntry.path)) {
                 FileLog.e("unable to prepare round video conversion for " + photoEntry.path);
@@ -35783,9 +35815,13 @@ public class ChatActivity extends BaseFragment implements
                 return;
             }
             videoEditedInfo.roundVideo = true;
+            if (videoEditedInfo.roundVideoQualitySide <= 0 && roundVideoQualitySide > 0) {
+                videoEditedInfo.roundVideoQualitySide = roundVideoQualitySide;
+            }
             SendMessagesHelper.prepareRoundVideoEditedInfo(videoEditedInfo, currentAccount);
             photoEntry.editedInfo = videoEditedInfo;
             photoEntry.sendAsRoundVideo = true;
+            photoEntry.roundVideoQualitySide = videoEditedInfo.roundVideoQualitySide;
         }
 
         if (editingMessageObject != null && editingMessageObject.needResendWhenEdit() && !ChatObject.canManageMonoForum(currentAccount, editingMessageObject.getDialogId())) {

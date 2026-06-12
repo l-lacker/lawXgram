@@ -61,6 +61,7 @@ public class VideoEditedInfo {
     public long estimatedDuration;
     public boolean roundVideo;
     public boolean muted;
+    public int roundVideoQualitySide;
     public float volume = 1f;
     public long originalDuration;
     public TLRPC.InputFile file;
@@ -420,7 +421,7 @@ public class VideoEditedInfo {
 
     public String getString() {
         String filters;
-        if (avatarStartTime != -1 || filterState != null || paintPath != null || blurPath != null || mediaEntities != null && !mediaEntities.isEmpty() || cropState != null || fromCamera || roundVideoNoConvert) {
+        if (avatarStartTime != -1 || filterState != null || paintPath != null || blurPath != null || mediaEntities != null && !mediaEntities.isEmpty() || cropState != null || fromCamera || roundVideoNoConvert || roundVideoQualitySide > 0) {
             int len = 10;
             if (filterState != null) {
                 len += 160;
@@ -440,7 +441,7 @@ public class VideoEditedInfo {
                 blurPathBytes = null;
             }
             SerializedData serializedData = new SerializedData(len);
-            serializedData.writeInt32(12);
+            serializedData.writeInt32(13);
             serializedData.writeInt64(avatarStartTime);
             serializedData.writeInt32(originalBitrate);
             if (filterState != null) {
@@ -543,6 +544,7 @@ public class VideoEditedInfo {
             } else {
                 serializedData.writeInt32(TLRPC.TL_null.constructor);
             }
+            serializedData.writeInt32(roundVideoQualitySide);
             filters = Utilities.bytesToHex(serializedData.toByteArray());
             serializedData.cleanup();
         } else {
@@ -694,6 +696,9 @@ public class VideoEditedInfo {
                                     collageParts.add(part);
                                 }
                             }
+                        }
+                        if (version >= 13) {
+                            roundVideoQualitySide = serializedData.readInt32(false);
                         }
                         serializedData.cleanup();
                     }

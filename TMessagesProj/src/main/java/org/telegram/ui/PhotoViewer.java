@@ -342,6 +342,7 @@ import ru.llacker.lawxgram.forward.ForwardItem;
 import ru.llacker.lawxgram.helpers.LensHelper;
 import ru.llacker.lawxgram.helpers.MessageHelper;
 import ru.llacker.lawxgram.helpers.QrHelper;
+import ru.llacker.lawxgram.helpers.RoundVideoQualityHelper;
 import ru.llacker.lawxgram.streaming.MediaStreamingProvider;
 import ru.llacker.lawxgram.translator.Translator;
 import me.vkryl.android.animator.BoolAnimator;
@@ -963,7 +964,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private static final float ROUND_VIDEO_MAX_DURATION = 60000.0f;
     private static final int ROUND_VIDEO_MAX_SIZE = SendMessagesHelper.ROUND_VIDEO_MAX_SIZE;
     private static final int ROUND_VIDEO_MAX_FRAMERATE = SendMessagesHelper.ROUND_VIDEO_MAX_FRAMERATE;
-    private static final int ROUND_VIDEO_MAX_SELECTOR_COMPRESSION = 2;
+    private static final String ROUND_VIDEO_QUALITY_SIDE_PREF = "round_video_quality_side";
 
     private Runnable onUserLeaveHintListener = this::onUserLeaveHint;
 
@@ -6394,8 +6395,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         qualityPicker.doneButton.setTextColor(getThemedColor(Theme.key_chat_editMediaButton));
         containerView.addView(qualityPicker, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.BOTTOM | Gravity.LEFT));
         qualityPicker.cancelButton.setOnClickListener(view -> {
-            selectedCompression = previousCompression;
-            didChangedCompressionLevel(false);
+            if (isCurrentMediaRoundVideoOrPending()) {
+                selectedRoundVideoQualitySide = previousRoundVideoQualitySide;
+                applySelectedRoundVideoQualitySide(false);
+            } else {
+                selectedCompression = previousCompression;
+                didChangedCompressionLevel(false);
+            }
             showQualityView(false);
             requestVideoPreview(2);
         });
@@ -6411,19 +6417,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             requestVideoPreview(2);
         });
         qualityPicker.originalButton.setOnClickListener(view -> {
-            if (isCurrentMediaRoundVideoOrPending()) {
-                if (ensureRoundVideoCompressionLevel(true)) {
-                    updateVideoInfo();
-                    if (currentIndex >= 0 && currentIndex < imagesArrLocals.size()) {
-                        Object object = imagesArrLocals.get(currentIndex);
-                        if (object instanceof MediaController.MediaEditState state) {
-                            state.editedInfo = getCurrentVideoEditedInfo();
-                        }
-                    }
-                    requestVideoPreview(1);
-                }
-                return;
-            }
             if (selectedCompression != -2) {
                 selectedCompression = -2;
                 muteVideo = false;
@@ -7064,9 +7057,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 }
                 return;
             }
-            ensureRoundVideoCompressionLevel(true);
             roundVideoCropPending = true;
             roundVideoCropPreviousValue = false;
+            applySelectedRoundVideoQualitySide(false);
             updateRoundVideoButton();
             updateMuteButton();
             updateVideoInfo();
@@ -10187,6 +10180,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             if (isCurrentMediaRoundVideo() && !TextUtils.isEmpty(currentPathObject)) {
                 VideoEditedInfo videoEditedInfo = SendMessagesHelper.createRoundVideoEditedInfo(currentPathObject, currentPathVideoOffset, currentAccount);
                 if (videoEditedInfo != null) {
+                    selectedRoundVideoQualitySide = getClampedRoundVideoQualitySide(selectedRoundVideoQualitySide);
+                    videoEditedInfo.roundVideoQualitySide = selectedRoundVideoQualitySide;
                     videoEditedInfo.start = videoCutStart;
                     videoEditedInfo.end = videoCutEnd;
                     if (videoCutStart > 0) {
@@ -10207,7 +10202,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         videoEditedInfo.mediaEntities = editState.mediaEntities != null && !editState.mediaEntities.isEmpty() ? editState.mediaEntities : null;
                     }
                     videoEditedInfo.cropState = editState.cropState;
-                    SendMessagesHelper.prepareRoundVideoEditedInfo(videoEditedInfo, currentAccount);
+                    SendMessagesHelper.prepareRoundVideoEditedInfo(videoEditedInfo, currentAccount, selectedRoundVideoQualitySide);
                     videoEditedInfo.muted = muteVideo || sendPhotoType == SELECT_TYPE_AVATAR;
                     return videoEditedInfo;
                 }
@@ -10229,9 +10224,11 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         videoEditedInfo.estimatedSize = estimatedSize != 0 ? estimatedSize : 1;
         videoEditedInfo.estimatedDuration = estimatedDuration;
         boolean roundVideo = isCurrentMediaRoundVideo();
-        if (roundVideo && ensureRoundVideoCompressionLevel(true)) {
-            videoEditedInfo.compressQuality = selectedCompression;
+        if (roundVideo) {
+            selectedRoundVideoQualitySide = getClampedRoundVideoQualitySide(selectedRoundVideoQualitySide);
+            videoEditedInfo.compressQuality = -1;
             videoEditedInfo.bitrate = bitrate;
+            videoEditedInfo.roundVideoQualitySide = selectedRoundVideoQualitySide;
         }
         videoEditedInfo.framerate = roundVideo ? Math.min(videoFramerate, ROUND_VIDEO_MAX_FRAMERATE) : videoFramerate;
         videoEditedInfo.originalDuration = (long) (videoDuration * 1000);
@@ -15429,16 +15426,21 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                             end = photoEntry.editedInfo.end;
                             compressQuality = photoEntry.editedInfo.compressQuality;
                             coverPath = photoEntry.coverPath;
+                            if (photoEntry.editedInfo.roundVideoQualitySide > 0) {
+                                photoEntry.roundVideoQualitySide = photoEntry.editedInfo.roundVideoQualitySide;
+                            }
+                        }
+                        if (sendAsRoundVideo) {
+                            int side = photoEntry.roundVideoQualitySide > 0 ? photoEntry.roundVideoQualitySide : getSavedRoundVideoQualitySide();
+                            selectedRoundVideoQualitySide = RoundVideoQualityHelper.normalizePickerSide(side);
+                            photoEntry.roundVideoQualitySide = selectedRoundVideoQualitySide;
                         }
                         coverPhoto = photoEntry.coverPhoto;
                         coverPhotoObject = photoEntry.coverPhotoParentObject;
                     }
-                    if (sendAsRoundVideo && compressQuality == -2) {
-                        compressQuality = ROUND_VIDEO_MAX_SELECTOR_COMPRESSION;
-                    }
                     if (sendPhotoType != SELECT_TYPE_NO_SELECT) {
                         processOpenVideo(currentPathObject, livePhotoVideoOffset, isMuted, start, end, compressQuality, livePhotoTimestampUs);
-                        if (isDocumentsPicker || compressQuality == -2) {
+                        if (isDocumentsPicker || compressQuality == -2 && !sendAsRoundVideo) {
                             showVideoTimeline(false, animated);
                             videoAvatarTooltip.setVisibility(View.GONE);
                             cropItem.setVisibility(View.GONE);
@@ -21513,6 +21515,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private volatile int selectedCompression;
     private volatile int compressionsCount = -1;
     private int previousCompression;
+    private int selectedRoundVideoQualitySide = RoundVideoQualityHelper.PICKER_SIDE_SMALL;
+    private int previousRoundVideoQualitySide = RoundVideoQualityHelper.PICKER_SIDE_SMALL;
 
     private int rotationValue;
     private volatile int originalWidth;
@@ -21578,46 +21582,45 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             setAccessibilityDelegate(new IntSeekBarAccessibilityDelegate() {
                 @Override
                 protected int getProgress() {
-                    return selectedCompression;
+                    return getCurrentQualityIndex();
                 }
 
                 @Override
                 protected void setProgress(int progress) {
-                    if (compressionsCount <= 0) {
+                    int count = getCurrentQualityCount();
+                    if (count <= 0) {
                         return;
                     }
-                    int clamped = Math.max(0, Math.min(compressionsCount - 1, progress));
-                    if (isCurrentMediaRoundVideoOrPending()) {
-                        clamped = clampCompressionForRoundVideo(clamped);
-                    }
-                    if (clamped == selectedCompression) {
+                    int clamped = Math.max(0, Math.min(count - 1, progress));
+                    if (clamped == getCurrentQualityIndex()) {
                         return;
                     }
-                    startMovingQuality = selectedCompression;
-                    selectedCompression = clamped;
-                    didChangedCompressionLevel(false);
+                    startMovingQuality = getCurrentQualityIndex();
+                    setCurrentQualityIndex(clamped, false);
                     invalidate();
-                    if (selectedCompression != startMovingQuality) {
+                    if (getCurrentQualityIndex() != startMovingQuality) {
                         requestVideoPreview(1);
                     }
                 }
 
                 @Override
                 protected int getMaxValue() {
-                    if (isCurrentMediaRoundVideoOrPending()) {
-                        return getMaxRoundVideoCompression();
-                    }
-                    return Math.max(0, compressionsCount - 1);
+                    return Math.max(0, getCurrentQualityCount() - 1);
                 }
 
                 @Override
                 protected CharSequence getContentDescription(View host) {
                     final StringBuilder sb = new StringBuilder();
                     sb.append(getString("AccDescrVideoQuality", R.string.AccDescrVideoQuality));
-                    if (compressionsCount > 0) {
-                        sb.append(", ").append(selectedCompression + 1).append(" / ").append(compressionsCount);
+                    int count = getCurrentQualityCount();
+                    if (count > 0) {
+                        sb.append(", ").append(getCurrentQualityIndex() + 1).append(" / ").append(count);
                     }
-                    sb.append(", ").append(lowQualityDescription).append(" – ").append(hightQualityDescription);
+                    if (isCurrentMediaRoundVideoOrPending()) {
+                        sb.append(", ").append(getRoundVideoQualityLabel(getCurrentQualityIndex()));
+                    } else {
+                        sb.append(", ").append(lowQualityDescription).append(" – ").append(hightQualityDescription);
+                    }
                     return sb.toString();
                 }
             });
@@ -21627,19 +21630,18 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         public boolean onTouchEvent(MotionEvent event) {
             float x = event.getX();
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                startMovingQuality = selectedCompression;
+                startMovingQuality = getCurrentQualityIndex();
                 getParent().requestDisallowInterceptTouchEvent(true);
             }
             if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE) {
 
-                for (int a = 0; a < compressionsCount; a++) {
+                int count = getCurrentQualityCount();
+                for (int a = 0; a < count; a++) {
                     int cx = sideSide + (lineSize + gapSize * 2 + circleSize) * a + circleSize / 2;
                     int diff = lineSize / 2 + circleSize / 2 + gapSize;
                     if (x > cx - diff && x < cx + diff) {
-                        int compression = isCurrentMediaRoundVideoOrPending() ? clampCompressionForRoundVideo(a) : a;
-                        if (selectedCompression != compression) {
-                            selectedCompression = compression;
-                            didChangedCompressionLevel(false);
+                        if (getCurrentQualityIndex() != a) {
+                            setCurrentQualityIndex(a, false);
                             invalidate();
                         }
                         break;
@@ -21647,7 +21649,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 }
 
             } else if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
-                if (selectedCompression != startMovingQuality) {
+                if (getCurrentQualityIndex() != startMovingQuality) {
                     requestVideoPreview(1);
                 }
                 moving = false;
@@ -21665,33 +21667,47 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
         @Override
         protected void onDraw(Canvas canvas) {
-            if (compressionsCount != 1) {
-                lineSize = (getMeasuredWidth() - circleSize * compressionsCount - gapSize * (compressionsCount * 2 - 2) - sideSide * 2) / (compressionsCount - 1);
+            int count = getCurrentQualityCount();
+            int selectedIndex = getCurrentQualityIndex();
+            if (count <= 0) {
+                return;
+            }
+            if (count != 1) {
+                lineSize = (getMeasuredWidth() - circleSize * count - gapSize * (count * 2 - 2) - sideSide * 2) / (count - 1);
             } else {
-                lineSize = (getMeasuredWidth() - circleSize * compressionsCount - gapSize * 2 - sideSide * 2);
+                lineSize = (getMeasuredWidth() - circleSize * count - gapSize * 2 - sideSide * 2);
             }
             int cy = getMeasuredHeight() / 2 + dp(6);
-            for (int a = 0; a < compressionsCount; a++) {
+            for (int a = 0; a < count; a++) {
                 int cx = sideSide + (lineSize + gapSize * 2 + circleSize) * a + circleSize / 2;
-                if (a <= selectedCompression) {
+                if (a <= selectedIndex) {
                     paint.setColor(0xff53aeef);
                 } else {
                     paint.setColor(0x66ffffff);
                 }
 
-                canvas.drawCircle(cx, cy, a == selectedCompression ? dp(6) : circleSize / 2, paint);
+                canvas.drawCircle(cx, cy, a == selectedIndex ? dp(6) : circleSize / 2, paint);
 
                 if (a != 0) {
                     int x = cx - circleSize / 2 - gapSize - lineSize;
-                    float startPadding = a == (selectedCompression + 1) ? dpf2(2) : 0;
-                    float endPadding = a == selectedCompression ? dpf2(2) : 0;
+                    float startPadding = a == (selectedIndex + 1) ? dpf2(2) : 0;
+                    float endPadding = a == selectedIndex ? dpf2(2) : 0;
                     canvas.drawRect(x + startPadding, cy - dp(1), x + lineSize - endPadding, cy + dp(2), paint);
                 }
             }
 
-            canvas.drawText(lowQualityDescription, sideSide, cy - dp(16), textPaint);
-            float width = textPaint.measureText(hightQualityDescription);
-            canvas.drawText(hightQualityDescription, getMeasuredWidth() - sideSide - width, cy - dp(16), textPaint);
+            if (isCurrentMediaRoundVideoOrPending()) {
+                for (int a = 0; a < count; a++) {
+                    String label = getRoundVideoQualityLabel(a);
+                    float width = textPaint.measureText(label);
+                    int cx = sideSide + (lineSize + gapSize * 2 + circleSize) * a + circleSize / 2;
+                    canvas.drawText(label, cx - width / 2.0f, cy - dp(16), textPaint);
+                }
+            } else {
+                canvas.drawText(lowQualityDescription, sideSide, cy - dp(16), textPaint);
+                float width = textPaint.measureText(hightQualityDescription);
+                canvas.drawText(hightQualityDescription, getMeasuredWidth() - sideSide - width, cy - dp(16), textPaint);
+            }
         }
     }
 
@@ -21707,38 +21723,118 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         return roundVideoCropPending || isCurrentMediaRoundVideo();
     }
 
-    private int getMaxRoundVideoCompression() {
+    private int getCurrentQualityCount() {
+        if (isCurrentMediaRoundVideoOrPending()) {
+            return RoundVideoQualityHelper.getAvailablePickerSideCount(originalWidth, originalHeight);
+        }
+        return Math.max(0, compressionsCount);
+    }
+
+    private int getCurrentQualityIndex() {
+        if (isCurrentMediaRoundVideoOrPending()) {
+            int side = getClampedRoundVideoQualitySide(selectedRoundVideoQualitySide);
+            return Math.min(RoundVideoQualityHelper.getPickerIndexForSide(side), Math.max(0, getCurrentQualityCount() - 1));
+        }
         if (compressionsCount <= 0) {
             return 0;
         }
-        return Math.max(0, Math.min(ROUND_VIDEO_MAX_SELECTOR_COMPRESSION, compressionsCount - 1));
+        return selectedCompression;
     }
 
-    private int clampCompressionForRoundVideo(int compression) {
-        int maxCompression = getMaxRoundVideoCompression();
-        if (compression < 0 || compression > maxCompression) {
-            return maxCompression;
+    private void setCurrentQualityIndex(int index, boolean request) {
+        if (isCurrentMediaRoundVideoOrPending()) {
+            selectedRoundVideoQualitySide = RoundVideoQualityHelper.getPickerSideAt(index);
+            applySelectedRoundVideoQualitySide(request);
+        } else {
+            selectedCompression = index;
+            didChangedCompressionLevel(request);
         }
-        return compression;
     }
 
-    private boolean ensureRoundVideoCompressionLevel(boolean forceRoundVideo) {
-        if ((!forceRoundVideo && !isCurrentMediaRoundVideoOrPending()) || compressionsCount <= 0) {
-            return false;
+    private String getRoundVideoQualityLabel(int index) {
+        int side = RoundVideoQualityHelper.getPickerSideAt(index);
+        return side >= RoundVideoQualityHelper.PICKER_SIDE_LARGE ? "640" : String.valueOf(side);
+    }
+
+    private boolean canChangeRoundVideoQuality() {
+        return videoConvertSupported && getCurrentQualityCount() > 1;
+    }
+
+    private MediaController.MediaEditState getCurrentMediaEditState() {
+        if (currentIndex < 0 || currentIndex >= imagesArrLocals.size()) {
+            return null;
         }
-        int clamped = clampCompressionForRoundVideo(selectedCompression);
-        if (clamped == selectedCompression) {
-            return false;
+        Object object = imagesArrLocals.get(currentIndex);
+        return object instanceof MediaController.MediaEditState ? (MediaController.MediaEditState) object : null;
+    }
+
+    private int getSavedRoundVideoQualitySide() {
+        SharedPreferences preferences = MessagesController.getGlobalMainSettings();
+        return RoundVideoQualityHelper.normalizePickerSide(preferences.getInt(ROUND_VIDEO_QUALITY_SIDE_PREF, RoundVideoQualityHelper.PICKER_SIDE_SMALL));
+    }
+
+    private int getClampedRoundVideoQualitySide(int side) {
+        return RoundVideoQualityHelper.clampPickerSideForSource(side > 0 ? side : getSavedRoundVideoQualitySide(), originalWidth, originalHeight);
+    }
+
+    private void loadRoundVideoQualitySideFromState() {
+        int side = 0;
+        MediaController.MediaEditState state = getCurrentMediaEditState();
+        if (state != null) {
+            side = state.roundVideoQualitySide;
+            if (side <= 0 && state.editedInfo != null) {
+                side = state.editedInfo.roundVideoQualitySide;
+            }
         }
-        selectedCompression = clamped;
-        updateWidthHeightBitrateForCompression();
+        if (side <= 0) {
+            side = getSavedRoundVideoQualitySide();
+        }
+        selectedRoundVideoQualitySide = getClampedRoundVideoQualitySide(side);
+        if (state != null) {
+            state.roundVideoQualitySide = selectedRoundVideoQualitySide;
+        }
+    }
+
+    private void syncRoundVideoQualitySideFromState() {
+        loadRoundVideoQualitySideFromState();
+        applySelectedRoundVideoQualitySide(false);
+    }
+
+    private void applySelectedRoundVideoQualitySide(boolean request) {
+        selectedRoundVideoQualitySide = getClampedRoundVideoQualitySide(selectedRoundVideoQualitySide);
+        MediaController.MediaEditState state = getCurrentMediaEditState();
+        if (state != null) {
+            state.roundVideoQualitySide = selectedRoundVideoQualitySide;
+            if (state.editedInfo != null) {
+                state.editedInfo.roundVideoQualitySide = selectedRoundVideoQualitySide;
+            }
+        }
+        MessagesController.getGlobalMainSettings().edit().putInt(ROUND_VIDEO_QUALITY_SIDE_PREF, selectedRoundVideoQualitySide).apply();
+        updateWidthHeightBitrateForRoundVideoQuality();
+        updateVideoInfo();
         if (qualityChooseView != null) {
             qualityChooseView.invalidate();
         }
-        if (compressItem != null && !centerImageIsLivePhoto) {
-            compressItem.setState(videoConvertSupported && compressionsCount > 1, muteVideo, Math.min(resultWidth, resultHeight));
+        if (request) {
+            requestVideoPreview(1);
         }
-        return true;
+    }
+
+    private void updateWidthHeightBitrateForRoundVideoQuality() {
+        if (!isCurrentMediaRoundVideoOrPending() || originalWidth <= 0 || originalHeight <= 0) {
+            return;
+        }
+        int side = RoundVideoQualityHelper.getPickerOutputSide(selectedRoundVideoQualitySide);
+        resultWidth = side;
+        resultHeight = side;
+        long duration = estimatedDuration > 0 ? estimatedDuration : (long) (videoDuration * 1000);
+        bitrate = RoundVideoQualityHelper.calculateTargetVideoBitrate(currentAccount, originalWidth, originalHeight, originalBitrate > 0 ? originalBitrate : bitrate, side, duration);
+        if (videoDuration > 0) {
+            videoFramesSize = (long) (bitrate / 8.0f * videoDuration / 1000.0f);
+        }
+        if (compressItem != null && !centerImageIsLivePhoto) {
+            compressItem.setRoundState(canChangeRoundVideoQuality(), muteVideo, selectedRoundVideoQualitySide >= RoundVideoQualityHelper.PICKER_SIDE_LARGE ? 640 : selectedRoundVideoQualitySide);
+        }
     }
 
     private void cancelRoundVideoCropPending() {
@@ -21760,11 +21856,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             roundVideoCropPending = false;
             return;
         }
-        ensureRoundVideoCompressionLevel(true);
+        applySelectedRoundVideoQualitySide(false);
         setCurrentMediaRoundVideo(true);
         Object object = imagesArrLocals.get(currentIndex);
         if (object instanceof MediaController.MediaEditState) {
-            ((MediaController.MediaEditState) object).editedInfo = getCurrentVideoEditedInfo();
+            MediaController.MediaEditState state = (MediaController.MediaEditState) object;
+            state.roundVideoQualitySide = selectedRoundVideoQualitySide;
+            state.editedInfo = getCurrentVideoEditedInfo();
         }
         roundVideoCropPending = false;
         updateRoundVideoButton();
@@ -21800,7 +21898,15 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 state.editedInfo.roundVideo = value;
             }
             if (value) {
-                ensureRoundVideoCompressionLevel(true);
+                state.roundVideoQualitySide = selectedRoundVideoQualitySide = getClampedRoundVideoQualitySide(selectedRoundVideoQualitySide);
+                if (state.editedInfo != null) {
+                    state.editedInfo.roundVideoQualitySide = selectedRoundVideoQualitySide;
+                }
+            } else {
+                state.roundVideoQualitySide = 0;
+                if (state.editedInfo != null) {
+                    state.editedInfo.roundVideoQualitySide = 0;
+                }
             }
         }
     }
@@ -21876,6 +21982,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     }
 
     private void didChangedCompressionLevel(boolean request) {
+        if (isCurrentMediaRoundVideoOrPending()) {
+            applySelectedRoundVideoQualitySide(request);
+            return;
+        }
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt(String.format("compress_video_%d", compressionsCount), selectedCompression);
@@ -21951,7 +22061,11 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             qualityPicker.originalButton.setTextColor(0xffffffff);
         }
         if (!centerImageIsLivePhoto) {
-            compressItem.setState(videoConvertSupported && compressionsCount > 1, muteVideo, Math.min(resultWidth, resultHeight));
+            if (isCurrentMediaRoundVideoOrPending()) {
+                compressItem.setRoundState(canChangeRoundVideoQuality(), muteVideo, selectedRoundVideoQualitySide >= RoundVideoQualityHelper.PICKER_SIDE_LARGE ? 640 : selectedRoundVideoQualitySide);
+            } else {
+                compressItem.setState(videoConvertSupported && compressionsCount > 1, muteVideo, Math.min(resultWidth, resultHeight));
+            }
         }
         itemsLayout.requestLayout();
 
@@ -22062,6 +22176,12 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 videoPreviewMessageObject.videoEditedInfo.resultHeight = resultHeight;
                 videoPreviewMessageObject.videoEditedInfo.needUpdateProgress = true;
                 videoPreviewMessageObject.videoEditedInfo.originalDuration = (long) (videoDuration * 1000);
+                if (isCurrentMediaRoundVideoOrPending()) {
+                    videoPreviewMessageObject.videoEditedInfo.roundVideo = true;
+                    videoPreviewMessageObject.videoEditedInfo.roundVideoQualitySide = selectedRoundVideoQualitySide;
+                    videoPreviewMessageObject.videoEditedInfo.cropState = editState.cropState;
+                    SendMessagesHelper.prepareRoundVideoEditedInfo(videoPreviewMessageObject.videoEditedInfo, currentAccount, selectedRoundVideoQualitySide);
+                }
 
                 if (!MediaController.getInstance().scheduleVideoConvert(videoPreviewMessageObject, true, true, true)) {
                     tryStartRequestPreviewOnFinish = true;
@@ -22184,6 +22304,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
         if (show) {
             previousCompression = selectedCompression;
+            previousRoundVideoQualitySide = selectedRoundVideoQualitySide;
+            if (isCurrentMediaRoundVideoOrPending()) {
+                syncRoundVideoQualitySideFromState();
+            }
+            if (qualityPicker != null && qualityPicker.originalButton != null) {
+                qualityPicker.originalButton.setVisibility(isCurrentMediaRoundVideoOrPending() ? View.GONE : View.VISIBLE);
+            }
         }
         if (qualityChooseViewAnimation != null) {
             qualityChooseViewAnimation.cancel();
@@ -22360,14 +22487,21 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     if (videoConvertSupported) {
                         rotationValue = params[AnimatedFileDrawable.PARAM_NUM_ROTATION];
                         updateWidthHeightBitrateForCompression();
-                        ensureRoundVideoCompressionLevel(false);
+                        if (isCurrentMediaRoundVideoOrPending()) {
+                            loadRoundVideoQualitySideFromState();
+                            updateWidthHeightBitrateForRoundVideoQuality();
+                        }
 
                         if (selectedCompression > compressionsCount - 1) {
                             selectedCompression = compressionsCount - 1;
                         }
 
                         if (!centerImageIsLivePhoto) {
-                            compressItem.setState(compressionsCount > 1, muteVideo, Math.min(resultWidth, resultHeight));
+                            if (isCurrentMediaRoundVideoOrPending()) {
+                                compressItem.setRoundState(canChangeRoundVideoQuality(), muteVideo, selectedRoundVideoQualitySide >= RoundVideoQualityHelper.PICKER_SIDE_LARGE ? 640 : selectedRoundVideoQualitySide);
+                            } else {
+                                compressItem.setState(compressionsCount > 1, muteVideo, Math.min(resultWidth, resultHeight));
+                            }
                         }
                         if (BuildVars.LOGS_ENABLED) {
                             FileLog.d("compressionsCount = " + compressionsCount + " w = " + originalWidth + " h = " + originalHeight + " r = " + rotationValue);

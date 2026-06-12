@@ -526,6 +526,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         public boolean isPainted;
         public boolean isCropped;
         public boolean sendAsRoundVideo;
+        public int roundVideoQualitySide;
         public int ttl;
         public long effectId;
         @Nullable
@@ -557,6 +558,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             isPainted = false;
             isCropped = false;
             sendAsRoundVideo = false;
+            roundVideoQualitySide = 0;
             ttl = 0;
             mediaEntities = null;
             editedInfo = null;
@@ -577,6 +579,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             isPainted = false;
             isCropped = false;
             sendAsRoundVideo = false;
+            roundVideoQualitySide = 0;
             mediaEntities = null;
             editedInfo = null;
             entities = null;
@@ -607,6 +610,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             isPainted = state.isPainted;
             isCropped = state.isCropped;
             sendAsRoundVideo = state.sendAsRoundVideo;
+            roundVideoQualitySide = state.roundVideoQualitySide;
             livePhotoVideoOffset = state.livePhotoVideoOffset;
             ttl = state.ttl;
 
@@ -6773,7 +6777,9 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             int account = messageObject.currentAccount >= 0 ? messageObject.currentAccount : UserConfig.selectedAccount;
             int transformWidth = info.cropState != null && info.cropState.transformWidth > 0 ? info.cropState.transformWidth : resultWidth;
             int transformHeight = info.cropState != null && info.cropState.transformHeight > 0 ? info.cropState.transformHeight : resultHeight;
-            int outputSide = RoundVideoQualityHelper.chooseOutputSide(account, transformWidth, transformHeight);
+            int outputSide = info.roundVideoQualitySide > 0
+                    ? RoundVideoQualityHelper.getPickerOutputSide(info.roundVideoQualitySide)
+                    : RoundVideoQualityHelper.chooseOutputSide(account, transformWidth, transformHeight);
             RoundVideoQualityHelper.applyQuality(info, account, outputSide);
             resultWidth = info.resultWidth;
             resultHeight = info.resultHeight;

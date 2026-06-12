@@ -20,6 +20,14 @@ public final class RoundVideoQualityHelper {
     public static final int MAX_BITRATE_MBPS = HIGH_BITRATE_MBPS;
     public static final long TELEGRAM_MAX_SIZE_BYTES = 10L * 1024L * 1024L;
     public static final long MAX_RECORDING_DURATION_MS = 60_000L;
+    public static final int PICKER_SIDE_SMALL = 360;
+    public static final int PICKER_SIDE_MEDIUM = 480;
+    public static final int PICKER_SIDE_LARGE = 639;
+    public static final int[] PICKER_SIDES = new int[] {
+            PICKER_SIDE_SMALL,
+            PICKER_SIDE_MEDIUM,
+            PICKER_SIDE_LARGE
+    };
 
     private static final float MUX_OVERHEAD = 1.05f;
     private static final int SIDE_STEP = 16;
@@ -80,13 +88,61 @@ public final class RoundVideoQualityHelper {
 
     public static int encoderSafeSide(int side) {
         side = Math.max(2, Math.min(TELEGRAM_MAX_SIDE, side));
-        if (side > SIDE_STEP) {
+        if (side > PICKER_SIDE_MEDIUM) {
             side -= side % SIDE_STEP;
         }
         if ((side & 1) != 0) {
             side--;
         }
         return Math.max(2, side);
+    }
+
+    public static int normalizePickerSide(int side) {
+        if (side >= PICKER_SIDE_LARGE) {
+            return PICKER_SIDE_LARGE;
+        } else if (side >= PICKER_SIDE_MEDIUM) {
+            return PICKER_SIDE_MEDIUM;
+        }
+        return PICKER_SIDE_SMALL;
+    }
+
+    public static int getPickerSideAt(int index) {
+        if (index < 0) {
+            return PICKER_SIDES[0];
+        } else if (index >= PICKER_SIDES.length) {
+            return PICKER_SIDES[PICKER_SIDES.length - 1];
+        }
+        return PICKER_SIDES[index];
+    }
+
+    public static int getPickerIndexForSide(int side) {
+        side = normalizePickerSide(side);
+        for (int i = 0; i < PICKER_SIDES.length; i++) {
+            if (PICKER_SIDES[i] == side) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    public static int getAvailablePickerSideCount(int width, int height) {
+        int maxSide = Math.max(width, height);
+        if (maxSide >= PICKER_SIDE_LARGE) {
+            return 3;
+        } else if (maxSide >= PICKER_SIDE_MEDIUM) {
+            return 2;
+        }
+        return 1;
+    }
+
+    public static int clampPickerSideForSource(int side, int width, int height) {
+        int index = getPickerIndexForSide(side);
+        int maxIndex = Math.max(0, getAvailablePickerSideCount(width, height) - 1);
+        return getPickerSideAt(Math.min(index, maxIndex));
+    }
+
+    public static int getPickerOutputSide(int side) {
+        return encoderSafeSide(normalizePickerSide(side));
     }
 
     public static int chooseOutputSide(int account, int transformedWidth, int transformedHeight) {
