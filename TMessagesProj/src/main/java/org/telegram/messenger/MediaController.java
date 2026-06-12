@@ -6771,8 +6771,13 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
 
         if (info.roundVideo) {
             int account = messageObject.currentAccount >= 0 ? messageObject.currentAccount : UserConfig.selectedAccount;
+            int transformWidth = info.cropState != null && info.cropState.transformWidth > 0 ? info.cropState.transformWidth : resultWidth;
+            int transformHeight = info.cropState != null && info.cropState.transformHeight > 0 ? info.cropState.transformHeight : resultHeight;
+            int outputSide = RoundVideoQualityHelper.chooseOutputSide(account, transformWidth, transformHeight);
+            RoundVideoQualityHelper.applyQuality(info, account, outputSide);
+            resultWidth = info.resultWidth;
+            resultHeight = info.resultHeight;
             long qualityDuration = RoundVideoQualityHelper.getDurationMs(info);
-            int outputSide = info.cropState != null ? Math.min(info.cropState.transformWidth, info.cropState.transformHeight) : Math.min(resultWidth, resultHeight);
             framerate = RoundVideoQualityHelper.chooseFps(framerate);
             bitrate = RoundVideoQualityHelper.calculateTargetVideoBitrate(account, originalWidth, originalHeight, originalBitrate > 0 ? originalBitrate : bitrate, Math.max(2, outputSide), qualityDuration);
             info.framerate = framerate;
@@ -6857,11 +6862,65 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("time=" + (System.currentTimeMillis() - time) + " canceled=" + canceled);
         }
+        if (!error && !canceled && info.roundVideo && !isValidRoundVideoOutput(cacheFile)) {
+            FileLog.e("round video conversion produced invalid output " + cacheFile.getAbsolutePath());
+            error = true;
+        }
 
         preferences.edit().putBoolean("isPreviousOk", true).apply();
         didWriteData(convertMessage, cacheFile, true, videoConvertor.getLastFrameTimestamp(), cacheFile.length(), error || canceled, 1f);
 
         return true;
+    }
+
+    private static boolean isValidRoundVideoOutput(File file) {
+        if (file == null || !file.exists() || file.length() <= 0) {
+            return false;
+        }
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(file.getAbsolutePath());
+            int width = Utilities.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+            int height = Utilities.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+            long duration = Utilities.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+            if (width <= 0 || width != height || width > RoundVideoQualityHelper.TELEGRAM_MAX_SIDE || duration <= 0 || duration > RoundVideoQualityHelper.MAX_RECORDING_DURATION_MS) {
+                return false;
+            }
+            MediaExtractor extractor = new MediaExtractor();
+            try {
+                extractor.setDataSource(file.getAbsolutePath());
+                int videoIndex = findTrack(extractor, false);
+                if (videoIndex < 0) {
+                    return false;
+                }
+                MediaFormat videoFormat = extractor.getTrackFormat(videoIndex);
+                String mime = videoFormat.getString(MediaFormat.KEY_MIME);
+                if (!VIDEO_MIME_TYPE.equals(mime)) {
+                    return false;
+                }
+                int frames = 0;
+                extractor.selectTrack(videoIndex);
+                while (extractor.getSampleTrackIndex() == videoIndex) {
+                    frames++;
+                    if (!extractor.advance()) {
+                        break;
+                    }
+                }
+                double averageFps = frames * 1000.0 / duration;
+                return frames > 0 && averageFps <= RoundVideoQualityHelper.TELEGRAM_MAX_FPS + 1.0;
+            } finally {
+                extractor.release();
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
+        } finally {
+            try {
+                retriever.release();
+            } catch (Throwable throwable) {
+                FileLog.e(throwable);
+            }
+        }
+        return false;
     }
 
     public static int getVideoBitrate(String path) {

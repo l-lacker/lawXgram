@@ -90,11 +90,7 @@ public final class RoundVideoQualityHelper {
     }
 
     public static int chooseOutputSide(int account, int transformedWidth, int transformedHeight) {
-        int sourceSide = Math.min(transformedWidth, transformedHeight);
-        if (sourceSide <= 0) {
-            sourceSide = getConfiguredSide(account);
-        }
-        return encoderSafeSide(Math.min(sourceSide, getConfiguredSide(account)));
+        return getConfiguredSide(account);
     }
 
     public static int chooseFps(int sourceFps) {
