@@ -216,14 +216,6 @@
     <string name="MarkdownParseLinks">Analizuj linki</string>
     <string name="MarkdownAbout">Edytuj tekst w wiadomościach używając markdown: ^1**pogrubienie**^1, ^2__kursywa__^2, ^3~~przekreślenie~~^3, ^4`stała szerokość`^4, ^5||spoiler||^5, ^6tekst^7url^8.</string>
     <string name="MarkdownAbout2">Edytuj tekst w wiadomościach używając markdown: ^1**pogrubienie**^1, ^2__kursywa__^2, ^3~~przekreślenie~~^3, ^4`stała szerokość`^4, ^5||spoiler||^5.</string>
-    <string name="AppIconOldSchool">Stara szkoła</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Tęcza</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Przestrzeń</string>
-    <string name="AppIconCloud">Chmura</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Materiał</string>
     <string name="RecentChats">Ostatnie czaty</string>
     <string name="ClearRecentChats">Wyczyść ostatnie czaty</string>
     <string name="ClearRecentChatAlert">Czy chcesz wyczyścić swoje ostatnie czaty?</string>

@@ -219,14 +219,6 @@
     <string name="MarkdownParseLinks">การแยกวิเคราะห์ลิงก์</string>
     <string name="MarkdownAbout">แก้ไขข้อความในข้อความโดยใช้มาร์กดาวน์: ^1**ตัวหนา**^1, ^2__ตัวเอียง__^2, ^3~~ขีดฆ่า~~^3, ^4`โมโนสเปซ`^4, ^5||สปอยล์||^5, ^6ข้อความ^7ยูอาร์แอล^8.</string>
     <string name="MarkdownAbout2">แก้ไขข้อความในข้อความโดยใช้มาร์กดาวน์: ^1**ตัวหนา**^1, ^2__ตัวเอียง__^2, ^3~~ขีดฆ่า~~^3, ^4`โมโนสเปซ`^4, ^5||สปอยล์||^5.</string>
-    <string name="AppIconOldSchool">โรงเรียนเก่า</string>
-    <string name="AppIconMerio">เมริโอ</string>
-    <string name="AppIconRainbow">รุ้ง</string>
-    <string name="AppIconMusheen">มูชิน</string>
-    <string name="AppIconSpace">อวกาศ</string>
-    <string name="AppIconCloud">เมฆ</string>
-    <string name="AppIconNeon">นีออน</string>
-    <string name="AppIconMaterial">วัสดุ</string>
     <string name="RecentChats">การสนทนาล่าสุด</string>
     <string name="ClearRecentChats">ล้างการแชทล่าสุด</string>
     <string name="ClearRecentChatAlert">คุณต้องการล้างการแชทล่าสุดของคุณใช่ไหม?</string>

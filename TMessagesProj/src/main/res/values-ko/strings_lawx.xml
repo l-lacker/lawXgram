@@ -215,14 +215,6 @@
     <string name="MarkdownParseLinks">링크 파싱</string>
     <string name="MarkdownAbout">마크다운을 사용하여 메시지의 텍스트 편집: ^1**굵게**^1,^2__기울기__^2,^3~~중간선~~^3,^4`모노스페이스`^4,^5||스포일러||^5,^6텍스트^7url^8.</string>
     <string name="MarkdownAbout2">마크다운을 사용하여 메시지의 텍스트 편집: ^1**굵게**^1,^2__기울기__^2,^3~~중간선~~^3,^4`모노스페이스`^4,^5||스포일러||^5.</string>
-    <string name="AppIconOldSchool">옛날 학교</string>
-    <string name="AppIconMerio">메리오</string>
-    <string name="AppIconRainbow">무지개</string>
-    <string name="AppIconMusheen">무신</string>
-    <string name="AppIconSpace">스페이스</string>
-    <string name="AppIconCloud">클라우드</string>
-    <string name="AppIconNeon">네온</string>
-    <string name="AppIconMaterial">재료</string>
     <string name="RecentChats">최근 대화</string>
     <string name="ClearRecentChats">최근 대화 삭제</string>
     <string name="ClearRecentChatAlert">최근 대화를 삭제 하시겠습니까?</string>

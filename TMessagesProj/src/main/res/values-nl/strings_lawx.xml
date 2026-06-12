@@ -171,14 +171,6 @@
     <string name="MarkdownParseLinks">Koppelingen verwerken</string>
     <string name="MarkdownAbout">Bewerk tekst in berichten met behulp van markdown: ^1**vet**^1, ^2__cursief__^2, ^3~~doorhalen~~^3, ^4`monospace`^4, ^5||spoiler||^5, ^6tekst^7url^8.</string>
     <string name="MarkdownAbout2">Bewerk tekst in berichten met behulp van markdown: ^1**vet**^1, ^2__cursief__^2, ^3~~doorhalen~~^3, ^4`monospace`^4, ^5||spoiler||^5.</string>
-    <string name="AppIconOldSchool">Old school</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Regenboog</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Ruimte</string>
-    <string name="AppIconCloud">Wolk</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">Recente chats</string>
     <string name="ClearRecentChats">Recente chats wissen</string>
     <string name="ClearRecentChatAlert">Wil je je recente chats wissen?</string>

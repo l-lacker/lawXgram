@@ -212,14 +212,6 @@
     <string name="MarkdownParseLinks">पार्स लिंक्स</string>
     <string name="MarkdownAbout">मार्कडाउन का उपयोग करके संदेशों में टेक्स्ट संपादित करें: ^1**bold**^1, ^2__italic__^2, ^3~~strikethrough~~^3, ^4`monospace`^4, ^5||spoiler||^5, ^6text^7url^8</string>
     <string name="MarkdownAbout2">मार्कडाउन का उपयोग करके संदेशों में टेक्स्ट संपादित करें: ^1**bold**^1, ^2__italic__^2, ^3~~strikethrough~~^3, ^4`monospace`^4, ^5||spoiler||^5</string>
-    <string name="AppIconOldSchool">पुराना विद्यालय</string>
-    <string name="AppIconMerio">मेरियो</string>
-    <string name="AppIconRainbow">रेनबो</string>
-    <string name="AppIconMusheen">मशीन</string>
-    <string name="AppIconSpace">अंतरिक्ष</string>
-    <string name="AppIconCloud">बादल</string>
-    <string name="AppIconNeon">नियॉन</string>
-    <string name="AppIconMaterial">मैटेरियल</string>
     <string name="RecentChats">हाल की चैट्स</string>
     <string name="ClearRecentChats">हाल की चैट्स साफ करें</string>
     <string name="ClearRecentChatAlert">क्या आप अपनी हाल की चैट साफ़ करना चाहते हैं?</string>

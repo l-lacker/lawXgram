@@ -218,14 +218,6 @@
     <string name="MarkdownParseLinks">リンクの解析</string>
     <string name="MarkdownAbout">マークダウンでメッセージのテキスト装飾: ^1**太字**^1, ^2__斜体__^2, ^3~~取り消し線~~^3, ^4`等幅`^4, ^5||スポイラー||^5, ^6テキスト^7URL^8</string>
     <string name="MarkdownAbout2">マークダウンでメッセージのテキスト装飾: ^1**太字**^1, ^2__斜体__^2, ^3~~取り消し線~~^3, ^4`等幅`^4, ^5||スポイラー||^5</string>
-    <string name="AppIconOldSchool">Old School</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Rainbow</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Space</string>
-    <string name="AppIconCloud">Cloud</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">最近のチャット</string>
     <string name="ClearRecentChats">最近のチャットを消去</string>
     <string name="ClearRecentChatAlert">最近のチャットを消去しますか？</string>

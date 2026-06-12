@@ -220,14 +220,6 @@
     <string name="MarkdownParseLinks">Linkek elemzése</string>
     <string name="MarkdownAbout">Szöveg szerkesztése üzenetekben a követekezők segítségével: ^1**félkövér**^1, ^2__dőlt__^2, ^3~~áthúzott~~^3, ^4`egységes karakterhossz`^4, ^5||spoiler||^5, ^6szüveg^7urlcím^8.</string>
     <string name="MarkdownAbout2">Szöveg szerkesztése az üzenetekben a következők használatával: ^1**félkövér**^1, ^2__dőlt__^2, ^3~~áthúzott~~^3, ^4`egységes karakterhossz`^4, ^5||spoiler||^5.</string>
-    <string name="AppIconOldSchool">Régi típusú</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Szivárvány</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Space</string>
-    <string name="AppIconCloud">Felhő</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Material dizájn</string>
     <string name="RecentChats">Legutóbbi csevegések</string>
     <string name="ClearRecentChats">Legutóbbi csevegések törlése</string>
     <string name="ClearRecentChatAlert">Szeretné törölni a legutóbbi csevegéseket?</string>

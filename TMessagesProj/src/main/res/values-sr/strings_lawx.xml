@@ -219,14 +219,6 @@
     <string name="MarkdownParseLinks">Рашчлани везе</string>
     <string name="MarkdownAbout">Уредите текст у порукама користећи означавање: ^1**подебљано**^1, ^2__курзив__^2, ^3~~прецртано~~^3, ^4`моноразмак`^4, ^5||спојлер||^5, ^6текст^7url^8.</string>
     <string name="MarkdownAbout2">Уредите текст у порукама користећи означавање: ^1**подебљано**^1, ^2__курзив__^2, ^3~~прецртано~~^3, ^4`моноразмак`^4, ^5||спојлер||^5.</string>
-    <string name="AppIconOldSchool">Старомодна</string>
-    <string name="AppIconMerio">Мерио</string>
-    <string name="AppIconRainbow">Дуга</string>
-    <string name="AppIconMusheen">Мушин</string>
-    <string name="AppIconSpace">Свемир</string>
-    <string name="AppIconCloud">Облак</string>
-    <string name="AppIconNeon">Неон</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">Недавна ћаскања</string>
     <string name="ClearRecentChats">Чишћење недавних ћаскања</string>
     <string name="ClearRecentChatAlert">Желите ли да очистите ваша недавна ћаскања?</string>

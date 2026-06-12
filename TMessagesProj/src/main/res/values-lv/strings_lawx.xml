@@ -212,14 +212,6 @@
     <string name="MarkdownParseLinks">Izanalizēt saites</string>
     <string name="MarkdownAbout">Rediģējiet tekstu ziņojumos, izmantojot iezīmēšanu: ^1**bold**^1, ^2__italic__^2, ^3~~strickhrough~~^3, ^4`monospace`^4, ^5||spoiler||^5, ^6text^7url^8.</string>
     <string name="MarkdownAbout2">Rediģējiet tekstu ziņojumos, izmantojot iezīmēšanu: ^1**bold**^1, ^2__italic__^2, ^3~~strickhrough~~^3, ^4`monospace`^4, ^5||spoiler||^5.</string>
-    <string name="AppIconOldSchool">Vecā skola</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Rainbow</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Telpa</string>
-    <string name="AppIconCloud">Mākonis</string>
-    <string name="AppIconNeon">Neona</string>
-    <string name="AppIconMaterial">Materiāls</string>
     <string name="RecentChats">Pēdējās tērzēšanas sarunas</string>
     <string name="ClearRecentChats">Notīrīt pēdējās tērzēšanas sarunas</string>
     <string name="ClearRecentChatAlert">Vai vēlaties notīrīt pēdējās tērzēšanas sarunas?</string>

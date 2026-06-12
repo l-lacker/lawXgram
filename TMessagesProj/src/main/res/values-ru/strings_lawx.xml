@@ -221,14 +221,8 @@
     <string name="MarkdownParseLinks">Синтаксический анализатор ссылок</string>
     <string name="MarkdownAbout">Изменяйте текст сообщений, используя markdown: ^1**жирный**^1, ^2__курсив__^2, ^3~~зачёркнутый~~^3, ^4`моноширинный`^4, ^5||скрытый||^5, ^6текст^7url^8.</string>
     <string name="MarkdownAbout2">Изменяйте текст сообщений, используя markdown: ^1**жирный**^1, ^2__курсив__^2, ^3~~зачёркнутый~~^3, ^4`моноширинный`^4, ^5||скрытый||^5.</string>
-    <string name="AppIconOldSchool">Old School</string>
-    <string name="AppIconMerio">Мерио</string>
-    <string name="AppIconRainbow">Радуга</string>
-    <string name="AppIconMusheen">Мушин</string>
-    <string name="AppIconSpace">Космос</string>
-    <string name="AppIconCloud">Облако</string>
-    <string name="AppIconNeon">Неон</string>
-    <string name="AppIconMaterial">Material</string>
+    <string name="AppIconDefault">Основная</string>
+    <string name="AppIconDark">Тёмная</string>
     <string name="RecentChats">Недавно просмотренные</string>
     <string name="ClearRecentChats">Очистить недавно просмотренные</string>
     <string name="ClearRecentChatAlert">Вы хотите очистить список недавно просмотренных?</string>

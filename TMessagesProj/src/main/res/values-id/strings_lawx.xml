@@ -218,14 +218,6 @@
     <string name="MarkdownParseLinks">Mengurai tautan</string>
     <string name="MarkdownAbout">Edit teks pada pesan menggunakan markdown: ^1**tebal**^1, ^2__miring__^2, ^3~~coret~~^3, ^4`monospace`^4, ^5||spoiler||^5, ^6teks^7url^8.</string>
     <string name="MarkdownAbout2">Edit teks pada pesan menggunakan markdown: ^1**tebal**^1, ^2__miring__^2, ^3~~coret~~^3, ^4`monospace`^4, ^5||spoiler||^5.</string>
-    <string name="AppIconOldSchool">Old School</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Pelangi</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Luar angkasa</string>
-    <string name="AppIconCloud">Awan</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">Obrolan terbaru</string>
     <string name="ClearRecentChats">Hapus obrolan terbaru</string>
     <string name="ClearRecentChatAlert">Apakah Anda ingin menghapus obrolan terbaru Anda?</string>

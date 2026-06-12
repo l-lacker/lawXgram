@@ -216,14 +216,6 @@
     <string name="MarkdownParseLinks">Links zerlegen</string>
     <string name="MarkdownAbout">Text in Nachrichten mit Markdown bearbeiten: ^1**fett**^1, ^2__kursiv__^2, ^3~~durchgestrichen~~^3, ^4`Festbreite`^4, ^5||Spoiler||^5, ^6Text^7URL^8.</string>
     <string name="MarkdownAbout2">Text in Nachrichten mit Markdown bearbeiten: ^1**fett**^1, ^2__kursiv__^2, ^3~~durchgestrichen~~^3, ^4`Festbreite`^4, ^5||Spoiler||^5</string>
-    <string name="AppIconOldSchool">Wie früher</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Regenbogen</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Weltraum</string>
-    <string name="AppIconCloud">Cloud</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">Kürzliche Chats</string>
     <string name="ClearRecentChats">Kürzliche Chats löschen</string>
     <string name="ClearRecentChatAlert">Willst du deine kürzlichen Chats löschen?</string>

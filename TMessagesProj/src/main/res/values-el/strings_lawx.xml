@@ -216,14 +216,6 @@
     <string name="MarkdownParseLinks">Ανάλυση συνδέσμων</string>
     <string name="MarkdownAbout">Επεξεργ. κειμένου σε μηνύμ. markdown: ^1**bold**^1, ^2__italic__^2, ^3~~strikethrough~~^3, ^4`monospace`^4, ^5||spoiler||^5, ^6text^7url^8.</string>
     <string name="MarkdownAbout2">Επεξεργ. κειμένου σε μηνύμ. markdown: ^1**bold**^1, ^2__italic__^2, ^3~~strikethrough~~^3, ^4`monospace`^4, ^5||spoiler||^5.</string>
-    <string name="AppIconOldSchool">Old School</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Rainbow</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Space</string>
-    <string name="AppIconCloud">Cloud</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">Πρόσφατες συνομιλίες</string>
     <string name="ClearRecentChats">Εκκαθάριση πρόσφατων συνομιλιών</string>
     <string name="ClearRecentChatAlert">Θέλετε να διαγράψετε τις πρόσφατες συνομιλίες σας;</string>

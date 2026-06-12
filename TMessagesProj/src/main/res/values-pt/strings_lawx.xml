@@ -219,14 +219,6 @@
     <string name="MarkdownParseLinks">Analisar links</string>
     <string name="MarkdownAbout">Editar texto em mensagens usando markdown: ^1**bold**^1, ^2__italic__^2, ^3~~strikethrough~~^3, ^4`monospace`^4, ^5||spoiler||^5, ^6text^7url^8.</string>
     <string name="MarkdownAbout2">Editar texto em mensagens usando markdown: ^1**bold**^1, ^2__italic__^2, ^3~~strikethrough~~^3, ^4`monospace`^4, ^5||spoiler||^5, texturl.</string>
-    <string name="AppIconOldSchool">Velha Escola</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Arco-íris</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Espaço</string>
-    <string name="AppIconCloud">Nuvem</string>
-    <string name="AppIconNeon">Néon</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">Conversas recentes</string>
     <string name="ClearRecentChats">Limpar conversas recentes</string>
     <string name="ClearRecentChatAlert">Quer limpar as suas conversas recentes?</string>

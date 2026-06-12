@@ -217,14 +217,6 @@
     <string name="MarkdownParseLinks">解析链接</string>
     <string name="MarkdownAbout">使用 Markdown 来编辑消息中的文本：^1**粗体**^1, ^2__斜体__^2, ^3~~删除线~~^3, ^4`等宽`^4, ^5||黑幕||^5, ^6文本^7网址^8。</string>
     <string name="MarkdownAbout2">使用 Markdown 来编辑消息中的文本：^1**粗体**^1, ^2__斜体__^2, ^3~~删除线~~^3, ^4`等宽`^4, ^5||黑幕||^5。</string>
-    <string name="AppIconOldSchool">老派</string>
-    <string name="AppIconMerio">猫里奥</string>
-    <string name="AppIconRainbow">彩虹</string>
-    <string name="AppIconMusheen">棉吉猫</string>
-    <string name="AppIconSpace">太空</string>
-    <string name="AppIconCloud">云</string>
-    <string name="AppIconNeon">霓虹</string>
-    <string name="AppIconMaterial">质感</string>
     <string name="RecentChats">最近对话</string>
     <string name="ClearRecentChats">清除最近对话</string>
     <string name="ClearRecentChatAlert">您确定要清除您的最近对话吗？</string>

@@ -219,14 +219,6 @@
     <string name="MarkdownParseLinks">Аналізувати посилання</string>
     <string name="MarkdownAbout">Редагуйте текст у повідомленні, використовуючи markdown: ^1**жирний**^1, ^2__курсив__^2, ^3~~закреслений~~^3, ^4`моноширинний`^4, ^5||прихований||^5, ^6текст^7url^8.</string>
     <string name="MarkdownAbout2">Редагуйте текст у повідомленні, використовуючи markdown: ^1**жирний**^1, ^2__курсив__^2, ^3~~закреслений~~^3, ^4`моноширинний`^4, ^5||прихований||^5.</string>
-    <string name="AppIconOldSchool">Як Раніше</string>
-    <string name="AppIconMerio">Меріо</string>
-    <string name="AppIconRainbow">Веселкова</string>
-    <string name="AppIconMusheen">Мушин</string>
-    <string name="AppIconSpace">Космос</string>
-    <string name="AppIconCloud">Хмари</string>
-    <string name="AppIconNeon">Неона</string>
-    <string name="AppIconMaterial">Матеріал</string>
     <string name="RecentChats">Останні чати</string>
     <string name="ClearRecentChats">Очистити недавні чати</string>
     <string name="ClearRecentChatAlert">Ви хочете очистити свої останні чати?</string>

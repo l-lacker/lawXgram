@@ -220,14 +220,6 @@
     <string name="MarkdownParseLinks">解析連結</string>
     <string name="MarkdownAbout">使用標記編輯訊息中的文字：^1**粗體**^1、^2__斜體__^2、^3~~刪除線~~^3、^4`等寬字體`^4、^5||劇透||^5、 ^6文本^7網址^8。</string>
     <string name="MarkdownAbout2">使用標記編輯訊息中的文字：^1**粗體**^1、^2__斜體__^2、^3~~刪除線~~^3、^4`等寬字體`^4、^5||劇透||^5。</string>
-    <string name="AppIconOldSchool">老派貓</string>
-    <string name="AppIconMerio">瑪莉貓</string>
-    <string name="AppIconRainbow">彩虹貓</string>
-    <string name="AppIconMusheen">牧神貓</string>
-    <string name="AppIconSpace">太空貓</string>
-    <string name="AppIconCloud">雲朵貓</string>
-    <string name="AppIconNeon">霓虹貓</string>
-    <string name="AppIconMaterial">質感貓</string>
     <string name="RecentChats">最近聊天記錄</string>
     <string name="ClearRecentChats">清除最近聊天記錄</string>
     <string name="ClearRecentChatAlert">您想清除最近聊天記錄嗎？</string>

@@ -214,14 +214,6 @@
     <string name="MarkdownParseLinks">Bağlantıları ayrıştır</string>
     <string name="MarkdownAbout">Markdown kullanarak mesajlardaki metni düzenleyin: ^1**kalın**^1, ^2__italik__^2, ^3~~üstü çizili~~^3, ^4`kod`^4, ^5||spoiler||^5, ^6metin^7bağlantı^8.</string>
     <string name="MarkdownAbout2">Markdown kullanarak mesajlardaki metni düzenleyin: ^1**kalın**^1, ^2__italik__^2, ^3~~üstü çizili~~^3, ^4`kod`^4, ^5||spoiler||^5.</string>
-    <string name="AppIconOldSchool">Eski Moda</string>
-    <string name="AppIconMerio">Atari</string>
-    <string name="AppIconRainbow">Gökkuşağı</string>
-    <string name="AppIconMusheen">Sevimli</string>
-    <string name="AppIconSpace">Uzay</string>
-    <string name="AppIconCloud">Bulut</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Materyal</string>
     <string name="RecentChats">Son sohbetler</string>
     <string name="ClearRecentChats">Son sohbetleri temizle</string>
     <string name="ClearRecentChatAlert">Son sohbetlerinizi temizlemek istediğinizden emin misiniz?</string>

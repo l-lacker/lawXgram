@@ -219,14 +219,6 @@
     <string name="MarkdownParseLinks">Analizza link</string>
     <string name="MarkdownAbout">Modificare il testo nei messaggi usando questo Markdown: ^1**grassetto**^1, ^2__corsivo__^2, ^3~~barrato~~^3, ^4`mono space`^4, ^5||spoiler||^5, ^6text^7url^8.</string>
     <string name="MarkdownAbout2">Modifica il testo nel messaggio usando markdown: ^1**grassetto**^1, ^2__corsivo__^2, ^3~~barrato~~^3, ^4`mono spaziato`^4, ^5||spoiler||^5.</string>
-    <string name="AppIconOldSchool">Vecchia Scuola</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Arcobaleno</string>
-    <string name="AppIconMusheen">Pusheen</string>
-    <string name="AppIconSpace">Spazio</string>
-    <string name="AppIconCloud">Nuvola</string>
-    <string name="AppIconNeon">Neon</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">Chat recenti</string>
     <string name="ClearRecentChats">Cancella le chat recenti</string>
     <string name="ClearRecentChatAlert">Vuoi cancellare le tue chat recenti?</string>

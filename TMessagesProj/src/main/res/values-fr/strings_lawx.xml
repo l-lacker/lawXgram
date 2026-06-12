@@ -220,14 +220,6 @@
     <string name="MarkdownAbout">Modifier le texte dans les messages en utilisant le format Markdown : ^1**gras**^1, ^2__italique__^2, ^3~~barré~~^3, ^4`monospace`^4, ^5||spoiler||^5, ^6texte^7url^8.</string>
     <string name="MarkdownAbout2">Éditez le texte dans les messages en utilisant ces démarquages :
 ^1**gras**^1, ^2__italique__^2,^3~~barré~~^3, ^4`monospace`^4, ^5||spoilers ||^5.</string>
-    <string name="AppIconOldSchool">Old School</string>
-    <string name="AppIconMerio">Merio</string>
-    <string name="AppIconRainbow">Arc-en-ciel</string>
-    <string name="AppIconMusheen">Musheen</string>
-    <string name="AppIconSpace">Espace</string>
-    <string name="AppIconCloud">Nuage</string>
-    <string name="AppIconNeon">Néon</string>
-    <string name="AppIconMaterial">Material</string>
     <string name="RecentChats">Discussions récentes</string>
     <string name="ClearRecentChats">Effacer les discussions récentes</string>
     <string name="ClearRecentChatAlert">Voulez-vous effacer vos conversations récentes ?</string>
