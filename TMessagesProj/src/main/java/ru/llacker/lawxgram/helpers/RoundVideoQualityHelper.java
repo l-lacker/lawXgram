@@ -19,7 +19,7 @@ public final class RoundVideoQualityHelper {
     public static final int HIGH_BITRATE_MBPS = 5;
     public static final int MAX_BITRATE_MBPS = HIGH_BITRATE_MBPS;
     public static final long TELEGRAM_MAX_SIZE_BYTES = 10L * 1024L * 1024L;
-    public static final long MAX_RECORDING_DURATION_MS = 60_000L;
+    public static final long MAX_RECORDING_DURATION_MS = 59_500L;
     public static final int PICKER_SIDE_SMALL = 360;
     public static final int PICKER_SIDE_MEDIUM = 480;
     public static final int PICKER_SIDE_LARGE = 639;

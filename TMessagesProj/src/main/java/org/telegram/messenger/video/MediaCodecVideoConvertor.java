@@ -100,6 +100,7 @@ public class MediaCodecVideoConvertor {
         boolean isPhoto = convertVideoParams.isPhoto;
         MediaController.CropState cropState = convertVideoParams.cropState;
         boolean isRound = convertVideoParams.isRound;
+        boolean forceRoundCfr = false;
         Integer gradientTopColor = convertVideoParams.gradientTopColor;
         Integer gradientBottomColor = convertVideoParams.gradientBottomColor;
         boolean muted = convertVideoParams.muted;
@@ -837,7 +838,7 @@ public class MediaCodecVideoConvertor {
                                                 decoder.flush();
                                                 flushed = true;
                                             }
-                                            if (!isRound && lastFramePts > 0 && info.presentationTimeUs - lastFramePts < frameDeltaFroSkipFrames && (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) == 0) {
+                                            if ((!isRound || !forceRoundCfr) && lastFramePts > 0 && info.presentationTimeUs - lastFramePts < frameDeltaFroSkipFrames && (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) == 0) {
                                                 doRender = false;
                                             }
                                             trueStartTime = avatarStartTime >= 0 ? avatarStartTime : startTime;
@@ -864,7 +865,7 @@ public class MediaCodecVideoConvertor {
                                                 if (avatarStartTime == -1 && additionalPresentationTime != 0) {
                                                     info.presentationTimeUs += additionalPresentationTime;
                                                 }
-                                                if (isRound && doRender) {
+                                                if (isRound && forceRoundCfr && doRender) {
                                                     if (firstRoundFramePts < 0) {
                                                         firstRoundFramePts = info.presentationTimeUs;
                                                     }
@@ -904,18 +905,18 @@ public class MediaCodecVideoConvertor {
                                                     FileLog.e(e);
                                                 }
                                                 if (!errorWait) {
-                                                    long outputPresentationTimeUs = isRound ? roundOutputPresentationTimeUs : info.presentationTimeUs;
+                                                    long outputPresentationTimeUs = isRound && forceRoundCfr ? roundOutputPresentationTimeUs : info.presentationTimeUs;
                                                     outputSurface.drawImage(outputPresentationTimeUs * 1000);
                                                     inputSurface.setPresentationTime(outputPresentationTimeUs * 1000);
                                                     inputSurface.swapBuffers();
-                                                    if (isRound) {
+                                                    if (isRound && forceRoundCfr) {
                                                         lastRoundFrameIndex = roundTargetFrameIndex;
                                                     }
                                                 }
                                             }
                                             if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                                                 decoderOutputAvailable = false;
-                                                if (isRound && lastRoundFrameIndex >= 0 && duration > frameDelta) {
+                                                if (isRound && forceRoundCfr && lastRoundFrameIndex >= 0 && duration > frameDelta) {
                                                     long expectedLastFrameIndex = Math.max(0, getCfrFrameIndex(duration, framerate) - 1);
                                                     long maxTailFrameIndex = Math.min(expectedLastFrameIndex, lastRoundFrameIndex + MAX_ROUND_DUPLICATE_FRAMES_WITHOUT_DRAIN);
                                                     while (lastRoundFrameIndex < maxTailFrameIndex) {

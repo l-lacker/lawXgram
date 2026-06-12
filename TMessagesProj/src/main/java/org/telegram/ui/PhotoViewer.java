@@ -961,7 +961,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private boolean isCurrentVideo;
     private boolean roundVideoCropPending;
     private boolean roundVideoCropPreviousValue;
-    private static final float ROUND_VIDEO_MAX_DURATION = 60000.0f;
+    private static final float ROUND_VIDEO_MAX_DURATION = RoundVideoQualityHelper.MAX_RECORDING_DURATION_MS;
     private static final int ROUND_VIDEO_MAX_SIZE = SendMessagesHelper.ROUND_VIDEO_MAX_SIZE;
     private static final int ROUND_VIDEO_MAX_FRAMERATE = SendMessagesHelper.ROUND_VIDEO_MAX_FRAMERATE;
     private static final String ROUND_VIDEO_QUALITY_SIDE_PREF = "round_video_quality_side";
