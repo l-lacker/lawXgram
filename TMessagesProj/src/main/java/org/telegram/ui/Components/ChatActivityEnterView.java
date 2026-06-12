@@ -11649,6 +11649,14 @@ public class ChatActivityEnterView extends FrameLayout implements
                                     info.videoEditedInfo = entry.editedInfo;
                                     info.sendAsRoundVideo = entry.sendAsRoundVideo || info.videoEditedInfo != null && info.videoEditedInfo.roundVideo;
                                     info.roundVideoQualitySide = entry.roundVideoQualitySide;
+                                    if (info.sendAsRoundVideo && info.videoEditedInfo != null) {
+                                        info.videoEditedInfo.roundVideo = true;
+                                        if (info.videoEditedInfo.roundVideoQualitySide > 0) {
+                                            info.roundVideoQualitySide = info.videoEditedInfo.roundVideoQualitySide;
+                                        } else if (info.roundVideoQualitySide > 0) {
+                                            info.videoEditedInfo.roundVideoQualitySide = info.roundVideoQualitySide;
+                                        }
+                                    }
                                     info.canDeleteAfter = entry.canDeleteAfter;
                                     info.updateStickersOrder = SendMessagesHelper.checkUpdateStickersOrder(entry.caption);
                                     info.hasMediaSpoilers = entry.hasSpoiler;

@@ -21717,7 +21717,11 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             return false;
         }
         Object object = imagesArrLocals.get(currentIndex);
-        return object instanceof MediaController.MediaEditState && ((MediaController.MediaEditState) object).sendAsRoundVideo;
+        if (!(object instanceof MediaController.MediaEditState)) {
+            return false;
+        }
+        MediaController.MediaEditState state = (MediaController.MediaEditState) object;
+        return state.sendAsRoundVideo || state.editedInfo != null && state.editedInfo.roundVideo;
     }
 
     private boolean isCurrentMediaRoundVideoOrPending() {

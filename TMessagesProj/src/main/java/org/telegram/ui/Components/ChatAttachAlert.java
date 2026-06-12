@@ -2316,9 +2316,15 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                             }
                             info.thumbPath = searchImage.thumbPath;
                             info.videoEditedInfo = searchImage.editedInfo;
-                            info.sendAsRoundVideo = searchImage.sendAsRoundVideo;
+                            info.sendAsRoundVideo = searchImage.sendAsRoundVideo || info.videoEditedInfo != null && info.videoEditedInfo.roundVideo;
+                            info.roundVideoQualitySide = searchImage.roundVideoQualitySide;
                             if (info.sendAsRoundVideo && info.videoEditedInfo != null) {
                                 info.videoEditedInfo.roundVideo = true;
+                                if (info.videoEditedInfo.roundVideoQualitySide > 0) {
+                                    info.roundVideoQualitySide = info.videoEditedInfo.roundVideoQualitySide;
+                                } else if (info.roundVideoQualitySide > 0) {
+                                    info.videoEditedInfo.roundVideoQualitySide = info.roundVideoQualitySide;
+                                }
                                 info.isVideo = true;
                             }
                             info.caption = searchImage.caption != null ? searchImage.caption.toString() : null;
@@ -2394,8 +2400,22 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                     if (delegate == null) {
                         return;
                     }
+                    boolean sendAsRoundVideo = entry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo || entry.editedInfo != null && entry.editedInfo.roundVideo;
+                    int roundVideoQualitySide = entry.roundVideoQualitySide;
+                    if (roundVideoQualitySide <= 0 && entry.editedInfo != null) {
+                        roundVideoQualitySide = entry.editedInfo.roundVideoQualitySide;
+                    }
                     entry.editedInfo = videoEditedInfo;
-                    entry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
+                    entry.sendAsRoundVideo = sendAsRoundVideo;
+                    if (entry.sendAsRoundVideo && entry.editedInfo != null) {
+                        entry.editedInfo.roundVideo = true;
+                        if (entry.editedInfo.roundVideoQualitySide > 0) {
+                            entry.roundVideoQualitySide = entry.editedInfo.roundVideoQualitySide;
+                        } else if (roundVideoQualitySide > 0) {
+                            entry.roundVideoQualitySide = roundVideoQualitySide;
+                            entry.editedInfo.roundVideoQualitySide = roundVideoQualitySide;
+                        }
+                    }
                     AlertsCreator.ensurePaidMessageConfirmation(currentAccount, getDialogId(), 1 + getAdditionalMessagesCount(), payStars -> {
                         ChatAttachAlertPhotoLayout.selectedPhotosOrder.clear();
                         ChatAttachAlertPhotoLayout.selectedPhotos.clear();

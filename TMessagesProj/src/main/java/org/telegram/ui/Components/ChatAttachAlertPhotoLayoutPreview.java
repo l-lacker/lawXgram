@@ -1470,8 +1470,22 @@ public class ChatAttachAlertPhotoLayoutPreview extends ChatAttachAlert.AttachAle
                     fromPhotoArrays();
                     return orderIndex;
                 } else {
+                    boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo || photoEntry.editedInfo != null && photoEntry.editedInfo.roundVideo;
+                    int roundVideoQualitySide = photoEntry.roundVideoQualitySide;
+                    if (roundVideoQualitySide <= 0 && photoEntry.editedInfo != null) {
+                        roundVideoQualitySide = photoEntry.editedInfo.roundVideoQualitySide;
+                    }
                     photoEntry.editedInfo = videoEditedInfo;
-                    photoEntry.sendAsRoundVideo = videoEditedInfo != null && videoEditedInfo.roundVideo;
+                    photoEntry.sendAsRoundVideo = sendAsRoundVideo;
+                    if (photoEntry.sendAsRoundVideo && photoEntry.editedInfo != null) {
+                        photoEntry.editedInfo.roundVideo = true;
+                        if (photoEntry.editedInfo.roundVideoQualitySide > 0) {
+                            photoEntry.roundVideoQualitySide = photoEntry.editedInfo.roundVideoQualitySide;
+                        } else if (roundVideoQualitySide > 0) {
+                            photoEntry.roundVideoQualitySide = roundVideoQualitySide;
+                            photoEntry.editedInfo.roundVideoQualitySide = roundVideoQualitySide;
+                        }
+                    }
                     photosOrder.add(imageId);
                     fromPhotoArrays();
                     return photosOrder.size() - 1;

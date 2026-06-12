@@ -10537,22 +10537,25 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         String thumbKey = null;
                         TLRPC.PhotoSize cover = null;
 
-                        final boolean sendAsRoundVideo = info.sendAsRoundVideo || info.videoEditedInfo != null && info.videoEditedInfo.roundVideo;
-                        final VideoEditedInfo videoEditedInfo;
-                        if (forceDocument && !sendAsRoundVideo) {
-                            videoEditedInfo = null;
-                        } else {
-                            videoEditedInfo = info.videoEditedInfo != null ? info.videoEditedInfo : sendAsRoundVideo ? createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset, accountInstance.getCurrentAccount()) : createCompressionSettings(info.path, info.livePhotoVideoOffset);
-                            if (sendAsRoundVideo && videoEditedInfo != null) {
-                                videoEditedInfo.roundVideo = true;
-                                if (videoEditedInfo.roundVideoQualitySide <= 0 && info.roundVideoQualitySide > 0) {
-                                    videoEditedInfo.roundVideoQualitySide = info.roundVideoQualitySide;
-                                }
-                                normalizeRoundVideoTrackDuration(videoEditedInfo, info.path);
-                                prepareRoundVideoEditedInfo(videoEditedInfo, accountInstance.getCurrentAccount());
+                        final boolean roundVideoIntent = isRoundVideoSendInfo(info);
+                        if (roundVideoIntent && info.path == null && info.searchImage != null) {
+                            if (info.searchImage.photo instanceof TLRPC.TL_photo) {
+                                info.path = FileLoader.getInstance(accountInstance.getCurrentAccount()).getPathToAttach(info.searchImage.photo, true).getAbsolutePath();
+                            } else {
+                                String md5 = Utilities.MD5(info.searchImage.imageUrl) + "." + ImageLoader.getHttpUrlExtension(info.searchImage.imageUrl, "jpg");
+                                info.path = new File(FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE), md5).getAbsolutePath();
                             }
                         }
-                        if (sendAsRoundVideo && videoEditedInfo == null) {
+                        final VideoEditedInfo videoEditedInfo;
+                        if (forceDocument && !roundVideoIntent) {
+                            videoEditedInfo = null;
+                        } else if (roundVideoIntent) {
+                            videoEditedInfo = prepareRoundVideoSendInfo(info, accountInstance.getCurrentAccount());
+                        } else {
+                            videoEditedInfo = info.videoEditedInfo != null ? info.videoEditedInfo : createCompressionSettings(info.path, info.livePhotoVideoOffset);
+                        }
+                        final boolean sendAsRoundVideo = roundVideoIntent || videoEditedInfo != null && videoEditedInfo.roundVideo;
+                        if (roundVideoIntent && videoEditedInfo == null) {
                             FileLog.e("unable to prepare round video conversion for " + info.path);
                             continue;
                         }
@@ -11372,6 +11375,40 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
     private static boolean isIntendedRoundVideo(VideoEditedInfo videoEditedInfo, TLRPC.Document document) {
         return videoEditedInfo != null && videoEditedInfo.roundVideo || MessageObject.isRoundVideoDocument(document);
+    }
+
+    public static boolean isRoundVideoSendInfo(SendingMediaInfo info) {
+        return info != null && (info.sendAsRoundVideo || info.videoEditedInfo != null && info.videoEditedInfo.roundVideo);
+    }
+
+    public static VideoEditedInfo prepareRoundVideoSendInfo(SendingMediaInfo info, int account) {
+        if (!isRoundVideoSendInfo(info)) {
+            return info != null ? info.videoEditedInfo : null;
+        }
+        if (TextUtils.isEmpty(info.path) && info.videoEditedInfo != null && !TextUtils.isEmpty(info.videoEditedInfo.originalPath)) {
+            info.path = info.videoEditedInfo.originalPath;
+        }
+        VideoEditedInfo videoEditedInfo = info.videoEditedInfo;
+        if (videoEditedInfo == null && !TextUtils.isEmpty(info.path)) {
+            videoEditedInfo = createRoundVideoEditedInfo(info.path, info.livePhotoVideoOffset, account);
+        }
+        if (videoEditedInfo == null) {
+            return null;
+        }
+        videoEditedInfo.roundVideo = true;
+        int qualitySide = videoEditedInfo.roundVideoQualitySide > 0 ? videoEditedInfo.roundVideoQualitySide : info.roundVideoQualitySide;
+        if (qualitySide > 0) {
+            videoEditedInfo.roundVideoQualitySide = RoundVideoQualityHelper.normalizePickerSide(qualitySide);
+        }
+        if (!TextUtils.isEmpty(info.path)) {
+            normalizeRoundVideoTrackDuration(videoEditedInfo, info.path);
+        }
+        prepareRoundVideoEditedInfo(videoEditedInfo, account, videoEditedInfo.roundVideoQualitySide);
+        info.videoEditedInfo = videoEditedInfo;
+        info.isVideo = true;
+        info.sendAsRoundVideo = true;
+        info.roundVideoQualitySide = videoEditedInfo.roundVideoQualitySide;
+        return videoEditedInfo;
     }
 
     private static void ensureRoundVideoDocumentAttribute(TLRPC.Document document, VideoEditedInfo videoEditedInfo) {

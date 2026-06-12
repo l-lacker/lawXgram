@@ -289,9 +289,22 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             int num;
             if ((num = addToSelectedPhotos(photoEntry, -1)) == -1) {
                 num = selectedPhotosOrder.indexOf(photoEntry.imageId);
-                boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
+                boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo || photoEntry.editedInfo != null && photoEntry.editedInfo.roundVideo;
+                int roundVideoQualitySide = photoEntry.roundVideoQualitySide;
+                if (roundVideoQualitySide <= 0 && photoEntry.editedInfo != null) {
+                    roundVideoQualitySide = photoEntry.editedInfo.roundVideoQualitySide;
+                }
                 photoEntry.editedInfo = videoEditedInfo;
                 photoEntry.sendAsRoundVideo = sendAsRoundVideo;
+                if (photoEntry.sendAsRoundVideo && photoEntry.editedInfo != null) {
+                    photoEntry.editedInfo.roundVideo = true;
+                    if (photoEntry.editedInfo.roundVideoQualitySide > 0) {
+                        photoEntry.roundVideoQualitySide = photoEntry.editedInfo.roundVideoQualitySide;
+                    } else if (roundVideoQualitySide > 0) {
+                        photoEntry.roundVideoQualitySide = roundVideoQualitySide;
+                        photoEntry.editedInfo.roundVideoQualitySide = roundVideoQualitySide;
+                    }
+                }
             } else {
                 add = false;
                 photoEntry.editedInfo = null;
@@ -536,9 +549,22 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             parentAlert.sent = true;
             MediaController.PhotoEntry photoEntry = getPhotoEntryAtPosition(index);
             if (photoEntry != null) {
-                boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo;
+                boolean sendAsRoundVideo = photoEntry.sendAsRoundVideo || videoEditedInfo != null && videoEditedInfo.roundVideo || photoEntry.editedInfo != null && photoEntry.editedInfo.roundVideo;
+                int roundVideoQualitySide = photoEntry.roundVideoQualitySide;
+                if (roundVideoQualitySide <= 0 && photoEntry.editedInfo != null) {
+                    roundVideoQualitySide = photoEntry.editedInfo.roundVideoQualitySide;
+                }
                 photoEntry.editedInfo = videoEditedInfo;
                 photoEntry.sendAsRoundVideo = sendAsRoundVideo;
+                if (photoEntry.sendAsRoundVideo && photoEntry.editedInfo != null) {
+                    photoEntry.editedInfo.roundVideo = true;
+                    if (photoEntry.editedInfo.roundVideoQualitySide > 0) {
+                        photoEntry.roundVideoQualitySide = photoEntry.editedInfo.roundVideoQualitySide;
+                    } else if (roundVideoQualitySide > 0) {
+                        photoEntry.roundVideoQualitySide = roundVideoQualitySide;
+                        photoEntry.editedInfo.roundVideoQualitySide = roundVideoQualitySide;
+                    }
+                }
             }
             if (selectedPhotos.isEmpty() && photoEntry != null) {
                 addToSelectedPhotos(photoEntry, -1);
