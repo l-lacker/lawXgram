@@ -73,7 +73,6 @@ import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.ImageLocation;
-import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
@@ -350,7 +349,6 @@ public class QrActivity extends BaseFragment {
         closeImageView.setImageResource(R.drawable.ic_ab_back);
         closeImageView.setScaleType(ImageView.ScaleType.CENTER);
         closeImageView.setOnClickListener(v -> finishFragment());
-        closeImageView.setContentDescription(LocaleController.getString("AccDescrGoBack", R.string.AccDescrGoBack));
         rootLayout.addView(closeImageView, LayoutHelper.createFrame(34, 34));
 
         emojiThemeIcon = Bitmap.createBitmap(AndroidUtilities.dp(32), AndroidUtilities.dp(32), Bitmap.Config.ARGB_8888);
@@ -1055,7 +1053,7 @@ public class QrActivity extends BaseFragment {
                 }
                 if (contentBitmap != null) {
                     canvas.drawBitmap(contentBitmap, 0f, 0f, bitmapGradientPaint);
-                    gradientDrawable.updateAnimation(true);
+                    gradientDrawable.updateAnimation();
                 } else {
                     drawLoading(canvas);
                 }
