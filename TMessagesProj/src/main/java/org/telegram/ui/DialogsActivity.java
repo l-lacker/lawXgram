@@ -7906,7 +7906,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         } else if (searchViewPager != null && adapter == searchViewPager.dialogsSearchAdapter) {
             Object obj = searchViewPager.dialogsSearchAdapter.getItem(position);
             isGlobalSearch = searchViewPager.dialogsSearchAdapter.isGlobalSearch(position);
-            if (obj instanceof TLRPC.User) {
+            if (obj instanceof DialogsSearchAdapter.MonoForumTopicSearchResult) {
+                DialogsSearchAdapter.MonoForumTopicSearchResult result = (DialogsSearchAdapter.MonoForumTopicSearchResult) obj;
+                dialogId = result.dialogId;
+                topicId = result.topicId;
+            } else if (obj instanceof TLRPC.User) {
                 dialogId = ((TLRPC.User) obj).id;
                 if (!onlySelect) {
                     searchDialogId = dialogId;
@@ -7951,7 +7955,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 AlertsCreator.createContactInviteDialog(DialogsActivity.this, contact.first_name, contact.last_name, contact.phones.get(0));
             } else if (obj instanceof TLRPC.TL_forumTopic && rightSlidingDialogContainer != null && rightSlidingDialogContainer.getFragment() instanceof TopicsFragment) {
                 dialogId = ((TopicsFragment) rightSlidingDialogContainer.getFragment()).getDialogId();
-                topicId = ((TLRPC.TL_forumTopic) obj).id;
+                TLRPC.TL_forumTopic topic = (TLRPC.TL_forumTopic) obj;
+                topicId = getMessagesController().isMonoForum(dialogId) ? ForumUtilities.getMonoForumTopicPeerDialogId(topic) : topic.id;
             }
 
             if (dialogId != 0 && actionBar.isActionModeShowed()) {
@@ -8013,6 +8018,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 args.putLong("chat_id", -did);
             }
+            TLRPC.Chat openingChat = dialogId < 0 ? getMessagesController().getChat(-dialogId) : null;
+            if (openingChat != null && openingChat.monoforum) {
+                args.putInt("chatMode", ChatActivity.MODE_SUGGESTIONS);
+                args.putBoolean("isSubscriberSuggestions", !ChatObject.canManageMonoForum(currentAccount, openingChat));
+            }
             if (message_id != 0) {
                 args.putInt("message_id", message_id);
             } else if (!isGlobalSearch) {
@@ -8065,12 +8075,16 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             } else if (searchString != null) {
                 if (getMessagesController().checkCanOpenChat(args, DialogsActivity.this)) {
                     getNotificationCenter().postNotificationName(NotificationCenter.closeChats);
-                    presentChatFragment(new ChatActivity(args), msg);
+                    ChatActivity chatActivity = new ChatActivity(args);
+                    if (topicId != 0) {
+                        ForumUtilities.applyTopic(chatActivity, MessagesStorage.TopicKey.of(dialogId, topicId));
+                    }
+                    presentChatFragment(chatActivity, msg);
                 }
             } else {
                 slowedReloadAfterDialogClick = true;
                 if (getMessagesController().checkCanOpenChat(args, DialogsActivity.this)) {
-                    TLRPC.Chat chat = getMessagesController().getChat(-dialogId);
+                    TLRPC.Chat chat = openingChat != null ? openingChat : getMessagesController().getChat(-dialogId);
                     TLRPC.Dialog dialog = getMessagesController().getDialog(dialogId);
                     boolean needOpenChatActivity = dialog != null && dialog.view_forum_as_messages;
 

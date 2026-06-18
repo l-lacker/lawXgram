@@ -35,6 +35,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SavedMessagesController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
+import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.INavigationLayout;
@@ -533,6 +534,37 @@ public class ForumUtilities {
 
     public static int monoForumTopicIdToTopicId(long id) {
         return Long.hashCode(id);
+    }
+
+    public static long getMonoForumTopicPeerDialogId(TLRPC.TL_forumTopic topic) {
+        long peerDialogId = topic != null ? DialogObject.getPeerDialogId(topic.from_id) : 0;
+        if (peerDialogId == 0 && topic != null && !TextUtils.isEmpty(topic.title)) {
+            try {
+                peerDialogId = Long.parseLong(topic.title);
+            } catch (Exception ignore) {
+            }
+        }
+        return peerDialogId;
+    }
+
+    public static long getTopicStorageId(int currentAccount, long dialogId, TLRPC.TL_forumTopic topic) {
+        if (MessagesController.getInstance(currentAccount).isMonoForum(dialogId)) {
+            long peerDialogId = getMonoForumTopicPeerDialogId(topic);
+            if (peerDialogId != 0) {
+                return peerDialogId;
+            }
+        }
+        return topic != null ? topic.id : 0;
+    }
+
+    public static String getMonoForumTopicName(int currentAccount, TLRPC.TL_forumTopic topic) {
+        long peerDialogId = getMonoForumTopicPeerDialogId(topic);
+        TLObject peer = peerDialogId != 0 ? MessagesController.getInstance(currentAccount).getUserOrChat(peerDialogId) : null;
+        String name = peer != null ? MessagesController.getInstance(currentAccount).getPeerName(peerDialogId) : null;
+        if (TextUtils.isEmpty(name) && topic != null) {
+            name = topic.title;
+        }
+        return name;
     }
 
     public static ArrayList<TLRPC.TL_forumTopic> monoForumTopicToTopic(ArrayList<TLRPC.savedDialog> dialogs) {

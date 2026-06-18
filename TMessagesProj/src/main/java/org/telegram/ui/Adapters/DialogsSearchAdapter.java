@@ -67,6 +67,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RLottieDrawable;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.DialogsActivity;
+import org.telegram.ui.FilterCreateActivity;
 import org.telegram.ui.FilteredSearchView;
 
 import java.util.ArrayList;
@@ -200,6 +201,17 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
         public long did;
     }
 
+    public static class MonoForumTopicSearchResult extends TLObject {
+        public long dialogId;
+        public long topicId;
+        public int date;
+        public TLRPC.Chat parentChat;
+        public TLRPC.TL_forumTopic topic;
+        public TLObject peer;
+        public CharSequence name;
+        public CharSequence subtitle;
+    }
+
     public interface DialogsSearchAdapterDelegate {
         void searchStateChanged(boolean searching, boolean animated);
         void didPressedOnSubDialog(long did);
@@ -280,6 +292,16 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
         public int getItemCount() {
             return MediaDataController.getInstance(currentAccount).hints.size();
         }
+    }
+
+    private CharSequence withMonoForumSpan(CharSequence name) {
+        SpannableStringBuilder builder = new SpannableStringBuilder(TextUtils.isEmpty(name) ? "" : name);
+        builder.append(" ");
+        int start = builder.length();
+        String label = LocaleController.getString(R.string.MonoforumSpan);
+        builder.append(label);
+        builder.setSpan(new FilterCreateActivity.TextSpan(label, 9.33f, Theme.key_windowBackgroundWhiteGrayText, resourcesProvider), start, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return builder;
     }
 
     private boolean filter(Object obj) {
@@ -503,12 +525,20 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
         }
         if (!TextUtils.isEmpty(query)) {
             long dialogId = delegate.getSearchForumDialogId();
+            boolean monoForum = MessagesController.getInstance(currentAccount).isMonoForum(dialogId);
             ArrayList<TLRPC.TL_forumTopic> topics = MessagesController.getInstance(currentAccount).getTopicsController().getTopics(-dialogId);
-            String searchTrimmed = query.trim();
-            for (int i = 0; i < topics.size(); i++) {
-                if (topics.get(i) != null && topics.get(i).title.toLowerCase().contains(searchTrimmed)) {
-                    searchTopics.add(topics.get(i));
-                    topics.get(i).searchQuery = searchTrimmed;
+            String searchTrimmed = query.trim().toLowerCase();
+            if (topics != null) {
+                for (int i = 0; i < topics.size(); i++) {
+                    TLRPC.TL_forumTopic topic = topics.get(i);
+                    if (topic == null) {
+                        continue;
+                    }
+                    String title = monoForum ? ForumUtilities.getMonoForumTopicName(currentAccount, topic) : topic.title;
+                    if (title != null && title.toLowerCase().contains(searchTrimmed)) {
+                        searchTopics.add(topic);
+                        topic.searchQuery = searchTrimmed;
+                    }
                 }
             }
         }
@@ -1010,6 +1040,20 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                 } else if (obj instanceof TLRPC.EncryptedChat) {
                     TLRPC.EncryptedChat chat = (TLRPC.EncryptedChat) obj;
                     MessagesController.getInstance(currentAccount).putEncryptedChat(chat, true);
+                } else if (obj instanceof MonoForumTopicSearchResult) {
+                    MonoForumTopicSearchResult monoResult = (MonoForumTopicSearchResult) obj;
+                    dialogId = monoResult.dialogId;
+                    if (monoResult.parentChat != null) {
+                        MessagesController.getInstance(currentAccount).putChat(monoResult.parentChat, true);
+                    }
+                    if (monoResult.peer instanceof TLRPC.User) {
+                        MessagesController.getInstance(currentAccount).putUser((TLRPC.User) monoResult.peer, true);
+                    } else if (monoResult.peer instanceof TLRPC.Chat) {
+                        MessagesController.getInstance(currentAccount).putChat((TLRPC.Chat) monoResult.peer, true);
+                    }
+                    if (monoResult.topic != null) {
+                        MessagesController.getInstance(currentAccount).getTopicsController().onTopicCreated(monoResult.dialogId, monoResult.topic, false);
+                    }
                 }
 
                 if (dialogId != 0) {
@@ -1034,7 +1078,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                     }
                 }
 
-                if (recentSearchAvailable() && !(obj instanceof TLRPC.EncryptedChat)) {
+                if (recentSearchAvailable() && !(obj instanceof TLRPC.EncryptedChat) && !(obj instanceof MonoForumTopicSearchResult)) {
                     boolean foundInRecent = false;
                     if (delegate != null && delegate.getSearchForumDialogId() == dialogId) {
                         foundInRecent = true;
@@ -1728,8 +1772,18 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                 String un = null;
                 ArrayList<TLRPC.TL_username> usernames = null;
                 Object obj = getItem(position);
+                MonoForumTopicSearchResult monoForumTopicResult = null;
 
-                if (obj instanceof TLRPC.TL_sponsoredPeer) {
+                if (obj instanceof MonoForumTopicSearchResult) {
+                    monoForumTopicResult = (MonoForumTopicSearchResult) obj;
+                    if (monoForumTopicResult.peer instanceof TLRPC.User) {
+                        user = (TLRPC.User) monoForumTopicResult.peer;
+                    } else if (monoForumTopicResult.peer instanceof TLRPC.Chat) {
+                        chat = (TLRPC.Chat) monoForumTopicResult.peer;
+                    }
+                    name = withMonoForumSpan(monoForumTopicResult.name);
+                    username = monoForumTopicResult.subtitle;
+                } else if (obj instanceof TLRPC.TL_sponsoredPeer) {
                     final TLRPC.TL_sponsoredPeer sponsoredPeer = (TLRPC.TL_sponsoredPeer) obj;
                     seenSponsoredPeer(sponsoredPeer);
                     final long dialogId = DialogObject.getPeerDialogId(sponsoredPeer.peer);
@@ -1802,7 +1856,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         position != localCount + globalCount + phoneCount + localServerCount - 1
                     );
                 }
-                if (position >= 0 && position < searchResult.size() && user == null) {
+                if (monoForumTopicResult == null && position >= 0 && position < searchResult.size() && user == null) {
                     name = searchResultNames.get(position);
                     String username1 = UserObject.getPublicUsername(user);
                     if (name != null && user != null && username1 != null) {
@@ -1812,7 +1866,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         }
                     }
                 }
-                if (username == null) {
+                if (monoForumTopicResult == null && username == null) {
                     String foundUserName = isRecent ? filteredRecentQuery : searchAdapterHelper.getLastFoundUsername();
                     if (!TextUtils.isEmpty(foundUserName)) {
                         String nameSearch = null;
@@ -1884,12 +1938,12 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                 }
                 cell.setChecked(false, false);
                 boolean savedMessages = false;
-                if (user != null && user.id == selfUserId && dialogsType != DialogsActivity.DIALOGS_TYPE_BOT_SELECT_VERIFY) {
+                if (monoForumTopicResult == null && user != null && user.id == selfUserId && dialogsType != DialogsActivity.DIALOGS_TYPE_BOT_SELECT_VERIFY) {
                     name = LocaleController.getString(R.string.SavedMessages);
                     username = null;
                     savedMessages = true;
                 }
-                if (chat != null && chat.participants_count != 0) {
+                if (monoForumTopicResult == null && chat != null && chat.participants_count != 0) {
                     String membersString;
                     if (ChatObject.isChannel(chat) && !chat.megagroup) {
                         membersString = LocaleController.formatPluralStringSpaced("Subscribers", chat.participants_count);
@@ -1903,7 +1957,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                     } else {
                         username = membersString;
                     }
-                } else if (user != null && user.bot && user.bot_active_users != 0) {
+                } else if (monoForumTopicResult == null && user != null && user.bot && user.bot_active_users != 0) {
                     String membersString = LocaleController.formatPluralStringSpaced("BotUsersShort", user.bot_active_users);
                     if (username instanceof SpannableStringBuilder) {
                         ((SpannableStringBuilder) username).append(", ").append(membersString);
@@ -1913,11 +1967,11 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         username = membersString;
                     }
                 }
-                cell.allowBotOpenButton(isRecent, this::openBotApp);
+                cell.allowBotOpenButton(monoForumTopicResult == null && isRecent, this::openBotApp);
                 cell.setOnSponsoredOptionsClick(this::openSponsoredOptions);
                 cell.setAd(obj instanceof TLRPC.TL_sponsoredPeer ? (TLRPC.TL_sponsoredPeer) obj : null);
-                cell.setData(user != null ? user : chat, encryptedChat, name, username, true, savedMessages);
-                cell.setChecked(delegate.isSelected(cell.getDialogId()), oldDialogId == cell.getDialogId());
+                cell.setData(user != null ? user : chat, encryptedChat, name, username, monoForumTopicResult == null, savedMessages);
+                cell.setChecked(monoForumTopicResult == null && delegate.isSelected(cell.getDialogId()), oldDialogId == cell.getDialogId());
                 break;
             }
             case VIEW_TYPE_GRAY_SECTION: {
@@ -2145,7 +2199,8 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
             }
             case VIEW_TYPE_TOPIC_CELL: {
                 TopicSearchCell topicSearchCell = (TopicSearchCell) holder.itemView;
-                topicSearchCell.setTopic((TLRPC.TL_forumTopic) getItem(position));
+                boolean monoForum = delegate != null && MessagesController.getInstance(currentAccount).isMonoForum(delegate.getSearchForumDialogId());
+                topicSearchCell.setTopic((TLRPC.TL_forumTopic) getItem(position), monoForum);
                 break;
             }
             case VIEW_TYPE_HASHTAG_CELL: {

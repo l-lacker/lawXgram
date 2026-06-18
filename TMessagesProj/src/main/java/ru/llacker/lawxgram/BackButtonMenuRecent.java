@@ -2,6 +2,8 @@ package ru.llacker.lawxgram;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -11,7 +13,10 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -116,9 +121,12 @@ public class BackButtonMenuRecent {
             Drawable thumb = avatarDrawable;
 
             if (chat != null) {
+                boolean monoForumTopic = topicId != 0 && ChatObject.isMonoForum(chat);
                 avatarDrawable.setInfo(chat);
-                if (topicId != 0 && ChatObject.isMonoForum(chat)) {
-                    TLObject topicPeer = MessagesController.getInstance(currentAccount).getUserOrChat(topicId);
+                if (monoForumTopic) {
+                    TLRPC.TL_forumTopic topic = MessagesController.getInstance(currentAccount).getTopicsController().findTopic(chat.id, topicId);
+                    long topicPeerId = topic != null ? ForumUtilities.getMonoForumTopicPeerDialogId(topic) : topicId;
+                    TLObject topicPeer = MessagesController.getInstance(currentAccount).getUserOrChat(topicPeerId);
                     imageView.setRoundRadius(AndroidUtilities.dp(16));
                     if (topicPeer instanceof TLRPC.User) {
                         TLRPC.User topicUser = (TLRPC.User) topicPeer;
@@ -132,15 +140,32 @@ public class BackButtonMenuRecent {
                         imageView.setImage(ImageLocation.getForChat(topicChat, ImageLocation.TYPE_SMALL), "50_50", avatarDrawable, topicChat);
                     } else {
                         ForumUtilities.setMonoForumAvatar(currentAccount, chat, avatarDrawable, imageView);
-                        titleView.setText(ForumUtilities.getMonoForumTitle(currentAccount, chat));
+                        titleView.setText(ForumUtilities.getMonoForumTitle(currentAccount, chat, true));
                     }
+                    var titleParams = (FrameLayout.LayoutParams) titleView.getLayoutParams();
+                    if (LocaleController.isRTL) {
+                        titleParams.leftMargin = AndroidUtilities.dp(40);
+                    } else {
+                        titleParams.rightMargin = AndroidUtilities.dp(40);
+                    }
+                    titleView.setLayoutParams(titleParams);
+
+                    var badgeView = new ImageView(context);
+                    Drawable badge = ContextCompat.getDrawable(context, R.drawable.filled_profile_message_24);
+                    if (badge != null) {
+                        badge = badge.mutate();
+                        badge.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultSubmenuItemIcon), PorterDuff.Mode.MULTIPLY));
+                        badgeView.setImageDrawable(badge);
+                    }
+                    badgeView.setContentDescription(LocaleController.getString(R.string.ChannelOpenDirect));
+                    cell.addView(badgeView, LayoutHelper.createFrameRelatively(18, 18, Gravity.END | Gravity.CENTER_VERTICAL, 0, 0, 14, 0));
                 } else if (chat.photo != null && chat.photo.strippedBitmap != null) {
                     thumb = chat.photo.strippedBitmap;
                     imageView.setImage(ImageLocation.getForChat(chat, ImageLocation.TYPE_SMALL), "50_50", thumb, chat);
                 } else {
                     imageView.setImage(ImageLocation.getForChat(chat, ImageLocation.TYPE_SMALL), "50_50", thumb, chat);
                 }
-                if (topicId != 0 && ChatObject.isForum(chat)) {
+                if (!monoForumTopic && topicId != 0 && ChatObject.isForum(chat)) {
                     TLRPC.TL_forumTopic topic = MessagesController.getInstance(currentAccount).getTopicsController().findTopic(chat.id, topicId);
                     if (topic != null) {
                         ForumUtilities.setTopicIcon(imageView, topic);
@@ -224,7 +249,14 @@ public class BackButtonMenuRecent {
             cell.setOnLongClickListener(e2 -> {
                 options.dismiss();
                 var bundle = new Bundle();
-                long profileDialogId = topicId != 0 && chat != null && ChatObject.isMonoForum(chat) ? topicId : dialogId;
+                long profileDialogId = dialogId;
+                if (topicId != 0 && chat != null && ChatObject.isMonoForum(chat)) {
+                    TLRPC.TL_forumTopic topic = MessagesController.getInstance(currentAccount).getTopicsController().findTopic(chat.id, topicId);
+                    long topicPeerId = topic != null ? ForumUtilities.getMonoForumTopicPeerDialogId(topic) : topicId;
+                    if (topicPeerId != 0) {
+                        profileDialogId = topicPeerId;
+                    }
+                }
                 if (profileDialogId < 0) {
                     bundle.putLong("chat_id", -profileDialogId);
                 } else {

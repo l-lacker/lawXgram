@@ -11,9 +11,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.UserConfig;
+import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.Forum.ForumUtilities;
 import org.telegram.ui.Components.LayoutHelper;
@@ -50,14 +55,43 @@ public class TopicSearchCell extends FrameLayout {
     }
 
     public void setTopic(TLRPC.TL_forumTopic topic) {
+        setTopic(topic, false);
+    }
+
+    public void setTopic(TLRPC.TL_forumTopic topic, boolean monoForum) {
         this.topic = topic;
-        if (TextUtils.isEmpty(topic.searchQuery)) {
-            textView.setText(AndroidUtilities.removeDiacritics(topic.title));
-        } else {
-            textView.setText(AndroidUtilities.highlightText(AndroidUtilities.removeDiacritics(topic.title), topic.searchQuery, null));
+        String title = monoForum ? ForumUtilities.getMonoForumTopicName(UserConfig.selectedAccount, topic) : topic.title;
+        if (title == null) {
+            title = "";
         }
-        ForumUtilities.setTopicIcon(backupImageView, topic);
-        if (backupImageView != null && backupImageView.getImageReceiver() != null && backupImageView.getImageReceiver().getDrawable() instanceof ForumUtilities.GeneralTopicDrawable) {
+        if (TextUtils.isEmpty(topic.searchQuery)) {
+            textView.setText(AndroidUtilities.removeDiacritics(title));
+        } else {
+            textView.setText(AndroidUtilities.highlightText(AndroidUtilities.removeDiacritics(title), topic.searchQuery, null));
+        }
+        boolean avatarSet = false;
+        if (monoForum) {
+            long peerDialogId = ForumUtilities.getMonoForumTopicPeerDialogId(topic);
+            TLObject peer = MessagesController.getInstance(UserConfig.selectedAccount).getUserOrChat(peerDialogId);
+            AvatarDrawable avatarDrawable = new AvatarDrawable();
+            backupImageView.setRoundRadius(AndroidUtilities.dp(15));
+            if (peer instanceof TLRPC.User) {
+                TLRPC.User user = (TLRPC.User) peer;
+                avatarDrawable.setInfo(user);
+                backupImageView.setImage(ImageLocation.getForUser(user, ImageLocation.TYPE_SMALL), "50_50", avatarDrawable, user);
+                avatarSet = true;
+            } else if (peer instanceof TLRPC.Chat) {
+                TLRPC.Chat chat = (TLRPC.Chat) peer;
+                avatarDrawable.setInfo(chat);
+                backupImageView.setImage(ImageLocation.getForChat(chat, ImageLocation.TYPE_SMALL), "50_50", avatarDrawable, chat);
+                avatarSet = true;
+            }
+        }
+        if (!avatarSet) {
+            backupImageView.setRoundRadius(0);
+            ForumUtilities.setTopicIcon(backupImageView, topic);
+        }
+        if (!avatarSet && backupImageView != null && backupImageView.getImageReceiver() != null && backupImageView.getImageReceiver().getDrawable() instanceof ForumUtilities.GeneralTopicDrawable) {
             ((ForumUtilities.GeneralTopicDrawable) backupImageView.getImageReceiver().getDrawable()).setColor(Theme.getColor(Theme.key_chats_archiveBackground));
         }
     }

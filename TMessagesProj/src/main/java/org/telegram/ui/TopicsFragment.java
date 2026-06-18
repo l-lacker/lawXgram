@@ -3425,10 +3425,10 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
             recyclerView.setOnItemClickListener((view, position) -> {
                 if (view instanceof TopicSearchCell) {
                     TopicSearchCell cell = (TopicSearchCell) view;
-                    ForumUtilities.openTopic(TopicsFragment.this, chatId, cell.getTopic(), 0);
+                    openSearchTopic(cell.getTopic(), 0);
                 } else if (view instanceof TopicDialogCell) {
                     TopicDialogCell cell = (TopicDialogCell) view;
-                    ForumUtilities.openTopic(TopicsFragment.this, chatId, cell.forumTopic, cell.getMessageId());
+                    openSearchTopic(cell.forumTopic, cell.getMessageId());
                 }
             });
             recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -3652,6 +3652,30 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
             }
         }
 
+        private void openSearchTopic(TLRPC.TL_forumTopic topic, int messageId) {
+            if (topic == null) {
+                return;
+            }
+            if (getMessagesController().isMonoForum(-chatId)) {
+                Bundle args = new Bundle();
+                args.putLong("chat_id", chatId);
+                args.putInt("chatMode", ChatActivity.MODE_SUGGESTIONS);
+                TLRPC.Chat chat = getMessagesController().getChat(chatId);
+                args.putBoolean("isSubscriberSuggestions", chat == null || !ChatObject.canManageMonoForum(currentAccount, chat));
+                if (messageId != 0) {
+                    args.putInt("message_id", messageId);
+                }
+                ChatActivity chatActivity = new ChatActivity(args);
+                long topicId = ForumUtilities.getMonoForumTopicPeerDialogId(topic);
+                if (topicId != 0) {
+                    ForumUtilities.applyTopic(chatActivity, MessagesStorage.TopicKey.of(-chatId, topicId));
+                }
+                TopicsFragment.this.presentFragment(chatActivity);
+                return;
+            }
+            ForumUtilities.openTopic(TopicsFragment.this, chatId, topic, messageId);
+        }
+
         private void searchMessages(String searchString) {
             if (searchRunnable != null) {
                 AndroidUtilities.cancelRunOnUIThread(searchRunnable);
@@ -3686,11 +3710,14 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
 
             searchRunnable = () -> {
                 String searchTrimmed = searchString.trim().toLowerCase();
+                boolean monoForum = getMessagesController().isMonoForum(-chatId);
                 ArrayList<TLRPC.TL_forumTopic> topics = new ArrayList<>();
                 for (int i = 0; i < forumTopics.size(); i++) {
-                    if (forumTopics.get(i).topic != null && forumTopics.get(i).topic.title.toLowerCase().contains(searchTrimmed)) {
-                        topics.add(forumTopics.get(i).topic);
-                        forumTopics.get(i).topic.searchQuery = searchTrimmed;
+                    TLRPC.TL_forumTopic topic = forumTopics.get(i).topic;
+                    String title = monoForum ? ForumUtilities.getMonoForumTopicName(currentAccount, topic) : (topic == null ? null : topic.title);
+                    if (topic != null && title != null && title.toLowerCase().contains(searchTrimmed)) {
+                        topics.add(topic);
+                        topic.searchQuery = searchTrimmed;
                     }
                 }
 
@@ -3839,7 +3866,7 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
                 if (getItemViewType(position) == VIEW_TYPE_TOPIC) {
                     TLRPC.TL_forumTopic topic = searchResultTopics.get(position - topicsStartRow);
                     TopicSearchCell topicSearchCell = (TopicSearchCell) holder.itemView;
-                    topicSearchCell.setTopic(topic);
+                    topicSearchCell.setTopic(topic, getMessagesController().isMonoForum(-chatId));
                     topicSearchCell.drawDivider = position != topicsEndRow - 1;
                 }
                 if (getItemViewType(position) == VIEW_TYPE_MESSAGE) {

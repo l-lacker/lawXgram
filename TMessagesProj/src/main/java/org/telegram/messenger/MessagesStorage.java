@@ -1611,10 +1611,11 @@ public class MessagesStorage extends BaseController {
             HashMap<Integer, Integer> pinnedValues = new HashMap<>();
             for (int i = 0; i < topics.size(); i++) {
                 TLRPC.TL_forumTopic topic = topics.get(i);
-                SQLiteCursor cursor = database.queryFinalized("SELECT did, pinned FROM topics WHERE did = " + dialogId + " AND topic_id = " + topic.id);
+                long topicId = getTopicStorageId(dialogId, topic);
+                SQLiteCursor cursor = database.queryFinalized("SELECT did, pinned FROM topics WHERE did = " + dialogId + " AND topic_id = " + topicId);
                 boolean exist = cursor.next();
                 if (exist) {
-                    pinnedValues.put(i, cursor.intValue(2));
+                    pinnedValues.put(i, cursor.intValue(1));
                 }
                 cursor.dispose();
                 cursor = null;
@@ -1632,7 +1633,7 @@ public class MessagesStorage extends BaseController {
 
             for (int i = 0; i < topics.size(); i++) {
                 TLRPC.TL_forumTopic topic = topics.get(i);
-                long topicId = isMonoForum(dialogId) ? DialogObject.getPeerDialogId(topic.from_id): topic.id;
+                long topicId = getTopicStorageId(dialogId, topic);
                 boolean exist = existingTopics.contains(i);
 
                 state.requery();
@@ -1700,6 +1701,16 @@ public class MessagesStorage extends BaseController {
         updateTopicData(dialogId, fromTopic, flags, getConnectionsManager().getCurrentTime());
     }
 
+    private long getTopicStorageId(long dialogId, TLRPC.TL_forumTopic topic) {
+        if (isMonoForum(dialogId)) {
+            long peerDialogId = ForumUtilities.getMonoForumTopicPeerDialogId(topic);
+            if (peerDialogId != 0) {
+                return peerDialogId;
+            }
+        }
+        return topic != null ? topic.id : 0;
+    }
+
     public void updateTopicData(long dialogId, TLRPC.TL_forumTopic fromTopic, int flags, int date) {
         if (fromTopic == null) {
             return;
@@ -1708,12 +1719,13 @@ public class MessagesStorage extends BaseController {
             SQLitePreparedStatement state = null;
             SQLiteCursor cursor = null;
             try {
+                long topicId = getTopicStorageId(dialogId, fromTopic);
                 if ((flags & TopicsController.TOPIC_FLAG_TOTAL_MESSAGES_COUNT) != 0) {
                     state = database.executeFast("UPDATE topics SET total_messages_count = ? WHERE did = ? AND topic_id = ?");
                     state.requery();
                     state.bindInteger(1, fromTopic.totalMessagesCount);
                     state.bindLong(2, dialogId);
-                    state.bindLong(3, isMonoForum(dialogId) ? DialogObject.getPeerDialogId(fromTopic.from_id) : fromTopic.id);
+                    state.bindLong(3, topicId);
                     state.step();
                     state.dispose();
                     if (flags == TopicsController.TOPIC_FLAG_TOTAL_MESSAGES_COUNT) {
@@ -1722,7 +1734,7 @@ public class MessagesStorage extends BaseController {
                 }
                 int currentEditDate = 0;
                 TLRPC.TL_forumTopic topicToUpdate = null;
-                cursor = database.queryFinalized(String.format(Locale.US, "SELECT data, edit_date FROM topics WHERE did = %d AND topic_id = %d", dialogId, fromTopic.id));
+                cursor = database.queryFinalized(String.format(Locale.US, "SELECT data, edit_date FROM topics WHERE did = %d AND topic_id = %d", dialogId, topicId));
                 if (cursor.next()) {
                     NativeByteBuffer data = cursor.byteBufferValue(0);
                     currentEditDate = cursor.intValue(1);
@@ -1762,7 +1774,7 @@ public class MessagesStorage extends BaseController {
                     state.bindInteger(3, topicToUpdate.hidden ? 1 : 0);
                     state.bindInteger(4, date);
                     state.bindLong(5, dialogId);
-                    state.bindLong(6, topicToUpdate.id);
+                    state.bindLong(6, topicId);
                     state.step();
                     data.reuse();
 
@@ -17375,6 +17387,194 @@ public class MessagesStorage extends BaseController {
         return chat;
     }
 
+    private boolean canSearchMonoForumTopics(int dialogsType) {
+        return dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT
+                || dialogsType == DialogsActivity.DIALOGS_TYPE_FOLDER1
+                || dialogsType == DialogsActivity.DIALOGS_TYPE_FOLDER2;
+    }
+
+    private boolean searchMatchesName(String value, String[] search) {
+        if (TextUtils.isEmpty(value)) {
+            return false;
+        }
+        String name = value.toLowerCase();
+        String tName = LocaleController.getInstance().getTranslitString(name);
+        if (name.equals(tName)) {
+            tName = null;
+        }
+        for (String q : search) {
+            if (name.startsWith(q) || name.contains(" " + q) || tName != null && (tName.startsWith(q) || tName.contains(" " + q))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean searchMatchesUsername(String username, String[] search) {
+        if (TextUtils.isEmpty(username)) {
+            return false;
+        }
+        username = username.toLowerCase();
+        for (String q : search) {
+            if (q != null && q.startsWith("@")) {
+                q = q.substring(1);
+            }
+            if (!TextUtils.isEmpty(q) && username.startsWith(q)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String getPeerSearchName(TLObject peer) {
+        if (peer instanceof TLRPC.User) {
+            TLRPC.User user = (TLRPC.User) peer;
+            return ContactsController.formatName(user.first_name, user.last_name);
+        } else if (peer instanceof TLRPC.Chat) {
+            return ((TLRPC.Chat) peer).title;
+        }
+        return null;
+    }
+
+    private String getMonoForumParentTitle(TLRPC.Chat chat) throws Exception {
+        if (ChatObject.isMonoForum(chat) && chat.linked_monoforum_id != 0) {
+            ArrayList<TLRPC.Chat> linkedChats = new ArrayList<>();
+            getChatsInternal(Long.toString(chat.linked_monoforum_id), linkedChats);
+            if (!linkedChats.isEmpty()) {
+                return linkedChats.get(0).title;
+            }
+        }
+        String title = ForumUtilities.getMonoForumTitle(currentAccount, chat, true);
+        return TextUtils.isEmpty(title) && chat != null ? chat.title : title;
+    }
+
+    private void collectMonoForumChatsForSearch(ArrayList<Long> chatsToLoad, LongSparseArray<DialogsSearchAdapter.DialogSearchResult> dialogsResult, ArrayList<TLRPC.Chat> monoForumChatsToSearch, HashSet<Long> monoForumDialogIdsToSearch) throws Exception {
+        if (chatsToLoad.isEmpty() || monoForumChatsToSearch == null) {
+            return;
+        }
+        ArrayList<TLRPC.Chat> chats = new ArrayList<>();
+        getChatsInternal(TextUtils.join(",", chatsToLoad), chats);
+        for (int i = 0; i < chats.size(); i++) {
+            TLRPC.Chat chat = chats.get(i);
+            if (chat == null || !ChatObject.isMonoForum(chat) || chat.deactivated || ChatObject.isChannel(chat) && ChatObject.isNotInChat(chat)) {
+                continue;
+            }
+            long dialogId = -chat.id;
+            if (dialogsResult.get(dialogId) != null && !monoForumDialogIdsToSearch.contains(dialogId)) {
+                monoForumChatsToSearch.add(chat);
+                monoForumDialogIdsToSearch.add(dialogId);
+            }
+        }
+    }
+
+    private void searchMonoForumTopics(String[] search, ArrayList<TLRPC.Chat> monoForumChats, LongSparseArray<DialogsSearchAdapter.DialogSearchResult> dialogsResult, ArrayList<DialogsSearchAdapter.DialogSearchResult> searchResults) throws Exception {
+        if (monoForumChats == null || monoForumChats.isEmpty()) {
+            return;
+        }
+        ArrayList<DialogsSearchAdapter.MonoForumTopicSearchResult> candidates = new ArrayList<>();
+        ArrayList<Long> usersToLoad = new ArrayList<>();
+        ArrayList<Long> chatsToLoad = new ArrayList<>();
+
+        for (int i = 0; i < monoForumChats.size(); i++) {
+            TLRPC.Chat parentChat = monoForumChats.get(i);
+            if (parentChat == null) {
+                continue;
+            }
+            long dialogId = -parentChat.id;
+            DialogsSearchAdapter.DialogSearchResult parentResult = dialogsResult.get(dialogId);
+            int parentDate = parentResult != null ? parentResult.date : 0;
+            SQLiteCursor topicsCursor = null;
+            try {
+                topicsCursor = database.queryFinalized(String.format(Locale.US, "SELECT top_message, data FROM topics WHERE did = %d ORDER BY top_message DESC LIMIT 200", dialogId));
+                while (topicsCursor.next()) {
+                    NativeByteBuffer data = topicsCursor.byteBufferValue(1);
+                    if (data == null) {
+                        continue;
+                    }
+                    TLRPC.TL_forumTopic topic = TLRPC.TL_forumTopic.TLdeserialize(data, data.readInt32(false), false);
+                    data.reuse();
+                    if (topic == null) {
+                        continue;
+                    }
+                    topic.top_message = topicsCursor.intValue(0);
+                    long peerDialogId = ForumUtilities.getMonoForumTopicPeerDialogId(topic);
+                    if (peerDialogId == 0) {
+                        continue;
+                    }
+                    DialogsSearchAdapter.MonoForumTopicSearchResult result = new DialogsSearchAdapter.MonoForumTopicSearchResult();
+                    result.dialogId = dialogId;
+                    result.topicId = peerDialogId;
+                    result.date = parentDate;
+                    result.parentChat = parentChat;
+                    result.topic = topic;
+                    candidates.add(result);
+                    if (peerDialogId > 0) {
+                        if (!usersToLoad.contains(peerDialogId)) {
+                            usersToLoad.add(peerDialogId);
+                        }
+                    } else {
+                        long chatId = -peerDialogId;
+                        if (!chatsToLoad.contains(chatId)) {
+                            chatsToLoad.add(chatId);
+                        }
+                    }
+                }
+            } finally {
+                if (topicsCursor != null) {
+                    topicsCursor.dispose();
+                }
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return;
+        }
+
+        LongSparseArray<TLObject> peers = new LongSparseArray<>();
+        ArrayList<TLRPC.User> loadedUsers = new ArrayList<>();
+        getUsersInternal(usersToLoad, loadedUsers);
+        for (int i = 0; i < loadedUsers.size(); i++) {
+            TLRPC.User user = loadedUsers.get(i);
+            peers.put(user.id, user);
+        }
+        if (!chatsToLoad.isEmpty()) {
+            ArrayList<TLRPC.Chat> loadedChats = new ArrayList<>();
+            getChatsInternal(TextUtils.join(",", chatsToLoad), loadedChats);
+            for (int i = 0; i < loadedChats.size(); i++) {
+                TLRPC.Chat chat = loadedChats.get(i);
+                peers.put(-chat.id, chat);
+            }
+        }
+
+        int addedCount = 0;
+        for (int i = 0; i < candidates.size() && addedCount < 50; i++) {
+            DialogsSearchAdapter.MonoForumTopicSearchResult result = candidates.get(i);
+            TLObject peer = peers.get(result.topicId);
+            if (peer == null) {
+                continue;
+            }
+            String peerName = getPeerSearchName(peer);
+            if (TextUtils.isEmpty(peerName)) {
+                peerName = Long.toString(result.topicId);
+            }
+            String username = DialogObject.getPublicUsername(peer);
+            String parentTitle = getMonoForumParentTitle(result.parentChat);
+            boolean nameMatches = searchMatchesName(peerName, search);
+            if (!nameMatches && !searchMatchesUsername(username, search) && !searchMatchesName(parentTitle, search)) {
+                continue;
+            }
+            result.peer = peer;
+            result.name = nameMatches ? AndroidUtilities.generateSearchName(peerName, null, search[0]) : AndroidUtilities.removeRTL(AndroidUtilities.removeDiacritics(peerName));
+            result.subtitle = parentTitle;
+
+            DialogsSearchAdapter.DialogSearchResult searchResult = new DialogsSearchAdapter.DialogSearchResult();
+            searchResult.object = result;
+            searchResult.name = result.name;
+            searchResult.date = result.date;
+            searchResults.add(searchResult);
+            addedCount++;
+        }
+    }
 
     public void localSearch(int dialogsType, String query, ArrayList<Object> resultArray, ArrayList<CharSequence> resultArrayNames, ArrayList<TLRPC.User> encUsers, ArrayList<Long> onlyDialogIds, int folderId) {
         long selfUserId = UserConfig.getInstance(currentAccount).getClientUserId();
@@ -17401,6 +17601,8 @@ public class MessagesStorage extends BaseController {
             ArrayList<Long> usersToLoad = new ArrayList<>();
             ArrayList<Long> chatsToLoad = new ArrayList<>();
             ArrayList<Integer> encryptedToLoad = new ArrayList<>();
+            ArrayList<TLRPC.Chat> monoForumChatsToSearch = canSearchMonoForumTopics(dialogsType) ? new ArrayList<>() : null;
+            HashSet<Long> monoForumDialogIdsToSearch = monoForumChatsToSearch != null ? new HashSet<>() : null;
             int resultCount = 0;
 
             LongSparseArray<DialogsSearchAdapter.DialogSearchResult> dialogsResult = new LongSparseArray<>();
@@ -17521,6 +17723,8 @@ public class MessagesStorage extends BaseController {
                 cursor = null;
             }
 
+            collectMonoForumChatsForSearch(chatsToLoad, dialogsResult, monoForumChatsToSearch, monoForumDialogIdsToSearch);
+
             if (!chatsToLoad.isEmpty()) {
                 cursor = getDatabase().queryFinalized(String.format(Locale.US, "SELECT data, name FROM chats WHERE uid IN(%s)", TextUtils.join(",", chatsToLoad)));
                 while (cursor.next()) {
@@ -17544,6 +17748,11 @@ public class MessagesStorage extends BaseController {
                                 if (dialogsType == DialogsActivity.DIALOGS_TYPE_CHANNELS_ONLY && !ChatObject.isChannelAndNotMegaGroup(chat)) {
                                     continue;
                                 }
+                                long dialog_id = -chat.id;
+                                if (monoForumChatsToSearch != null && ChatObject.isMonoForum(chat) && dialogsResult.get(dialog_id) != null && !monoForumDialogIdsToSearch.contains(dialog_id)) {
+                                    monoForumChatsToSearch.add(chat);
+                                    monoForumDialogIdsToSearch.add(dialog_id);
+                                }
 
                                 if (chat.monoforum) {
                                     name = ForumUtilities.getMonoForumTitle(currentAccount, chat, true);
@@ -17563,7 +17772,6 @@ public class MessagesStorage extends BaseController {
                                 }
 
                                 if (!(chat == null || chat.deactivated || ChatObject.isChannel(chat) && ChatObject.isNotInChat(chat))) {
-                                    long dialog_id = -chat.id;
                                     DialogsSearchAdapter.DialogSearchResult dialogSearchResult = dialogsResult.get(dialog_id);
                                     dialogSearchResult.name = AndroidUtilities.generateSearchName(chat.monoforum ? ForumUtilities.getMonoForumTitle(currentAccount, chat):chat.title, null, q);
                                     dialogSearchResult.object = chat;
@@ -17666,6 +17874,7 @@ public class MessagesStorage extends BaseController {
                     searchResults.add(dialogSearchResult);
                 }
             }
+            searchMonoForumTopics(search, monoForumChatsToSearch, dialogsResult, searchResults);
 
             Collections.sort(searchResults, (lhs, rhs) -> {
                 if (lhs.date < rhs.date) {
