@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
@@ -23,6 +24,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.SerializedData;
+import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
 import org.telegram.ui.ActionBar.AlertDialog;
@@ -31,6 +33,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.Components.BackupImageView;
+import org.telegram.ui.Components.Forum.ForumUtilities;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.DialogsActivity;
@@ -48,9 +51,11 @@ public class BackButtonMenuRecent {
     private static final int MAX_RECENT_DIALOGS = 25;
     private static final String PREFS_NAME = "lawxrecentdialogs";
     private static final String LEGACY_PREFS_NAME = "nekorecentdialogs";
+    private static final String PREFS_KEY_PREFIX = "recents_";
+    private static final String PREFS_TOPICS_KEY_PREFIX = "recents_topics_";
 
     private static final SharedPreferences preferences = PreferencesMigrationHelper.getSharedPreferences(ApplicationLoader.applicationContext, PREFS_NAME, LEGACY_PREFS_NAME);
-    private static final SparseArray<LinkedList<Long>> recentDialogs = new SparseArray<>();
+    private static final SparseArray<LinkedList<MessagesStorage.TopicKey>> recentDialogs = new SparseArray<>();
 
     public static boolean show(int currentAccount, BaseFragment fragment, View button, DialogsActivity.DialogsActivityDelegate delegate) {
         return show(currentAccount, fragment, button, delegate, 0, null, null);
@@ -78,7 +83,9 @@ public class BackButtonMenuRecent {
             });
             options.addGap();
         }
-        for (var dialogId : dialogs) {
+        for (var recentDialog : dialogs) {
+            final long dialogId = recentDialog.dialogId;
+            final long topicId = recentDialog.topicId;
             final TLRPC.Chat chat;
             final TLRPC.User user;
             if (dialogId < 0) {
@@ -94,7 +101,7 @@ public class BackButtonMenuRecent {
             var cell = new FrameLayout(context);
 
             var imageView = new BackupImageView(context);
-            imageView.setRoundRadius(chat != null && chat.forum ? AndroidUtilities.dp(8) : AndroidUtilities.dp(16));
+            imageView.setRoundRadius(chat != null && (chat.forum || ChatObject.isMonoForum(chat)) ? AndroidUtilities.dp(8) : AndroidUtilities.dp(16));
             cell.addView(imageView, LayoutHelper.createFrameRelatively(32, 32, Gravity.START | Gravity.CENTER_VERTICAL, 13, 0, 1, 0));
 
             var titleView = new TextView(context);
@@ -110,11 +117,42 @@ public class BackButtonMenuRecent {
 
             if (chat != null) {
                 avatarDrawable.setInfo(chat);
-                if (chat.photo != null && chat.photo.strippedBitmap != null) {
+                if (topicId != 0 && ChatObject.isMonoForum(chat)) {
+                    TLObject topicPeer = MessagesController.getInstance(currentAccount).getUserOrChat(topicId);
+                    imageView.setRoundRadius(AndroidUtilities.dp(16));
+                    if (topicPeer instanceof TLRPC.User) {
+                        TLRPC.User topicUser = (TLRPC.User) topicPeer;
+                        avatarDrawable.setInfo(topicUser);
+                        titleView.setText(UserObject.getUserName(topicUser));
+                        imageView.setImage(ImageLocation.getForUser(topicUser, ImageLocation.TYPE_SMALL), "50_50", avatarDrawable, topicUser);
+                    } else if (topicPeer instanceof TLRPC.Chat) {
+                        TLRPC.Chat topicChat = (TLRPC.Chat) topicPeer;
+                        avatarDrawable.setInfo(topicChat);
+                        titleView.setText(topicChat.title);
+                        imageView.setImage(ImageLocation.getForChat(topicChat, ImageLocation.TYPE_SMALL), "50_50", avatarDrawable, topicChat);
+                    } else {
+                        ForumUtilities.setMonoForumAvatar(currentAccount, chat, avatarDrawable, imageView);
+                        titleView.setText(ForumUtilities.getMonoForumTitle(currentAccount, chat));
+                    }
+                } else if (chat.photo != null && chat.photo.strippedBitmap != null) {
                     thumb = chat.photo.strippedBitmap;
+                    imageView.setImage(ImageLocation.getForChat(chat, ImageLocation.TYPE_SMALL), "50_50", thumb, chat);
+                } else {
+                    imageView.setImage(ImageLocation.getForChat(chat, ImageLocation.TYPE_SMALL), "50_50", thumb, chat);
                 }
-                imageView.setImage(ImageLocation.getForChat(chat, ImageLocation.TYPE_SMALL), "50_50", thumb, chat);
-                titleView.setText(chat.title);
+                if (topicId != 0 && ChatObject.isForum(chat)) {
+                    TLRPC.TL_forumTopic topic = MessagesController.getInstance(currentAccount).getTopicsController().findTopic(chat.id, topicId);
+                    if (topic != null) {
+                        ForumUtilities.setTopicIcon(imageView, topic);
+                    }
+                    titleView.setText(topic != null ? topic.title : chat.title);
+                } else if (ChatObject.isMonoForum(chat)) {
+                    if (topicId == 0) {
+                        titleView.setText(ForumUtilities.getMonoForumTitle(currentAccount, chat));
+                    }
+                } else {
+                    titleView.setText(chat.title);
+                }
             } else {
                 String name;
                 if (user.photo != null && user.photo.strippedBitmap != null) {
@@ -133,7 +171,17 @@ public class BackButtonMenuRecent {
                     avatarDrawable.setInfo(user);
                     imageView.setImage(ImageLocation.getForUser(user, ImageLocation.TYPE_SMALL), "50_50", thumb, user);
                 }
-                titleView.setText(name);
+                if (topicId != 0) {
+                    TLRPC.TL_forumTopic topic = MessagesController.getInstance(currentAccount).getTopicsController().findTopic(-dialogId, topicId);
+                    if (topic != null) {
+                        ForumUtilities.setTopicIcon(imageView, topic);
+                        titleView.setText(topic.title);
+                    } else {
+                        titleView.setText(name);
+                    }
+                } else {
+                    titleView.setText(name);
+                }
             }
 
             cell.setBackground(Theme.getSelectorDrawable(Theme.getColor(Theme.key_listSelector), false));
@@ -141,30 +189,46 @@ public class BackButtonMenuRecent {
                 options.dismiss();
                 if (fragment instanceof DialogsActivity dialogsActivity && delegate != null) {
                     ArrayList<MessagesStorage.TopicKey> keys = new ArrayList<>();
-                    keys.add(MessagesStorage.TopicKey.of(dialogId, 0));
+                    keys.add(MessagesStorage.TopicKey.of(dialogId, topicId));
                     delegate.didSelectDialogs(dialogsActivity, keys, null, false, true, 0, 0, null);
                     return;
                 }
                 var bundle = new Bundle();
                 if (dialogId < 0) {
                     bundle.putLong("chat_id", -dialogId);
-                    if (MessagesController.getInstance(currentAccount).isForum(dialogId)) {
+                    boolean monoForum = ChatObject.isMonoForum(chat);
+                    if (monoForum) {
+                        bundle.putInt("chatMode", ChatActivity.MODE_SUGGESTIONS);
+                        bundle.putBoolean("isSubscriberSuggestions", !ChatObject.canManageMonoForum(currentAccount, chat));
+                    }
+                    if (topicId != 0) {
+                        ChatActivity chatActivity = new ChatActivity(bundle);
+                        ForumUtilities.applyTopic(chatActivity, MessagesStorage.TopicKey.of(dialogId, topicId));
+                        fragment.presentFragment(chatActivity);
+                    } else if (monoForum) {
+                        fragment.presentFragment(new ChatActivity(bundle));
+                    } else if (MessagesController.getInstance(currentAccount).isForum(dialogId)) {
                         fragment.presentFragment(new TopicsFragment(bundle));
                     } else {
                         fragment.presentFragment(new ChatActivity(bundle));
                     }
                 } else {
                     bundle.putLong("user_id", dialogId);
-                    fragment.presentFragment(new ChatActivity(bundle));
+                    ChatActivity chatActivity = new ChatActivity(bundle);
+                    if (topicId != 0) {
+                        ForumUtilities.applyTopic(chatActivity, MessagesStorage.TopicKey.of(dialogId, topicId));
+                    }
+                    fragment.presentFragment(chatActivity);
                 }
             });
             cell.setOnLongClickListener(e2 -> {
                 options.dismiss();
                 var bundle = new Bundle();
-                if (dialogId < 0) {
-                    bundle.putLong("chat_id", -dialogId);
+                long profileDialogId = topicId != 0 && chat != null && ChatObject.isMonoForum(chat) ? topicId : dialogId;
+                if (profileDialogId < 0) {
+                    bundle.putLong("chat_id", -profileDialogId);
                 } else {
-                    bundle.putLong("user_id", dialogId);
+                    bundle.putLong("user_id", profileDialogId);
                 }
                 fragment.presentFragment(new ProfileActivity(bundle));
                 return true;
@@ -198,28 +262,61 @@ public class BackButtonMenuRecent {
         return true;
     }
 
-    private static LinkedList<Long> getRecentDialogs(int currentAccount) {
-        LinkedList<Long> recentDialog = recentDialogs.get(currentAccount);
+    private static LinkedList<MessagesStorage.TopicKey> getRecentDialogs(int currentAccount) {
+        LinkedList<MessagesStorage.TopicKey> recentDialog = recentDialogs.get(currentAccount);
         if (recentDialog == null) {
             recentDialog = new LinkedList<>();
-            String list = preferences.getString("recents_" + currentAccount, null);
+            String list = preferences.getString(PREFS_TOPICS_KEY_PREFIX + currentAccount, null);
             if (!TextUtils.isEmpty(list)) {
-                byte[] bytes = Base64.decode(list, Base64.NO_WRAP | Base64.NO_PADDING);
-                SerializedData data = new SerializedData(bytes);
-                int count = data.readInt32(false);
-                for (int a = 0; a < count; a++) {
-                    recentDialog.add(data.readInt64(false));
+                readRecentDialogs(list, recentDialog, true);
+            } else {
+                list = preferences.getString(PREFS_KEY_PREFIX + currentAccount, null);
+                if (!TextUtils.isEmpty(list)) {
+                    readRecentDialogs(list, recentDialog, false);
+                    saveRecentDialogsAsync(currentAccount, recentDialog);
                 }
-                data.cleanup();
             }
             recentDialogs.put(currentAccount, recentDialog);
         }
         return recentDialog;
     }
 
+    private static void readRecentDialogs(String list, LinkedList<MessagesStorage.TopicKey> recentDialog, boolean hasTopicIds) {
+        SerializedData data = null;
+        try {
+            byte[] bytes = Base64.decode(list, Base64.NO_WRAP | Base64.NO_PADDING);
+            data = new SerializedData(bytes);
+            if (data.remaining() < 4) {
+                return;
+            }
+            int count = data.readInt32(false);
+            for (int a = 0; a < count && data.remaining() >= 8; a++) {
+                long dialogId = data.readInt64(false);
+                long topicId = 0;
+                if (hasTopicIds) {
+                    if (data.remaining() < 8) {
+                        break;
+                    }
+                    topicId = data.readInt64(false);
+                }
+                recentDialog.add(MessagesStorage.TopicKey.of(dialogId, topicId));
+            }
+        } catch (Exception ignore) {
+            recentDialog.clear();
+        } finally {
+            if (data != null) {
+                data.cleanup();
+            }
+        }
+    }
+
     public static void addToRecentDialogs(int currentAccount, long dialogId) {
-        LinkedList<Long> recentDialog = getRecentDialogs(currentAccount);
-        if (!recentDialog.isEmpty() && recentDialog.getFirst() == dialogId) {
+        addToRecentDialogs(currentAccount, dialogId, 0);
+    }
+
+    public static void addToRecentDialogs(int currentAccount, long dialogId, long topicId) {
+        LinkedList<MessagesStorage.TopicKey> recentDialog = getRecentDialogs(currentAccount);
+        if (!recentDialog.isEmpty() && recentDialog.getFirst().dialogId == dialogId && recentDialog.getFirst().topicId == topicId) {
             if (recentDialog.size() <= MAX_RECENT_DIALOGS) {
                 return;
             }
@@ -228,41 +325,49 @@ public class BackButtonMenuRecent {
             return;
         }
         for (int i = 0; i < recentDialog.size(); i++) {
-            if (recentDialog.get(i) == dialogId) {
+            MessagesStorage.TopicKey key = recentDialog.get(i);
+            if (key.dialogId == dialogId && key.topicId == topicId) {
                 recentDialog.remove(i);
                 break;
             }
         }
 
-        recentDialog.addFirst(dialogId);
+        recentDialog.addFirst(MessagesStorage.TopicKey.of(dialogId, topicId));
         trimRecentDialogs(recentDialog);
         saveRecentDialogsAsync(currentAccount, recentDialog);
     }
 
-    private static void trimRecentDialogs(LinkedList<Long> recentDialog) {
+    private static void trimRecentDialogs(LinkedList<MessagesStorage.TopicKey> recentDialog) {
         while (recentDialog.size() > MAX_RECENT_DIALOGS) {
             recentDialog.removeLast();
         }
     }
 
-    private static void saveRecentDialogsAsync(int currentAccount, LinkedList<Long> recentDialog) {
-        LinkedList<Long> finalRecentDialog = new LinkedList<>(recentDialog);
+    private static void saveRecentDialogsAsync(int currentAccount, LinkedList<MessagesStorage.TopicKey> recentDialog) {
+        LinkedList<MessagesStorage.TopicKey> finalRecentDialog = new LinkedList<>();
+        for (MessagesStorage.TopicKey topicKey : recentDialog) {
+            finalRecentDialog.add(MessagesStorage.TopicKey.of(topicKey.dialogId, topicKey.topicId));
+        }
         Utilities.globalQueue.postRunnable(() -> saveRecentDialogs(currentAccount, finalRecentDialog));
     }
 
-    private static void saveRecentDialogs(int currentAccount, LinkedList<Long> recentDialog) {
+    private static void saveRecentDialogs(int currentAccount, LinkedList<MessagesStorage.TopicKey> recentDialog) {
         SerializedData serializedData = new SerializedData();
         int count = recentDialog.size();
         serializedData.writeInt32(count);
-        for (Long dialog : recentDialog) {
-            serializedData.writeInt64(dialog);
+        for (MessagesStorage.TopicKey dialog : recentDialog) {
+            serializedData.writeInt64(dialog.dialogId);
+            serializedData.writeInt64(dialog.topicId);
         }
-        preferences.edit().putString("recents_" + currentAccount, Base64.encodeToString(serializedData.toByteArray(), Base64.NO_WRAP | Base64.NO_PADDING)).apply();
+        preferences.edit().putString(PREFS_TOPICS_KEY_PREFIX + currentAccount, Base64.encodeToString(serializedData.toByteArray(), Base64.NO_WRAP | Base64.NO_PADDING)).apply();
         serializedData.cleanup();
     }
 
     public static void clearRecentDialogs(int currentAccount) {
         getRecentDialogs(currentAccount).clear();
-        preferences.edit().putString("recents_" + currentAccount, "").apply();
+        preferences.edit()
+                .putString(PREFS_KEY_PREFIX + currentAccount, "")
+                .putString(PREFS_TOPICS_KEY_PREFIX + currentAccount, "")
+                .apply();
     }
 }

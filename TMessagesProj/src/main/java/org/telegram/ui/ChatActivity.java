@@ -9050,7 +9050,12 @@ public class ChatActivity extends BaseFragment implements
                 updatePollVotesMentionButton(false);
             }
         }
-        if (chatMode == MODE_DEFAULT) BackButtonMenuRecent.addToRecentDialogs(currentAccount, currentUser != null ? currentUser.id : -currentChat.id);
+        if (chatMode == MODE_DEFAULT || (chatMode == MODE_SUGGESTIONS && ChatObject.isMonoForum(currentChat))) {
+            long recentDialogId = currentUser != null ? currentUser.id : currentChat != null ? -currentChat.id : 0;
+            if (recentDialogId != 0) {
+                BackButtonMenuRecent.addToRecentDialogs(currentAccount, recentDialogId, getTopicId());
+            }
+        }
 
         if (getDialogId() == getUserConfig().getClientUserId() && chatMode != MODE_SAVED) {
             savedMessagesHint = new HintView2(context, HintView2.DIRECTION_TOP);
