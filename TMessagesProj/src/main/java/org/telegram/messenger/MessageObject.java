@@ -42,6 +42,7 @@ import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.RelativeSizeSpan;
+import android.text.style.ReplacementSpan;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.util.Base64;
@@ -2201,6 +2202,66 @@ public class MessageObject {
         }
     }
 
+    private static String getAdminLogAvatarColorName(int color) {
+        if (color < 0) {
+            return getString(R.string.EventLogEmojiNone);
+        }
+        return AvatarDrawable.colorName(color).toLowerCase();
+    }
+
+    private static SpannableStringBuilder getAdminLogPeerColorValue(int currentAccount, TLRPC.PeerColor peerColor, boolean profile) {
+        SpannableStringBuilder value = new SpannableStringBuilder();
+        if (peerColor instanceof TLRPC.TL_peerColor) {
+            if ((peerColor.flags & 1) != 0 && peerColor.color >= 0) {
+                value.append("c");
+                value.setSpan(new PeerColorActivity.PeerColorSpan(profile, currentAccount, peerColor.color).setSize(dp(18)), value.length() - 1, value.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if ((peerColor.flags & 2) != 0 && peerColor.background_emoji_id != 0) {
+                if (value.length() > 0)
+                    value.append(", ");
+                value.append("e");
+                value.setSpan(new AnimatedEmojiSpan(peerColor.background_emoji_id, Theme.chat_actionTextPaint.getFontMetricsInt()), value.length() - 1, value.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        } else if (peerColor instanceof TLRPC.TL_peerColorCollectible) {
+            PeerColorActivity.PeerColorDrawable drawable = PeerColorActivity.PeerColorDrawable.from((TLRPC.TL_peerColorCollectible) peerColor);
+            if (drawable != null) {
+                value.append("c");
+                value.setSpan(new AdminLogPeerColorDrawableSpan(drawable).setSize(dp(18)), value.length() - 1, value.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        if (value.length() == 0) {
+            value.append(getString(R.string.EventLogEmojiNone));
+        }
+        return value;
+    }
+
+    private static class AdminLogPeerColorDrawableSpan extends ReplacementSpan {
+        private final PeerColorActivity.PeerColorDrawable drawable;
+        private int size = dp(21);
+
+        private AdminLogPeerColorDrawableSpan(PeerColorActivity.PeerColorDrawable drawable) {
+            this.drawable = drawable;
+        }
+
+        private AdminLogPeerColorDrawableSpan setSize(int size) {
+            drawable.setRadius(size / 2f);
+            this.size = size;
+            return this;
+        }
+
+        @Override
+        public int getSize(@NonNull Paint paint, CharSequence text, int start, int end, Paint.FontMetricsInt fm) {
+            return dp(3) + size + dp(3);
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, @NonNull Paint paint) {
+            int cy = (top + bottom) / 2;
+            drawable.setBounds((int) (x + dp(3)), cy - size, (int) (x + dp(5) + size), cy + size);
+            drawable.draw(canvas);
+        }
+    }
+
     public MessageObject(int accountNum, TLRPC.TL_channelAdminLogEvent event, ArrayList<MessageObject> messageObjects, HashMap<String, ArrayList<MessageObject>> messagesByDays, TLRPC.Chat chat, int[] mid, boolean addToEnd) {
         currentEvent = event;
         currentAccount = accountNum;
@@ -3292,41 +3353,14 @@ public class MessageObject {
         } else if (event.action instanceof TLRPC.TL_channelAdminLogEventActionChangeColor) {
             boolean isChannel = ChatObject.isChannelAndNotMegaGroup(chat);
             TLRPC.TL_channelAdminLogEventActionChangeColor action = (TLRPC.TL_channelAdminLogEventActionChangeColor) event.action;
-            messageText = replaceWithLink(formatString(isChannel ? R.string.EventLogChangedColor : R.string.EventLogChangedColorGroup, AvatarDrawable.colorName(action.prev_value).toLowerCase(), AvatarDrawable.colorName(action.new_value).toLowerCase()), "un1", fromUser);
+            messageText = replaceWithLink(formatString(isChannel ? R.string.EventLogChangedColor : R.string.EventLogChangedColorGroup, getAdminLogAvatarColorName(action.prev_value), getAdminLogAvatarColorName(action.new_value)), "un1", fromUser);
         } else if (event.action instanceof TLRPC.TL_channelAdminLogEventActionChangePeerColor) {
             boolean isChannel = ChatObject.isChannelAndNotMegaGroup(chat);
             TLRPC.TL_channelAdminLogEventActionChangePeerColor action = (TLRPC.TL_channelAdminLogEventActionChangePeerColor) event.action;
             SpannableStringBuilder ssb = new SpannableStringBuilder(getString(isChannel ? R.string.EventLogChangedPeerColorIcon : R.string.EventLogChangedPeerColorIconGroup));
 
-            SpannableStringBuilder prev = new SpannableStringBuilder();
-            if ((action.prev_value.flags & 1) != 0) {
-                prev.append("c");
-                prev.setSpan(new PeerColorActivity.PeerColorSpan(false, currentAccount, action.prev_value.color).setSize(dp(18)), prev.length() - 1, prev.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if ((action.prev_value.flags & 2) != 0) {
-                if (prev.length() > 0)
-                    prev.append(", ");
-                prev.append("e");
-                prev.setSpan(new AnimatedEmojiSpan(action.prev_value.background_emoji_id, Theme.chat_actionTextPaint.getFontMetricsInt()), prev.length() - 1, prev.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if (prev.length() == 0) {
-                prev.append(getString(R.string.EventLogEmojiNone));
-            }
-
-            SpannableStringBuilder next = new SpannableStringBuilder();
-            if ((action.new_value.flags & 1) != 0) {
-                next.append("c");
-                next.setSpan(new PeerColorActivity.PeerColorSpan(false, currentAccount, action.new_value.color).setSize(dp(18)), next.length() - 1, next.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if ((action.new_value.flags & 2) != 0) {
-                if (next.length() > 0)
-                    next.append(", ");
-                next.append("e");
-                next.setSpan(new AnimatedEmojiSpan(action.new_value.background_emoji_id, Theme.chat_actionTextPaint.getFontMetricsInt()), next.length() - 1, next.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if (next.length() == 0) {
-                next.append(getString(R.string.EventLogEmojiNone));
-            }
+            SpannableStringBuilder prev = getAdminLogPeerColorValue(currentAccount, action.prev_value, false);
+            SpannableStringBuilder next = getAdminLogPeerColorValue(currentAccount, action.new_value, false);
 
             ssb = AndroidUtilities.replaceCharSequence("%1$s", ssb, prev);
             ssb = AndroidUtilities.replaceCharSequence("%2$s", ssb, next);
@@ -3337,35 +3371,8 @@ public class MessageObject {
             TLRPC.TL_channelAdminLogEventActionChangeProfilePeerColor action = (TLRPC.TL_channelAdminLogEventActionChangeProfilePeerColor) event.action;
             SpannableStringBuilder ssb = new SpannableStringBuilder(getString(isChannel ? R.string.EventLogChangedProfileColorIcon : R.string.EventLogChangedProfileColorIconGroup));
 
-            SpannableStringBuilder prev = new SpannableStringBuilder();
-            if ((action.prev_value.flags & 1) != 0) {
-                prev.append("c");
-                prev.setSpan(new PeerColorActivity.PeerColorSpan(true, currentAccount, action.prev_value.color).setSize(dp(18)), prev.length() - 1, prev.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if ((action.prev_value.flags & 2) != 0) {
-                if (prev.length() > 0)
-                    prev.append(", ");
-                prev.append("e");
-                prev.setSpan(new AnimatedEmojiSpan(action.prev_value.background_emoji_id, Theme.chat_actionTextPaint.getFontMetricsInt()), prev.length() - 1, prev.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if (prev.length() == 0) {
-                prev.append(getString(R.string.EventLogEmojiNone));
-            }
-
-            SpannableStringBuilder next = new SpannableStringBuilder();
-            if ((action.new_value.flags & 1) != 0) {
-                next.append("c");
-                next.setSpan(new PeerColorActivity.PeerColorSpan(true, currentAccount, action.new_value.color).setSize(dp(18)), next.length() - 1, next.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if ((action.new_value.flags & 2) != 0) {
-                if (next.length() > 0)
-                    next.append(", ");
-                next.append("e");
-                next.setSpan(new AnimatedEmojiSpan(action.new_value.background_emoji_id, Theme.chat_actionTextPaint.getFontMetricsInt()), next.length() - 1, next.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if (next.length() == 0) {
-                next.append(getString(R.string.EventLogEmojiNone));
-            }
+            SpannableStringBuilder prev = getAdminLogPeerColorValue(currentAccount, action.prev_value, true);
+            SpannableStringBuilder next = getAdminLogPeerColorValue(currentAccount, action.new_value, true);
 
             ssb = AndroidUtilities.replaceCharSequence("%1$s", ssb, prev);
             ssb = AndroidUtilities.replaceCharSequence("%2$s", ssb, next);

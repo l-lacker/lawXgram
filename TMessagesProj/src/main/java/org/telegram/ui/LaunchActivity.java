@@ -6425,6 +6425,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     videoPath = null;
                     sendingText = null;
                 }
+                final boolean sharedMediaEditorConfirmed = dialogsFragment != null && dialogsFragment.isSharedMediaEditorConfirmed();
                 String captionToSend = null;
                 for (int i = 0; i < dids.size(); i++) {
                     final long did = dids.get(i).dialogId;
@@ -6441,15 +6442,17 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     }
                     boolean photosEditorOpened = false, videoEditorOpened = false;
                     if (fragment != null) {
+                        final boolean canOpenMediaEditor = dids.size() == 1 && topicId == 0 && !sharedMediaEditorConfirmed;
                         boolean withoutAnimation = dialogsFragment == null || videoPath != null || (photoPathsArray != null && photoPathsArray.size() > 0);
                         getActionBarLayout().presentFragment(fragment, dialogsFragment != null, withoutAnimation, true, false);
                         presentedFragmentWithRemoveLast = dialogsFragment != null;
-                        if (videoPath != null && topicId == 0 && !hasSharedMediaEntries) {
+                        if (videoPath != null && canOpenMediaEditor) {
                             fragment.openVideoEditor(videoPath, sendingText);
                             videoEditorOpened = true;
                             sendingText = null;
-                        } else if (photoPathsArray != null && photoPathsArray.size() > 0 && topicId == 0 && !hasSharedMediaEntries) {
-                            photosEditorOpened = fragment.openPhotosEditor(photoPathsArray, message == null || message.length() == 0 ? sendingText : message);
+                        } else if (photoPathsArray != null && photoPathsArray.size() > 0 && canOpenMediaEditor) {
+                            final CharSequence photosCaption = message == null || message.length() == 0 ? sendingText : message;
+                            photosEditorOpened = fragment.openPhotosEditor(photoPathsArray, photosCaption != null ? photosCaption : getFirstMediaCaption(photoPathsArray));
                             if (photosEditorOpened) {
                                 sendingText = null;
                             }
@@ -6572,6 +6575,19 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         final ArrayList<TLRPC.MessageEntity> entities = accountInstance.getMediaDataController().getEntities(cs, true);
         final SendMessagesHelper.SendMessageParams params = SendMessagesHelper.SendMessageParams.of(cs[0].toString(), dialogId, replyToMsg, replyToMsg, webPage, previewEnabled, entities, null, null, notify, scheduleDate, scheduleRepeatPeriod, null, false);
         accountInstance.getSendMessagesHelper().sendMessage(params);
+    }
+
+    private static CharSequence getFirstMediaCaption(ArrayList<SendMessagesHelper.SendingMediaInfo> infos) {
+        if (infos == null) {
+            return null;
+        }
+        for (int i = 0; i < infos.size(); i++) {
+            final SendMessagesHelper.SendingMediaInfo info = infos.get(i);
+            if (info != null && !TextUtils.isEmpty(info.caption)) {
+                return info.caption;
+            }
+        }
+        return null;
     }
 
     private static ArrayList<SendMessagesHelper.SendingMediaInfo> buildSendingInfosFromEntries(ArrayList<MediaController.PhotoEntry> entries) {

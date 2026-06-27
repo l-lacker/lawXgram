@@ -269,6 +269,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     private boolean endReached;
     private boolean loading;
     private boolean reloadingLastMessages;
+    private boolean initialRequestsStarted;
     private int loadsCount;
 
     private ArrayList<TLRPC.ChannelParticipant> admins;
@@ -400,8 +401,6 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.messagePlayingDidReset);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.messagePlayingProgressDidChanged);
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.didSetNewWallpapper);
-        loadMessages(true);
-        loadAdmins();
 
         Bulletin.addDelegate(this, new Bulletin.Delegate() {
             @Override
@@ -411,6 +410,25 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
         });
 
         return true;
+    }
+
+    private void startInitialRequests() {
+        if (initialRequestsStarted || isFinished) {
+            return;
+        }
+        initialRequestsStarted = true;
+        loadMessages(true);
+        loadAdmins();
+    }
+
+    private boolean isAdminLogRequestUiReady() {
+        return !isFinished
+                && contentView != null
+                && chatListView != null
+                && chatListItemAnimator != null
+                && chatAdapter != null
+                && progressView != null
+                && emptyViewContainer != null;
     }
 
     @Override
@@ -485,6 +503,10 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
             if (response != null) {
                 final TLRPC.TL_channels_adminLogResults res = (TLRPC.TL_channels_adminLogResults) response;
                 AndroidUtilities.runOnUIThread(() -> {
+                    if (!isAdminLogRequestUiReady()) {
+                        reloadingLastMessages = false;
+                        return;
+                    }
                     reloadingLastMessages = false;
                     chatListItemAnimator.setShouldAnimateEnterFromBottom(false);
                     saveScrollPosition(false);
@@ -569,6 +591,11 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
             if (response != null) {
                 final TLRPC.TL_channels_adminLogResults res = (TLRPC.TL_channels_adminLogResults) response;
                 AndroidUtilities.runOnUIThread(() -> {
+                    if (!isAdminLogRequestUiReady()) {
+                        loadsCount = Math.max(0, loadsCount - 1);
+                        loading = false;
+                        return;
+                    }
                     loadsCount--;
                     chatListItemAnimator.setShouldAnimateEnterFromBottom(false);
                     saveScrollPosition(false);
@@ -625,6 +652,9 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
                     }
                     if (!missingReplies.isEmpty()) {
                         MediaDataController.getInstance(currentAccount).loadReplyMessagesForMessages(missingReplies, -currentChat.id, ChatActivity.MODE_DEFAULT, 0, () -> {
+                            if (!isAdminLogRequestUiReady()) {
+                                return;
+                            }
                             saveScrollPosition(false);
                             chatAdapter.notifyDataSetChanged();
                         }, getClassGuid(), null);
@@ -1610,6 +1640,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
         contentView.addView(undoView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM | Gravity.LEFT, 8, 0, 8, 8));
 
         updateEmptyPlaceholder();
+        startInitialRequests();
 
         return fragmentView;
     }
@@ -2466,6 +2497,9 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
         req.offset = 0;
         req.limit = 200;
         int reqId = ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            if (!isAdminLogRequestUiReady()) {
+                return;
+            }
             if (error == null) {
                 TLRPC.TL_channels_channelParticipants res = (TLRPC.TL_channels_channelParticipants) response;
                 getMessagesController().putUsers(res.users, false);
@@ -4364,15 +4398,30 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     private static final int BLUR_INVALIDATE_FLAG_POSITIONS = 1 << 1;
     private static final int BLUR_INVALIDATE_FLAG_CLIP = 1 << 2;
 
+    private boolean canCaptureBlurredSources() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                && scrollableViewNoiseSuppressor != null
+                && !isFinished
+                && contentView != null
+                && chatListView != null
+                && invalidateBlurredSourcesView != null
+                && contentView.isAttachedToWindow()
+                && chatListView.isAttachedToWindow()
+                && invalidateBlurredSourcesView.isAttachedToWindow()
+                && contentView.getWidth() > 0
+                && contentView.getHeight() > 0
+                && chatListView.getWidth() > 0
+                && chatListView.getHeight() > 0
+                && invalidateBlurredSourcesView.getWidth() > 0
+                && invalidateBlurredSourcesView.getHeight() > 0;
+    }
+
     private void invalidateMergedVisibleBlurredPositionsAndSourcesPositions() {
         invalidateMergedVisibleBlurredPositionsAndSources(BLUR_INVALIDATE_FLAG_POSITIONS);
     }
 
     private void invalidateMergedVisibleBlurredPositionsAndSources(int flags) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || scrollableViewNoiseSuppressor == null) {
-            return;
-        }
-        if (invalidateBlurredSourcesView == null) {
+        if (!canCaptureBlurredSources()) {
             return;
         }
 
@@ -4384,7 +4433,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     private int glassDrawablesPositionsCount;
 
     private void invalidateMergedVisibleBlurredPositionsAndSourcesImpl(int flags) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || scrollableViewNoiseSuppressor == null) {
+        if (!canCaptureBlurredSources()) {
             return;
         }
 
@@ -4416,6 +4465,9 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     }
 
     private int getMergedVisibleBlurredPositions(List<RectF> positions) {
+        if (!canCaptureBlurredSources()) {
+            return 0;
+        }
         final int positionsCount = getVisibleBlurredPositions(glassDrawablesPositions);
         final int mergedPositionsCount = RectFMergeBounding.mergeOverlapping(glassDrawablesPositions, positionsCount, positions);
         final int maxX = contentView.getMeasuredWidth();
@@ -4434,6 +4486,9 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     }
 
     private int getVisibleBlurredPositions(List<RectF> positions) {
+        if (!canCaptureBlurredSources()) {
+            return 0;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             int count = 0;
 
@@ -4466,6 +4521,9 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     }
 
     private void invalidateAllGlassAttachedViews() {
+        if (!canCaptureBlurredSources()) {
+            return;
+        }
         contentView.invalidate();
         for (View v: glassAttachedViews) {
             v.invalidate();
@@ -4491,6 +4549,9 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
         }
 
         public void drawList(Canvas blurCanvas, RectF position) {
+            if (!canCaptureBlurredSources() || blurCanvas == null || position == null) {
+                return;
+            }
             final long drawingTime = SystemClock.uptimeMillis();
 
             if (chatListView.hasActiveEdgeEffects()) {

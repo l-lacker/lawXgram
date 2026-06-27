@@ -670,6 +670,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private ArrayList<MediaController.PhotoEntry> sharedMediaEntries;
     private String sharedLink;
     private CharSequence sharedTextSeed;
+    private boolean sharedMediaEditorConfirmed;
     private ShareTopView shareTopView;
     private Runnable shareLinkSearchRunnable;
 
@@ -11201,6 +11202,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     public void setSharedMedia(ArrayList<MediaController.PhotoEntry> entries, CharSequence initialCaption) {
+        sharedMediaEditorConfirmed = false;
         if (entries == null || entries.isEmpty()) {
             sharedMediaEntries = null;
             return;
@@ -11215,6 +11217,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     public void setSharedLink(String url, CharSequence initialCaption) {
+        sharedMediaEditorConfirmed = false;
         if (url == null || url.isEmpty()) {
             sharedLink = null;
             sharedTextSeed = null;
@@ -11231,6 +11234,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     public void setSharedText(CharSequence text, CharSequence initialCaption) {
+        sharedMediaEditorConfirmed = false;
         if (text == null || text.length() == 0) {
             sharedTextSeed = null;
             return;
@@ -11251,6 +11255,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     public boolean hasSharedMediaEntries() {
         return sharedMediaEntries != null && !sharedMediaEntries.isEmpty();
+    }
+
+    public boolean isSharedMediaEditorConfirmed() {
+        return sharedMediaEditorConfirmed;
     }
 
     public ArrayList<MediaController.PhotoEntry> getSharedMediaEntries() {
@@ -11415,6 +11423,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             @Override
             public void sendButtonPressed(int index, VideoEditedInfo videoEditedInfo, boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean forceDocument) {
                 syncCaptionFromEntries();
+                sharedMediaEditorConfirmed = true;
                 if (shareTopView != null) {
                     shareTopView.setSharedMedia(currentAccount, sharedMediaEntries);
                 }
