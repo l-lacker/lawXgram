@@ -27,7 +27,7 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.QueryProductDetailsParams;
 import com.google.common.collect.ImmutableList;
 import com.google.zxing.EncodeHintType;
-import com.google.zxing.qrcode.QRCodeWriter;
+import org.telegram.messenger.TelegramQRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -137,8 +137,9 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
                     var params = QueryProductDetailsParams.newBuilder()
                             .setProductList(productList)
                             .build();
-                    billingClient.queryProductDetailsAsync(params, (queryResult, list) -> {
+                    billingClient.queryProductDetailsAsync(params, (queryResult, queryProductDetailsResult) -> {
                         if (queryResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                            var list = queryProductDetailsResult.getProductDetailsList();
                             if (!list.isEmpty()) {
                                 AndroidUtilities.runOnUIThread(() -> {
                                     if (!canShowBillingUi() || listView == null || listView.adapter == null) {
@@ -336,7 +337,7 @@ public class LawxDonateActivity extends BaseLawxSettingsActivity implements Purc
                 HashMap<EncodeHintType, Object> hints = new HashMap<>();
                 hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
                 hints.put(EncodeHintType.MARGIN, 0);
-                var writer = new QRCodeWriter();
+                var writer = new TelegramQRCodeWriter();
                 return writer.encode(key, 768, 768, hints, null, 1.0f, 0xffffffff, 0xff000000, false);
             } catch (Exception e) {
                 FileLog.e(e);

@@ -3,6 +3,7 @@ import java.nio.file.Paths
 
 plugins {
     id 'com.android.library'
+    id 'org.telegram.lottie-meta'
     id 'org.lsposed.lsparanoid'
 }
 
@@ -64,6 +65,7 @@ dependencies {
 
     implementation 'com.google.android.gms:play-services-cast-framework:22.3.1'
     implementation 'androidx.mediarouter:mediarouter:1.8.1'
+    implementation 'com.google.zxing:core:3.5.4'
 
     implementation 'androidx.car.app:app:1.4.0'
     implementation 'androidx.car.app:app-projected:1.4.0'
@@ -83,7 +85,7 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     }
     implementation 'com.google.mlkit:language-id:17.0.6'
-    implementation 'com.android.billingclient:billing:7.1.1'
+    implementation 'com.android.billingclient:billing:8.0.0'
     implementation 'com.google.code.gson:gson:2.13.2'
     implementation ('com.google.guava:guava:33.5.0-android') {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
@@ -105,7 +107,10 @@ dependencies {
     implementation "io.noties.markwon:ext-tables:4.6.2"
     implementation "io.noties.markwon:html:4.6.2"
     implementation "io.noties.markwon:inline-parser:4.6.2"
-    implementation "io.noties.markwon:ext-latex:4.6.2"
+    implementation("io.noties.markwon:ext-latex:4.6.2") {
+        exclude group: 'ru.noties', module: 'jlatexmath-android'
+    }
+    api project(':jlatexmath')
 
 //    implementation 'com.google.mlkit:translate:17.0.3'
 
@@ -188,6 +193,7 @@ android {
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-23', '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
+                targets 'neko.49'
                 System.getenv("PATH").split(File.pathSeparator).any { path ->
                     var file = Paths.get("${path}${File.separator}ccache${if (OperatingSystem.current().windows) ".exe" else ""}").toFile()
                     if (file.exists()) {

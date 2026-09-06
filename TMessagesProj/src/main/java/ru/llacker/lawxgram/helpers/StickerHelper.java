@@ -38,7 +38,7 @@ public class StickerHelper {
                 int width;
                 int height;
                 if (animated) {
-                    RLottieDrawable drawable = new RLottieDrawable(new File(path), 512, 512, cacheOptions, false, null, 0);
+                    RLottieDrawable drawable = new RLottieDrawable(new File(path), null, 512, 512, cacheOptions, false, null, 0, false);
                     source = drawable;
                     width = drawable.getIntrinsicWidth();
                     height = drawable.getIntrinsicHeight();

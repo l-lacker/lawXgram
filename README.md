@@ -8,7 +8,8 @@ lawXgram is a third-party Telegram client based on Telegram for Android and the 
 
 ## Build
 
-1. Clone the repository: `git clone https://github.com/l-lacker/lawXgram.git`
+1. Clone the repository with its submodules: `git clone --recursive --shallow-submodules https://github.com/l-lacker/lawXgram.git`
+   - If you already cloned without `--recursive`, run `git submodule update --init --recursive --depth=1` inside the repository.
 2. Create `local.properties` and fill in:
    - `sdk.dir`
    - `telegramApiId`

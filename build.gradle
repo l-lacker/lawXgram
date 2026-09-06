@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application' version '9.1.0' apply false
+    id 'com.android.application' apply false
     id 'com.google.gms.google-services' version '4.4.4' apply false
     id 'io.sentry.android.gradle' version '6.0.0' apply false
     id 'org.lsposed.lsparanoid' version '0.5.2'
@@ -38,6 +38,20 @@ subprojects {
                 }
 
                 buildFeatures.buildConfig = true
+            }
+
+            // Strip JLatexMath assets we don't ship (~310 KB of optional fonts and
+            // license text). Has to live in the APK modules: a library's
+            // androidResources.ignoreAssetsPattern doesn't filter packaging in apps
+            // that consume it.
+            //   keep: base/, latin/, maths/, euler/  (\mathbb, \mathcal, \mathfrak)
+            //   drop: latin/optional/, maths/optional/, licences/
+            if (plugins.hasPlugin("com.android.application")) {
+                android {
+                    androidResources {
+                        ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~:!optional:!licences:!*stmary*:!*eufb*'
+                    }
+                }
             }
 
             dependencies {
