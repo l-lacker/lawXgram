@@ -47,7 +47,6 @@
     <string name="NeoOpenArchiveOnPull">Archívum megnyitása a lehúzható menüben</string>
     <string name="NeoHideKeyboardOnChatScroll">Billentyűzet elrejtése a csevegés görgetésénél</string>
     <string name="NeoCheckAllAdministrated">Adminisztrált hozzáadása</string>
-    <string name="NeoRearVideoMessages">Hátsó kamera a videóüzenetekben</string>
     <string name="NeoHideAllTab">\"Minden csevegés\" fül elrejtése</string>
     <string name="NeoTabTitleType">Megjelenítés a füleken</string>
     <string name="NeoTabTitleTypeTip">Az ikonokat a Telegram a felhőben szinkronizálja.</string>

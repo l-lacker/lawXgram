@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">Отвори архиву при повлачењу надоле</string>
     <string name="NeoHideKeyboardOnChatScroll">Сакриј тастатуру при померању по ћаскању</string>
     <string name="NeoCheckAllAdministrated">Додај администрирано</string>
-    <string name="NeoRearVideoMessages">Задња камера у видео-порукама</string>
     <string name="NeoHideAllTab">Сакриј картицу „Сва ћаскања”</string>
     <string name="NeoTabTitleType">Прикажи на картицама</string>
     <string name="NeoTabTitleTypeTip">Иконе су синхронизоване са Telegram-ом.</string>

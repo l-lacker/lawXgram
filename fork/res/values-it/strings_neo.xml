@@ -47,7 +47,6 @@
     <string name="NeoOpenArchiveOnPull">Apri l\'archivio tirando giù</string>
     <string name="NeoHideKeyboardOnChatScroll">Nascondi la tastiera durante lo scorrimento della chat</string>
     <string name="NeoCheckAllAdministrated">Aggiungi amministrate</string>
-    <string name="NeoRearVideoMessages">Usa fotocamera posteriore in Video Messaggi</string>
     <string name="NeoHideAllTab">Nascondi la cartella \"Tutte le chat\"</string>
     <string name="NeoTabTitleType">Mostra sulle schede</string>
     <string name="NeoTabTitleTypeTip">Le icone sono sincronizzate sul cloud da Telegram.</string>

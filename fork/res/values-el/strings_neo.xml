@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">Άνοιγμα Αρχ/θέτησης με κάτω σάρωση</string>
     <string name="NeoHideKeyboardOnChatScroll">Απόκρ. πληκ/γίου σε κύλιση συνομιλ.</string>
     <string name="NeoCheckAllAdministrated">Προσθήκη διαχειριζόμενων</string>
-    <string name="NeoRearVideoMessages">Πίσω κάμερα σε Βίντεο Μηνύματα</string>
     <string name="NeoHideAllTab">Απόκρυψη καρτέλας \"Όλες\"</string>
     <string name="NeoTabTitleType">Εμφάνιση στις καρτέλες</string>
     <string name="NeoTabTitleTypeTip">Τα εικονίδια συγχρονίζονται στο cloud από το Telegram.</string>

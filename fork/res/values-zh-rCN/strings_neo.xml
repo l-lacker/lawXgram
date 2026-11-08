@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">下拉打开已归档对话</string>
     <string name="NeoHideKeyboardOnChatScroll">当滚动浏览对话时隐藏键盘</string>
     <string name="NeoCheckAllAdministrated">添加管理的群组与频道</string>
-    <string name="NeoRearVideoMessages">视频留言默认使用后置摄像头</string>
     <string name="NeoHideAllTab">隐藏“所有聊天”标签页</string>
     <string name="NeoTabTitleType">在标签栏上显示</string>
     <string name="NeoTabTitleTypeTip">图标由 Telegram 云同步。</string>

@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">Abrir archivados al deslizar hacia abajo</string>
     <string name="NeoHideKeyboardOnChatScroll">Ocultar teclado al desplazar el chat</string>
     <string name="NeoCheckAllAdministrated">Añadir chats que administras</string>
-    <string name="NeoRearVideoMessages">Usar cámara trasera en videomensajes</string>
     <string name="NeoHideAllTab">Ocultar la pestaña \"Todos los chats\"</string>
     <string name="NeoTabTitleType">Mostrar en pestañas</string>
     <string name="NeoTabTitleTypeTip">Los iconos están sincronizados con la nube por Telegram.</string>

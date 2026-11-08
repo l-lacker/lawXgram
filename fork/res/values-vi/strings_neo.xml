@@ -47,7 +47,6 @@
     <string name="NeoOpenArchiveOnPull">Kéo xuống để mở Lưu trữ </string>
     <string name="NeoHideKeyboardOnChatScroll">Ẩn bàn phím khi cuộn trò chuyện</string>
     <string name="NeoCheckAllAdministrated">Thêm quản trị viên</string>
-    <string name="NeoRearVideoMessages">Camera sau trong Tin nhắn Video</string>
     <string name="NeoHideAllTab">Ẩn thẻ \"Tất cả cuộc trò chuyện\"</string>
     <string name="NeoTabTitleType">Hiển thị trên các thẻ</string>
     <string name="NeoTabTitleTypeTip">Các biểu tượng đã được đồng bộ đám mây bởi Telegram.</string>

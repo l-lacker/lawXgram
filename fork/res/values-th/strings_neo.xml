@@ -47,7 +47,6 @@
     <string name="NeoOpenArchiveOnPull">เปิดไฟล์เก็บถาวรบนเมนูแบบดึงลง</string>
     <string name="NeoHideKeyboardOnChatScroll">ซ่อนแป้นพิมพ์บนแถบเลื่อนแชท</string>
     <string name="NeoCheckAllAdministrated">เพิ่มผู้ดูแลระบบ</string>
-    <string name="NeoRearVideoMessages">กล้องหลังในข้อความวิดีโอ</string>
     <string name="NeoHideAllTab">ซ่อนแท็บ \"แชททั้งหมด\"</string>
     <string name="NeoTabTitleType">แสดงบนแท็บ</string>
     <string name="NeoTabTitleTypeTip">ไอคอนได้รับการซิงค์บนคลาวด์โดย Telegram</string>

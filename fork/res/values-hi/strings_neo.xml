@@ -40,7 +40,6 @@
     <string name="NeoOpenArchiveOnPull">नीचे खींचने पर आर्काइव चैट खोले</string>
     <string name="NeoHideKeyboardOnChatScroll">चैट स्क्रॉल करने पर कीबोर्ड को छुपाएं</string>
     <string name="NeoCheckAllAdministrated">व्यवस्थापक जोड़ें</string>
-    <string name="NeoRearVideoMessages">वीडियो कॉल्स में पिछला कैमरा</string>
     <string name="NeoHideAllTab">\"सभी संदेशों\" टैब को छिपाए</string>
     <string name="NeoTabTitleType">टैब्स पर दिखाए</string>
     <string name="NeoTabTitleTypeTip">टेलीग्राम के द्वारा आईकॉन्स क्लाउड-सिंक्ड रहते हैं</string>

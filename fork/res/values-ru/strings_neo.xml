@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">Открывать архив по свайпу</string>
     <string name="NeoHideKeyboardOnChatScroll">Скрыть клавиатуру при прокрутке</string>
     <string name="NeoCheckAllAdministrated">Добавить управляемые</string>
-    <string name="NeoRearVideoMessages">Задняя камера в видеосообщениях</string>
     <string name="NeoHideAllTab">Скрыть вкладку \"Все чаты\"</string>
     <string name="NeoTabTitleType">Показывать на вкладках</string>
     <string name="NeoTabTitleTypeTip">Иконки синхронизируются с Telegram.</string>

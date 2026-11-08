@@ -42,7 +42,6 @@
     <string name="NeoOpenArchiveOnPull">Arxivni pastga tortib oching</string>
     <string name="NeoHideKeyboardOnChatScroll">Chatda harakatlanganda klaviaturani yashirish</string>
     <string name="NeoCheckAllAdministrated">Boshqaruvchi qo\'shish</string>
-    <string name="NeoRearVideoMessages">Video xabarni orqa kamera bilan boshlash</string>
     <string name="NeoHideAllTab">\"Barcha chatlar\"ni yashirish</string>
     <string name="NeoTabTitleType">Yorliqlarda ko\'rsatish</string>
     <string name="NeoTabTitleTypeTip">Belgilar Telegram tomonidan bulutli-sinxronlangan.</string>

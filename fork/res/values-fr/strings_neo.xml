@@ -46,7 +46,6 @@
     <string name="NeoOpenArchiveOnPull">Ouvrir les archives dans le menu déroulant</string>
     <string name="NeoHideKeyboardOnChatScroll">Cacher clavier lors du défilement</string>
     <string name="NeoCheckAllAdministrated">Ajouter administrateur</string>
-    <string name="NeoRearVideoMessages">Caméra arrière dans les messages vidéo</string>
     <string name="NeoHideAllTab">Masquer le dossier \"Tous\"</string>
     <string name="NeoTabTitleType">Apparence des dossiers</string>
     <string name="NeoTabTitleTypeTip">Les icônes sont synchronisées sur le cloud Telegram.</string>

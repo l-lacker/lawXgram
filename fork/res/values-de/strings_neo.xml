@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">Archiv durch Herunterziehen öffnen</string>
     <string name="NeoHideKeyboardOnChatScroll">Tastatur beim Scrollen im Chat ausblenden</string>
     <string name="NeoCheckAllAdministrated">Administrierte Gruppen/Kanäle hinzufügen</string>
-    <string name="NeoRearVideoMessages">Rückkamera in Videonachrichten</string>
     <string name="NeoHideAllTab">\"Alle Chats\"-Tab ausblenden</string>
     <string name="NeoTabTitleType">Auf Tabs anzeigen</string>
     <string name="NeoTabTitleTypeTip">Symbole werden mit Telegram-Cloud synchronisiert.</string>

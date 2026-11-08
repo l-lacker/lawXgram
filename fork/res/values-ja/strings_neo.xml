@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">[収納したチャット] をプルダウンで開く</string>
     <string name="NeoHideKeyboardOnChatScroll">チャットスクロールでキーボードを非表示</string>
     <string name="NeoCheckAllAdministrated">管理者を追加</string>
-    <string name="NeoRearVideoMessages">ビデオメッセージでリアカメラを使用</string>
     <string name="NeoHideAllTab">「すべてのチャット」タブを非表示</string>
     <string name="NeoTabTitleType">タブに表示</string>
     <string name="NeoTabTitleTypeTip">アイコンはTelegram Cloudに同期されます。</string>

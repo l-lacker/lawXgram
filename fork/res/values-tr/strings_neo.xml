@@ -43,7 +43,6 @@
     <string name="NeoOpenArchiveOnPull">Aşağı çekince arşivi aç</string>
     <string name="NeoHideKeyboardOnChatScroll">Sohbeti kaydırırken klavyeyi gizle</string>
     <string name="NeoCheckAllAdministrated">Yönetilen grup ve kanalları ekle</string>
-    <string name="NeoRearVideoMessages">Video mesajlarda arka kamera</string>
     <string name="NeoHideAllTab">\"Tüm Sohbetler\" sekmesini gizle</string>
     <string name="NeoTabTitleType">Sekmelerde göster</string>
     <string name="NeoTabTitleTypeTip">Simgeler Telegram tarafından buluta kaydedilir.</string>

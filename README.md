@@ -96,6 +96,20 @@ builds and runs without Firebase.
 from scratch, `patchset lint` runs the static checks. See [docs/patchset.md](docs/patchset.md)
 for the full guide (in Russian).
 
+## CI and releases
+
+- `tools.yml` — patchset tool tests (Linux and Windows), patches apply cleanly, `fork/core` tests.
+- `build.yml` — a debug APK for arm64-v8a on every push, downloadable from the run's artifacts.
+- `release.yml` — started by hand (Actions → release → Run workflow, with a revision digit):
+  signed APKs for every ABI plus a universal one and `SHA256SUMS`, published as the release
+  `v<telegram version>-<revision>`. Direct builds update themselves from the newest release.
+
+Repository secrets used by the workflows: `NEO_TELEGRAM_API_ID`, `NEO_TELEGRAM_API_HASH`,
+`NEO_KEYSTORE_BASE64` (the release keystore, `base64 -w0 release.jks`), `NEO_SIGNING_STORE_PASSWORD`,
+`NEO_SIGNING_KEY_ALIAS`, `NEO_SIGNING_KEY_PASSWORD`; optional `NEO_SENTRY_DSN`, `NEO_MAPS_API_KEY`.
+Put the SHA-256 of the release certificate into `signing.releaseCertSha256` in
+`fork/branding.properties` and the release workflow refuses APKs signed with another key.
+
 ## Updating Telegram
 
 ```

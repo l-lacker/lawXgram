@@ -40,7 +40,6 @@
     <string name="NeoOpenArchiveOnPull">Atvērt arhīvu izvelkamajā sadaļā</string>
     <string name="NeoHideKeyboardOnChatScroll">Slēpt tastatūru tērzēšanas ritināšanā</string>
     <string name="NeoCheckAllAdministrated">Pievienot administratoru</string>
-    <string name="NeoRearVideoMessages">Aizmugurējā kamera videoziņojumos</string>
     <string name="NeoHideAllTab">Paslēpt cilni \"Visas tērzēšanas\"</string>
     <string name="NeoTabTitleType">Rādīt cilnēs</string>
     <string name="NeoTabTitleTypeTip">Ikonas tiek sinhronizētas ar Telegram.</string>

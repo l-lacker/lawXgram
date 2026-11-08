@@ -38,7 +38,6 @@
     <string name="NeoOpenArchiveOnPull">Åbn arkiv ved at trække ned</string>
     <string name="NeoHideKeyboardOnChatScroll">Skjul tastatur ved chat scroll</string>
     <string name="NeoCheckAllAdministrated">Tilføj administreret</string>
-    <string name="NeoRearVideoMessages">Bageste kamera i videobeskeder</string>
     <string name="NeoHideAllTab">Skjul fanen \"Alle Chats\"</string>
     <string name="NeoTabTitleType">Vis i faneblade</string>
     <string name="NeoTabTitleTypeTip">Ikoner er cloud-synkroniseret af Telegram.</string>

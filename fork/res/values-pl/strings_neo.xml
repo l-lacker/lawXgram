@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">Otwórz archiwum gestem pociągnięcia w dół</string>
     <string name="NeoHideKeyboardOnChatScroll">Ukryj klawiaturę podczas przewijania czatu</string>
     <string name="NeoCheckAllAdministrated">Dodaj administrowane</string>
-    <string name="NeoRearVideoMessages">Tylna kamera w wiadomościach wideo</string>
     <string name="NeoHideAllTab">Ukryj zakładkę „Wszystkie”</string>
     <string name="NeoTabTitleType">Pokaż na nazwach folderów</string>
     <string name="NeoTabTitleTypeTip">Ikony są synchronizowane przez Telegrama.</string>

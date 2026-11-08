@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">Mostrar arquivados ao puxar para baixo</string>
     <string name="NeoHideKeyboardOnChatScroll">Ocultar teclado ao rolar a conversa</string>
     <string name="NeoCheckAllAdministrated">Adicionar administrados</string>
-    <string name="NeoRearVideoMessages">Câmera traseira em mensagens de vídeo</string>
     <string name="NeoHideAllTab">Ocultar aba \"Todos os bate-papos\"</string>
     <string name="NeoTabTitleType">Mostrar nas abas</string>
     <string name="NeoTabTitleTypeTip">Os ícones são sincronizados na nuvem pelo Telegram.</string>

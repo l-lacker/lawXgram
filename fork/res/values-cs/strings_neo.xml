@@ -42,7 +42,6 @@
     <string name="NeoOpenArchiveOnPull">Відкрийте архів у спадному меню</string>
     <string name="NeoHideKeyboardOnChatScroll">Сховати клавіатуру при скроллінгу чата</string>
     <string name="NeoCheckAllAdministrated">Додати адміністратора</string>
-    <string name="NeoRearVideoMessages">Фронтальна камера у відеоповідомленнях</string>
     <string name="NeoHideAllTab">Приховати вкладку «Усі чати»</string>
     <string name="NeoTabTitleType">Покажати вкладки</string>
     <string name="NeoTabTitleTypeTip">Іконки синхронізуються в Телеграм хмарі.</string>

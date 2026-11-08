@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">Відкрити архів витягуванням до низу</string>
     <string name="NeoHideKeyboardOnChatScroll">Приховати клавіатуру під час прокрутки чату</string>
     <string name="NeoCheckAllAdministrated">Додати адміністраторів</string>
-    <string name="NeoRearVideoMessages">Задня камера у відеоповідомленнях</string>
     <string name="NeoHideAllTab">Сховати вкладку \"Усі чати\"</string>
     <string name="NeoTabTitleType">Показувати на вкладках</string>
     <string name="NeoTabTitleTypeTip">Іконки синхронізуються з Telegram.</string>

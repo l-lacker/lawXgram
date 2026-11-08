@@ -46,7 +46,6 @@
     <string name="NeoOpenArchiveOnPull">Open archief door omlaag te trekken</string>
     <string name="NeoHideKeyboardOnChatScroll">Toetsenbord verbergen bij chat scrollen</string>
     <string name="NeoCheckAllAdministrated">Beheerde groepen/kanalen toevoegen</string>
-    <string name="NeoRearVideoMessages">Camera achter in videoberichten</string>
     <string name="NeoHideAllTab">Tabblad \"Alle chats\" verbergen</string>
     <string name="NeoTabTitleType">Tonen op tabbladen</string>
     <string name="NeoTabTitleTypeTip">Pictogrammen worden in de cloud gesynchroniseerd door Telegram.</string>

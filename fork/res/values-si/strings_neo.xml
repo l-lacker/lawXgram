@@ -35,7 +35,6 @@
     <string name="NeoOpenArchiveOnPull">සංරක්ෂිතය විවෘත කිරීමට පහළට අදින්න</string>
     <string name="NeoHideKeyboardOnChatScroll">කතාබස නරඹන විටදී යතුරු පුවරුව සඟවන්න</string>
     <string name="NeoCheckAllAdministrated">පරිපාලනයට යොදවන්න</string>
-    <string name="NeoRearVideoMessages">විඩීයෝ මැසේජ සදහා පසුපස කැමරාව භාවිතා කරන්න</string>
     <string name="NeoHideAllTab">සියලුම කතාබස් සඟවන්න</string>
     <string name="NeoTabTitleType">Show on tabs</string>
     <string name="NeoTabTitleTypeText">මාතෘකා</string>

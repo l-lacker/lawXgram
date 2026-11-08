@@ -47,7 +47,6 @@
     <string name="NeoOpenArchiveOnPull">下拉開啟已封存對話</string>
     <string name="NeoHideKeyboardOnChatScroll">當滾動瀏覽對話時隱藏鍵盤</string>
     <string name="NeoCheckAllAdministrated">新增管理員</string>
-    <string name="NeoRearVideoMessages">影片訊息中使用後置鏡頭</string>
     <string name="NeoHideAllTab">隱藏“所有聊天”標籤</string>
     <string name="NeoTabTitleType">在標籤欄上顯示</string>
     <string name="NeoTabTitleTypeTip">圖示由 Telegram 雲同步。</string>

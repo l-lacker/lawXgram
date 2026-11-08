@@ -47,7 +47,6 @@
     <string name="NeoOpenArchiveOnPull">باز کردن بایگانی در حالت کشیدن</string>
     <string name="NeoHideKeyboardOnChatScroll">پنهان کردن صفحه کلید در اسکرول چت</string>
     <string name="NeoCheckAllAdministrated">اضافه کردن administrated</string>
-    <string name="NeoRearVideoMessages">استفاده از دوربین اصلی در پیام های ویدیویی</string>
     <string name="NeoHideAllTab">تب \"همه چت ها\" را پنهان کنید</string>
     <string name="NeoTabTitleType">نمایش در برگه ها</string>
     <string name="NeoTabTitleTypeTip">آیکون ها توسط تلگرام ابر همگام سازی می شوند.</string>

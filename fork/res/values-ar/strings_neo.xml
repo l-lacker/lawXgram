@@ -44,7 +44,6 @@
     <string name="NeoOpenArchiveOnPull">فتح الأرشيف عند السحب للأسفل</string>
     <string name="NeoHideKeyboardOnChatScroll">إخفاء لوحة المفاتيح عند التمرير في المحادثة</string>
     <string name="NeoCheckAllAdministrated">إضافة ادارة</string>
-    <string name="NeoRearVideoMessages">افتح الكاميرا الخلفية افتراضيا في رسائل الفيديو</string>
     <string name="NeoHideAllTab">إخفاء تبويب \"كل المحادثات\"</string>
     <string name="NeoTabTitleType">نوع علامات التبويب</string>
     <string name="NeoTabTitleTypeTip">تتم مزامنة الرموز عبر السحابة بواسطة Telegram</string>

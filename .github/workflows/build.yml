@@ -1,0 +1,63 @@
+name: build
+
+# Debug APK for arm64-v8a on every push and pull request: proves that the patches apply to the
+# pinned upstream and that Neogram compiles. Login needs NEO_TELEGRAM_API_ID/HASH repository
+# secrets; without them the APK builds but cannot sign in.
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug:
+    name: debug APK (arm64-v8a)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/node_modules /opt/ghc /usr/local/share/boost /usr/local/.ghcup "$AGENT_TOOLSDIRECTORY"
+          df -h /
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Configure git
+        run: |
+          git config --global user.name ci
+          git config --global user.email ci@example.invalid
+      - name: Upstream and patches
+        run: python tools/patchset.py setup --ci
+      - name: Build
+        working-directory: worktree
+        env:
+          NEO_TELEGRAM_API_ID: ${{ secrets.NEO_TELEGRAM_API_ID }}
+          NEO_TELEGRAM_API_HASH: ${{ secrets.NEO_TELEGRAM_API_HASH }}
+        run: ./gradlew :TMessagesProj_App:assembleAfatDebug -Pneo.abis=arm64-v8a --console=plain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neogram-debug-arm64-v8a
+          path: worktree/TMessagesProj_App/build/outputs/apk/afat/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
