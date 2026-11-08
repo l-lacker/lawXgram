@@ -38,14 +38,14 @@ index 0000000..0000000 100644
  
          muteImageView = new ImageView(context);
          muteImageView.setScaleType(ImageView.ScaleType.CENTER);
-@@ -381,6 +384,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+@@ -379,6 +382,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+         startedNotificationSent = false;
+         stopNotificationSent = false;
          lastVisibleDurationMs = 0L;
++        neo_lensButton.reset();
          progressView.setProgress(0f);
          showInitialPlaceholder();
-+        neo_lensButton.reset();
          upload = new TelegramRoundVideoUpload(currentAccount, secretChat);
-         activeOutputResolution = ru.llacker.neogram.round.NeoRoundCamera.outputResolution(SharedSettings.roundVideoOutputResolution.get());
-         session = ru.llacker.neogram.round.NeoRoundCamera.configure(new RoundVideoSession.Builder(getContext(), textureView)
 @@ -754,6 +758,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                  @NonNull RoundVideoSession.CameraCapabilities cameraCapabilities
          ) {

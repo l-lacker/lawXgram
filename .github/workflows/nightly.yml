@@ -1,0 +1,48 @@
+name: nightly
+
+# Every feature, debloat and bugfix patch must stay removable on its own: the rest of the series
+# has to apply without it. A patch that starts to depend on another one (shared context lines,
+# moved code) is reported here before an upstream rebase turns it into a conflict.
+# GitHub runs schedules on the default branch; once the file is there, it can also be started by
+# hand from the Actions tab for any branch.
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  removable:
+    name: each patch can be dropped
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Configure git
+        run: |
+          git config --global user.name ci
+          git config --global user.email ci@example.invalid
+      - name: Lint (strict)
+        run: python tools/patchset.py lint --fast --strict
+      - name: Drop each patch in turn
+        run: |
+          status=0
+          while read -r entry; do
+            name="${entry%.patch}"
+            case "$name" in
+              feature/*|debloat/*|bugfix/*) ;;
+              *) continue ;;
+            esac
+            echo "::group::without $name"
+            if ! python tools/patchset.py check --sparse --drop "$name"; then
+              echo "::error::the series does not apply without $name"
+              status=1
+            fi
+            echo "::endgroup::"
+          done < series
+          exit $status

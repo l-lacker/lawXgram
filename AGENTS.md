@@ -21,7 +21,8 @@ patches applied as one commit each. `patches/` and `series` are exports, never t
 - Fold changes into an existing patch: `patchset fixup <group>/<name> [-a]`.
 - Reorder/rename/drop: `patchset move|rename|reword|drop|edit …`, then `patchset continue` if stopped.
 - Export after every stack change: `patchset export`. Verify: `patchset export --check`, `patchset check --sparse`, `patchset lint`.
-- Update upstream: `patchset rebase <commit|latest>`, resolve, `patchset continue`, review `changed` output.
+- Update upstream: `patchset rebase <commit|latest>`, resolve, `patchset continue`, review `changed` output
+  (full procedure: `.claude/skills/neogram-rebase/SKILL.md`).
 - Tool tests: `python -m unittest discover -s tools/tests`. Core tests: `worktree/gradlew -p fork/core test`.
 - Android build: `cd worktree && ./gradlew :TMessagesProj_App:assembleDebug --console=plain`
   (Windows: `gradlew.bat`; add `-Pneo.abis=arm64-v8a` for a fast single-ABI build).
