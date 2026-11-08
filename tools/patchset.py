@@ -913,7 +913,7 @@ def todo_editor(argv: List[str]) -> int:
     else:
         print(f"unknown todo mode {mode}", file=sys.stderr)
         return 2
-    todo_path.write_text("\n".join(commands + comments) + "\n", encoding="utf-8")
+    write_text_lf(todo_path, "\n".join(commands + comments) + "\n")
     return 0
 
 
@@ -1118,7 +1118,8 @@ def cmd_check(ctx: Ctx, args: argparse.Namespace) -> int:
         local = ctx.worktree / ".git" / "objects"
         if local.exists() and git_ok(ctx.worktree, "cat-file", "-e", f"{commit}^{{commit}}"):
             alt = tmp / ".git" / "objects" / "info" / "alternates"
-            alt.write_text(str(local.resolve()) + "\n", encoding="utf-8")
+            # git reads the path up to the newline: a CRLF written on Windows would end up in it
+            write_text_lf(alt, local.resolve().as_posix() + "\n")
             shallow = ctx.worktree / ".git" / "shallow"
             if shallow.exists():
                 shutil.copyfile(shallow, tmp / ".git" / "shallow")
@@ -1134,7 +1135,7 @@ def cmd_check(ctx: Ctx, args: argparse.Namespace) -> int:
             git(tmp, "sparse-checkout", "init", "--no-cone")
             spec = "\n".join(["/" + p for p in paths] or ["/patchset.nonexistent"]) + "\n"
             sparse_file = tmp / ".git" / "info" / "sparse-checkout"
-            sparse_file.write_text(spec, encoding="utf-8")
+            write_text_lf(sparse_file, spec)
         git(tmp, "checkout", "-q", "-B", STACK_BRANCH, commit)
         git(tmp, "tag", "-f", BASE_TAG, commit)
         tctx = Ctx(root=ctx.root, worktree=tmp, verbose=ctx.verbose)
