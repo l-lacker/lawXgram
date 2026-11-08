@@ -468,4 +468,6 @@
     <string name="NeoMenuSaveSticker">Сохранить стикер в галерею</string>
     <string name="NeoMenuSaveStickerInfo">Сохраняет обычный (не анимированный) стикер в галерею как PNG с прозрачным фоном.</string>
     <string name="NeoStickerSizeInfo">Размер стикеров в чатах относительно обычного. Анимированные эмодзи не меняются.</string>
+    <string name="NeoNetworkHeader">Сеть</string>
+    <string name="NeoPreferIPv6Info">Если сеть выдала телефону IPv6-адрес, серверы Telegram доступны только через IPv6. Помогает там, где IPv4 медленный или фильтруется.</string>
 </resources>

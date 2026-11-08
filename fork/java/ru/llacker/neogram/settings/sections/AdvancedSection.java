@@ -7,6 +7,9 @@ import org.telegram.ui.Components.IconBackgroundColors;
 
 import java.util.List;
 
+import ru.llacker.neogram.NeoNetwork;
+import ru.llacker.neogram.config.NeoOptions;
+import ru.llacker.neogram.config.NeoValue;
 import ru.llacker.neogram.settings.NeoSettingsRow;
 import ru.llacker.neogram.settings.NeoSettingsSection;
 
@@ -20,5 +23,8 @@ public final class AdvancedSection {
     }
 
     private static void rows(@NonNull List<NeoSettingsRow> rows) {
+        rows.add(NeoSettingsRow.header(R.string.NeoNetworkHeader));
+        rows.add(NeoSettingsRow.toggle("prefer_ipv6", NeoValue.of(NeoOptions.PREFER_IPV6::get, NeoNetwork::setPreferIpv6),
+                R.string.NeoPreferIPv6, R.string.NeoPreferIPv6Info));
     }
 }

@@ -133,6 +133,11 @@ public final class NeoOptions {
     /** Time of the last counted failure, epoch millis: old failures are forgotten. */
     public static final NeoConfigItem.LongItem ROUND_V2_LAST_FAILURE = NeoConfig.longValue("round_v2_last_failure", 0L).notExportable();
 
+    // ---- Advanced ----------------------------------------------------------------------------------
+
+    /** Connect to Telegram over IPv6 only when the device has an IPv6 address. */
+    public static final NeoConfigItem.BoolItem PREFER_IPV6 = NeoConfig.bool("prefer_ipv6", false);
+
     // ---- About / updates ----------------------------------------------------------------------
 
     /** Check GitHub releases for a newer direct build on start (at most once per interval). */

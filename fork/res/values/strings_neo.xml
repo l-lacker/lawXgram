@@ -489,4 +489,6 @@
     <string name="NeoMenuSaveSticker">Save sticker to gallery</string>
     <string name="NeoMenuSaveStickerInfo">Saves a regular (not animated) sticker to the gallery as a PNG image with a transparent background.</string>
     <string name="NeoStickerSizeInfo">Size of stickers in chats compared with the usual one. Animated emoji keep their size.</string>
+    <string name="NeoNetworkHeader">Network</string>
+    <string name="NeoPreferIPv6Info">When the network gives the phone an IPv6 address, Telegram servers are reached only through IPv6. Helps where IPv4 is slow or filtered.</string>
 </resources>

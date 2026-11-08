@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/prefer-ipv6: prefer IPv6 for connections to Telegram
+
+Behind NeoOptions.PREFER_IPV6. When the device has an IPv6 address, ConnectionsManager.getIpStrategy answers IPv6 only, as it does when the server config sets force_try_ipv6; that server flag is rewritten on every config update, so the option cannot simply set it. Changing the option makes every active account reconnect (checkConnection).
+---
+ TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java b/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
++++ b/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
+@@ -1154,7 +1154,7 @@ public class ConnectionsManager extends BaseController {
+                 }
+             }
+             if (hasIpv6) {
+-                if (forceTryIpV6) {
++                if (forceTryIpV6 || ru.llacker.neogram.NeoNetwork.preferIpv6()) {
+                     return USE_IPV6_ONLY;
+                 }
+                 if (hasStrangeIpv4) {

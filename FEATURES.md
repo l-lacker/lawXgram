@@ -44,6 +44,7 @@ lawXgram is still to be ported. Stock behaviour that Neogram changes is always a
 | Try Instant View for every link | `feature/links-in-instant-view` | `NeoChat` |
 | No greeting sticker in empty chats | `debloat/greeting-sticker` | `NeoChat` |
 | Sticker size in chats (60–140%) | `feature/sticker-size` | `NeoChat` |
+| Prefer IPv6 for connections to Telegram | `feature/prefer-ipv6` | `NeoNetwork` |
 | Volume buttons only change the volume in chats (no video playback) | `debloat/volume-buttons-video` | `NeoMedia` |
 | Voice messages: Telegram's new recorder and RNNoise noise suppression (stock settings that release builds hide), included in backups | — | `MediaSection`, `NeoBackup` |
 
@@ -61,8 +62,8 @@ Grouped as in the plan; each becomes one or more small patches plus a settings p
   export.
 - **Translator:** providers (Google, Yandex, DeepL, Microsoft, …), target language, auto
   translation, show original, keep formatting; transcription with Cloudflare Workers AI.
-- **Privacy and accounts:** account passcodes, hidden accounts, panic code, instant lock, IPv6,
-  map drift fix.
+- **Privacy and accounts:** account passcodes, hidden accounts, panic code, instant lock, map
+  drift fix.
 - **Appearance:** tablet mode, system fonts and weight fallback, emoji sets, predictive back,
   reduced colours, stroke on views.
 - **Accessibility:** seek bar announcements, item counts, file progress, dialog types.
