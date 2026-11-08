@@ -72,6 +72,14 @@ public final class NeoOptions {
     public static final NeoConfigItem.BoolItem HIDE_BUSINESS_BOT_PANEL = NeoConfig.bool("hide_business_bot_panel", false);
     /** No time pill on stickers and large emoji (still shown while the message is selected). */
     public static final NeoConfigItem.BoolItem HIDE_TIME_ON_STICKERS = NeoConfig.bool("hide_time_on_stickers", false);
+    /** Dragging the message list closes the keyboard or the emoji panel. */
+    public static final NeoConfigItem.BoolItem HIDE_KEYBOARD_ON_SCROLL = NeoConfig.bool("hide_keyboard_on_scroll", false);
+    /** "Delete for everyone" starts ticked in the delete messages dialog. */
+    public static final NeoConfigItem.BoolItem DELETE_FOR_ALL_DEFAULT = NeoConfig.bool("delete_for_all_default", false);
+    /** Every link first tries to open in Instant View, not only telegra.ph. */
+    public static final NeoConfigItem.BoolItem LINKS_IN_INSTANT_VIEW = NeoConfig.bool("links_in_instant_view", false);
+    /** Empty chats do not offer a greeting sticker. */
+    public static final NeoConfigItem.BoolItem HIDE_GREETING_STICKER = NeoConfig.bool("hide_greeting_sticker", false);
 
     // ---- Privacy -----------------------------------------------------------------------------------
 
@@ -90,6 +98,8 @@ public final class NeoOptions {
     public static final NeoConfigItem.BoolItem DISABLE_VOICE_AUTOPLAY = NeoConfig.bool("disable_voice_autoplay", false);
     /** Videos open in their original quality unless another one was picked for them. */
     public static final NeoConfigItem.BoolItem PREFER_ORIGINAL_QUALITY = NeoConfig.bool("prefer_original_quality", false);
+    /** A volume key in a chat plays the visible video with sound (stock). */
+    public static final NeoConfigItem.BoolItem VOLUME_BUTTONS_PLAY_VIDEOS = NeoConfig.bool("volume_buttons_play_videos", true);
 
     // ---- Media: video messages ---------------------------------------------------------------
 

@@ -35,6 +35,14 @@ public final class ChatsSection {
                 R.string.NeoDisableJumpToNextChannel, R.string.NeoDisableJumpToNextChannelInfo));
         rows.add(NeoSettingsRow.toggle("hide_business_bot_panel", NeoOptions.HIDE_BUSINESS_BOT_PANEL,
                 R.string.NeoHideBusinessBotPanel, R.string.NeoHideBusinessBotPanelAbout));
+        rows.add(NeoSettingsRow.toggle("hide_keyboard_on_scroll", NeoOptions.HIDE_KEYBOARD_ON_SCROLL,
+                R.string.NeoHideKeyboardOnChatScroll, R.string.NeoHideKeyboardOnChatScrollInfo));
+        rows.add(NeoSettingsRow.toggle("delete_for_all_default", NeoOptions.DELETE_FOR_ALL_DEFAULT,
+                R.string.NeoDeleteForAllByDefault, R.string.NeoDeleteForAllByDefaultInfo));
+        rows.add(NeoSettingsRow.toggle("links_in_instant_view", NeoOptions.LINKS_IN_INSTANT_VIEW,
+                R.string.NeoOpenAllLinksInInstantView, R.string.NeoOpenAllLinksInInstantViewInfo));
+        rows.add(NeoSettingsRow.toggle("hide_greeting_sticker", NeoOptions.HIDE_GREETING_STICKER,
+                R.string.NeoDisableGreetingSticker, R.string.NeoDisableGreetingStickerInfo));
     }
 
     private static NeoSettingsRow doubleTap(@NonNull String slug, @NonNull NeoConfigItem<NeoDoubleTap.Action> item, int titleRes) {

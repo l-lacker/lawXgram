@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/hide-keyboard-on-scroll: hide the keyboard when the chat is dragged
+
+Behind NeoOptions.HIDE_KEYBOARD_ON_SCROLL. When the user starts dragging the message list, NeoChat closes the keyboard, or the emoji and sticker panel when the keyboard is not shown.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -6860,6 +6860,7 @@ public class ChatActivity extends BaseFragment implements
+                         wasManualScroll = true;
+                         scrollingChatListView = true;
+                     } else if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
++                        ru.llacker.neogram.chat.NeoChat.onChatDragged(ChatActivity.this);
+                         pollHintCell = null;
+                         wasManualScroll = true;
+                         scrollingFloatingDate = true;

@@ -472,4 +472,13 @@
     <string name="NeoPlaybackHeader">Playback</string>
     <string name="NeoDisableVoiceMessagesAutoPlayInfo">Playback stops after the voice or video message you tapped instead of going on to the next one.</string>
     <string name="NeoPreferOriginalQualityInfo">Videos open in their original quality unless you pick another quality for them in the player.</string>
+    <string name="NeoHideKeyboardOnChatScrollInfo">Scrolling through messages closes the keyboard, or the emoji and sticker panel.</string>
+    <string name="NeoDeleteForAllByDefault">Delete for everyone by default</string>
+    <string name="NeoDeleteForAllByDefaultInfo">When you delete messages, the box to delete them for the other person or for all members starts ticked.</string>
+    <string name="NeoOpenAllLinksInInstantViewInfo">Links open in Instant View when the page has one, not only telegra.ph pages. Others open as usual after a short check.</string>
+    <string name="NeoGreetingNoSticker">Send a message to start the conversation.</string>
+    <string name="NeoDisableGreetingStickerInfo">Empty chats no longer offer a sticker to send as a greeting.</string>
+    <string name="NeoUnmuteVideosWithVolumeButtonsInfo">In a chat, a volume button starts the video on screen with sound. Turned off, the buttons only change the volume.</string>
+    <string name="NeoVoiceRecorderInfo">Voice messages are recorded with Telegram\'s new recorder. Off means the classic one; by default the server decides.</string>
+    <string name="NeoNoiseSuppressionInfo">RNNoise removes background noise from voice messages on the phone. It may affect music or very quiet speech.</string>
 </resources>

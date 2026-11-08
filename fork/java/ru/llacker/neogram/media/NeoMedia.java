@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import ru.llacker.neogram.config.NeoOptions;
 
 /**
- * Media options: patches debloat/gallery-camera, debloat/voice-autoplay and
- * feature/original-video-quality.
+ * Media options: patches debloat/gallery-camera, debloat/voice-autoplay,
+ * debloat/volume-buttons-video and feature/original-video-quality.
  */
 public final class NeoMedia {
 
@@ -23,6 +23,11 @@ public final class NeoMedia {
 
     public static boolean disableVoiceAutoplay() {
         return NeoOptions.DISABLE_VOICE_AUTOPLAY.value();
+    }
+
+    /** A volume key in a chat plays the visible video with sound (stock). */
+    public static boolean volumeButtonsPlayVideos() {
+        return NeoOptions.VOLUME_BUTTONS_PLAY_VIDEOS.value();
     }
 
     /**

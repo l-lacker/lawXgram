@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: debloat/volume-buttons-video: volume buttons only change the volume in chats
+
+Behind NeoOptions.VOLUME_BUTTONS_PLAY_VIDEOS (on by default, as in stock). With it off, LaunchActivity no longer turns a volume key press in a chat into playing the visible video with sound (ChatActivity.maybePlayVisibleVideo); the key only changes the volume.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -8706,7 +8706,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+                         showVoiceChatTooltip(mute ? UndoView.ACTION_VOIP_SOUND_MUTED : UndoView.ACTION_VOIP_SOUND_UNMUTED);
+                     }
+                 }
+-            } else if (!mainFragmentsStack.isEmpty() && (!PhotoViewer.hasInstance() || !PhotoViewer.getInstance().isVisible()) && event.getRepeatCount() == 0) {
++            } else if (ru.llacker.neogram.media.NeoMedia.volumeButtonsPlayVideos() && !mainFragmentsStack.isEmpty() && (!PhotoViewer.hasInstance() || !PhotoViewer.getInstance().isVisible()) && event.getRepeatCount() == 0) {
+                 BaseFragment fragment = mainFragmentsStack.get(mainFragmentsStack.size() - 1);
+                 if (fragment instanceof ChatActivity && !BaseFragment.hasSheets(fragment)) {
+                     if (((ChatActivity) fragment).maybePlayVisibleVideo()) {

@@ -14,6 +14,7 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.SendMessagesHelper;
 import org.telegram.messenger.UserConfig;
+import org.telegram.utils.recorder.audio.AudioRecordingSession;
 import org.telegram.utils.recorder.round.RoundVideoSession;
 import org.telegram.utils.settings.SharedSettings;
 
@@ -69,6 +70,10 @@ public final class NeoBackup {
             shared.put("round_video_frame_rate", SharedSettings.roundVideoFrameRate.get().name());
             shared.put("round_video_video_bitrate", SharedSettings.roundVideoVideoBitrate.get());
             shared.put("round_video_composition", SharedSettings.roundVideoComposition.get());
+            if (SharedSettings.audioRecorderV2Enabled.isSet()) {
+                shared.put("audio_recorder_v2_enabled", SharedSettings.audioRecorderV2Enabled.get());
+            }
+            shared.put("audio_recorder_noise_suppression", SharedSettings.audioRecorderNoiseSuppression.get().name());
             root.put("shared", shared);
         } catch (JSONException e) {
             throw new IllegalStateException(e);
@@ -113,6 +118,17 @@ public final class NeoBackup {
                     result.skipped++;
                 }
             }
+            if (shared.has("audio_recorder_v2_enabled")) {
+                Object value = shared.opt("audio_recorder_v2_enabled");
+                if (value instanceof Boolean) {
+                    SharedSettings.audioRecorderV2Enabled.set((Boolean) value);
+                    result.applied++;
+                } else {
+                    result.skipped++;
+                }
+            }
+            count(result, applyEnum(shared, "audio_recorder_noise_suppression", AudioRecordingSession.NoiseSuppression.class,
+                    SharedSettings.audioRecorderNoiseSuppression::set));
         }
         return result;
     }

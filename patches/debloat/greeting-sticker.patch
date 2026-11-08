@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: debloat/greeting-sticker: no greeting sticker in empty chats
+
+Behind NeoOptions.HIDE_GREETING_STICKER. ChatGreetingsView hides its sticker container and says only that there are no messages yet, without the hint to tap the greeting; a business intro set later by ChatActivity keeps its own text.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Components/ChatGreetingsView.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatGreetingsView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatGreetingsView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatGreetingsView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatGreetingsView.java
+@@ -107,6 +107,7 @@ public class ChatGreetingsView extends LinearLayout implements Theme.Colorable {
+         if (preloadedGreetingsSticker == null) {
+             preloadedGreetingsSticker = MediaDataController.getInstance(currentAccount).getGreetingsSticker();
+         }
++        ru.llacker.neogram.chat.NeoChat.onGreetingsCreated(this);
+     }
+ 
+     public void setText(CharSequence title, CharSequence description) {

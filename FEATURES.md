@@ -39,20 +39,25 @@ lawXgram is still to be ported. Stock behaviour that Neogram changes is always a
 | No camera tile in the attachment gallery | `debloat/gallery-camera` | `NeoMedia` |
 | Voice and video messages do not play on by themselves | `debloat/voice-autoplay` | `NeoMedia` |
 | Videos open in their original quality | `feature/original-video-quality` | `NeoMedia` |
+| Hide the keyboard when the chat is scrolled | `feature/hide-keyboard-on-scroll` | `NeoChat` |
+| "Delete for everyone" ticked by default | `feature/delete-for-all-default` | `NeoChat` |
+| Try Instant View for every link | `feature/links-in-instant-view` | `NeoChat` |
+| No greeting sticker in empty chats | `debloat/greeting-sticker` | `NeoChat` |
+| Volume buttons only change the volume in chats (no video playback) | `debloat/volume-buttons-video` | `NeoMedia` |
+| Voice messages: Telegram's new recorder and RNNoise noise suppression (stock settings that release builds hide), included in backups | — | `MediaSection`, `NeoBackup` |
 
 ## To port from lawXgram
 
 Grouped as in the plan; each becomes one or more small patches plus a settings page section.
 
 - **Chats:** remaining message menu items (mention, copy ID, JSON, history), double tap to
-  translate, quick forward, search filter by type, sticker size, hide keyboard on scroll,
-  greeting sticker, channel buttons, Instant View links, blocked users' messages,
-  delete-for-everyone default, confirmation before sending voice/video messages, Markdown input
-  with undo/redo, inline bots management.
+  translate, quick forward, search filter by type, sticker size, channel buttons, blocked
+  users' messages, confirmation before sending voice/video messages, Markdown input with
+  undo/redo, inline bots management.
 - **Main screen and folders:** tab titles or icons, folder icons, tabs at the bottom, bottom
   navigation buttons, recent chats on long back.
-- **Media:** instant camera switch, volume-button unmute, autopause, proximity sensor, download
-  speed boost, GIF export, voice enhancements.
+- **Media:** instant camera switch, proximity sensor during calls, download speed boost, GIF
+  export.
 - **Translator:** providers (Google, Yandex, DeepL, Microsoft, …), target language, auto
   translation, show original, keep formatting; transcription with Cloudflare Workers AI.
 - **Privacy and accounts:** account passcodes, hidden accounts, panic code, instant lock, IPv6,
@@ -70,3 +75,5 @@ Grouped as in the plan; each becomes one or more small patches plus a settings p
 - lawXgram's own Camera2 fork for the attachment camera (the stock camera is used there).
 - Client-side Premium bypasses and hidden sponsored-message buttons (against the API terms).
 - Hacks for specific devices that the stock code no longer needs.
+- Auto-pause of viewer videos: Telegram 13 pauses them itself when the app goes to the
+  background. lawXgram's voice enhancement is replaced by the stock recorder settings above.

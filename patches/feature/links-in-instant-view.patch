@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/links-in-instant-view: try Instant View for every link
+
+Behind NeoOptions.LINKS_IN_INSTANT_VIEW. Browser.openUrl asks the server for a link preview of any page, as it does for telegra.ph, and opens the Instant View when the page has one; otherwise the link opens as usual after the request.
+---
+ TMessagesProj/src/main/java/org/telegram/messenger/browser/Browser.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/browser/Browser.java b/TMessagesProj/src/main/java/org/telegram/messenger/browser/Browser.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/browser/Browser.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/browser/Browser.java
+@@ -381,7 +381,7 @@ public class Browser {
+         if (tryTelegraph) {
+             try {
+                 String host = AndroidUtilities.getHostAuthority(uri);
+-                if (UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser() != null && (isTelegraphUrl(host, true) || "telegram.org".equalsIgnoreCase(host) && (uri.toString().toLowerCase().contains("telegram.org/faq") || uri.toString().toLowerCase().contains("telegram.org/privacy") || uri.toString().toLowerCase().contains("telegram.org/blog")))) {
++                if (UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser() != null && (ru.llacker.neogram.chat.NeoChat.openLinksInInstantView() || isTelegraphUrl(host, true) || "telegram.org".equalsIgnoreCase(host) && (uri.toString().toLowerCase().contains("telegram.org/faq") || uri.toString().toLowerCase().contains("telegram.org/privacy") || uri.toString().toLowerCase().contains("telegram.org/blog")))) {
+                     final AlertDialog[] progressDialog = new AlertDialog[] {
+                         new AlertDialog(context, AlertDialog.ALERT_TYPE_SPINNER)
+                     };

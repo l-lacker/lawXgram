@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/delete-for-all-default: tick delete for everyone by default
+
+Behind NeoOptions.DELETE_FOR_ALL_DEFAULT. Where the delete messages dialog offers to delete for the other person or for all members, the box starts ticked; it can still be unticked before deleting.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Components/AlertsCreator.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/AlertsCreator.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/AlertsCreator.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/AlertsCreator.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/AlertsCreator.java
+@@ -8037,6 +8037,7 @@ public class AlertsCreator {
+                 }
+                 cell.setPadding(LocaleController.isRTL ? dp(16) : dp(8), 0, LocaleController.isRTL ? dp(8) : dp(16), 0);
+                 frameLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT, 0, 0, 0, 0));
++                cell.setChecked(deleteForAll[0] = ru.llacker.neogram.chat.NeoChat.deleteForAllByDefault(), false);
+                 cell.setOnClickListener(v -> {
+                     CheckBoxCell cell12 = (CheckBoxCell) v;
+                     deleteForAll[0] = !deleteForAll[0];
+@@ -8096,6 +8097,7 @@ public class AlertsCreator {
+                 }
+                 cell.setPadding(LocaleController.isRTL ? dp(16) : dp(8), 0, LocaleController.isRTL ? dp(8) : dp(16), 0);
+                 frameLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT, 0, 0, 0, 0));
++                cell.setChecked(deleteForAll[0] = ru.llacker.neogram.chat.NeoChat.deleteForAllByDefault(), false);
+                 cell.setOnClickListener(v -> {
+                     CheckBoxCell cell1 = (CheckBoxCell) v;
+                     deleteForAll[0] = !deleteForAll[0];

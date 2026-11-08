@@ -451,4 +451,13 @@
     <string name="NeoPlaybackHeader">Воспроизведение</string>
     <string name="NeoDisableVoiceMessagesAutoPlayInfo">Воспроизведение останавливается после голосового или видеосообщения, которое вы включили, а не переходит к следующему.</string>
     <string name="NeoPreferOriginalQualityInfo">Видео открываются в исходном качестве, если в плеере для них не выбрано другое.</string>
+    <string name="NeoHideKeyboardOnChatScrollInfo">Прокрутка сообщений закрывает клавиатуру или панель эмодзи и стикеров.</string>
+    <string name="NeoDeleteForAllByDefault">«Удалить у всех» по умолчанию</string>
+    <string name="NeoDeleteForAllByDefaultInfo">При удалении сообщений галочка «удалить у собеседника» или «у всех участников» уже стоит.</string>
+    <string name="NeoOpenAllLinksInInstantViewInfo">Ссылки открываются в Instant View, если у страницы он есть, а не только telegra.ph. Остальные открываются как обычно после короткой проверки.</string>
+    <string name="NeoGreetingNoSticker">Отправьте сообщение, чтобы начать переписку.</string>
+    <string name="NeoDisableGreetingStickerInfo">Пустые чаты больше не предлагают отправить стикер для приветствия.</string>
+    <string name="NeoUnmuteVideosWithVolumeButtonsInfo">В чате кнопка громкости включает видео на экране со звуком. Если выключить, кнопки только меняют громкость.</string>
+    <string name="NeoVoiceRecorderInfo">Голосовые записываются новым рекордером Telegram. Если выключить, используется классический; по умолчанию решает сервер.</string>
+    <string name="NeoNoiseSuppressionInfo">RNNoise убирает фоновый шум из голосовых прямо на телефоне. Может искажать музыку и очень тихую речь.</string>
 </resources>
