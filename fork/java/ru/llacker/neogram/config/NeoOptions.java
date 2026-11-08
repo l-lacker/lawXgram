@@ -56,6 +56,12 @@ public final class NeoOptions {
     public static final NeoConfigItem.BoolItem MENU_DELETE_FILE = NeoConfig.bool("menu_delete_file", false);
     public static final NeoConfigItem.BoolItem MENU_STATISTICS = NeoConfig.bool("menu_statistics", false);
     public static final NeoConfigItem.BoolItem MENU_DETAILS = NeoConfig.bool("menu_details", false);
+    /** "Set a reminder": a scheduled copy in Saved Messages. */
+    public static final NeoConfigItem.BoolItem MENU_REMINDER = NeoConfig.bool("menu_reminder", false);
+    /** "Open in…" for downloaded videos. */
+    public static final NeoConfigItem.BoolItem MENU_OPEN_IN = NeoConfig.bool("menu_open_in", false);
+    /** "QR Code": read a QR code from a photo. */
+    public static final NeoConfigItem.BoolItem MENU_QR = NeoConfig.bool("menu_qr", false);
     /** The stock "Report" item; off hides it. */
     public static final NeoConfigItem.BoolItem MENU_REPORT = NeoConfig.bool("menu_report", true);
     /** Double tap on incoming / outgoing messages; REACTION is the stock behaviour. */

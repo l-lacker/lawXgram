@@ -28,6 +28,9 @@ public final class NeoMessageMenu {
     public static final int OPTION_DELETE_FILE = 1003;
     public static final int OPTION_COPY_PHOTO = 1004;
     public static final int OPTION_DETAILS = 1005;
+    public static final int OPTION_REMINDER = 1006;
+    public static final int OPTION_OPEN_IN = 1007;
+    public static final int OPTION_QR = 1008;
 
     private NeoMessageMenu() {
     }
@@ -48,8 +51,19 @@ public final class NeoMessageMenu {
             if (NeoOptions.MENU_SAVE.value() && NeoMessageActions.canSave(chat, message)) {
                 insert(index++, OPTION_SAVE, R.drawable.msg_saved, NeoStrings.get(R.string.NeoAddToSavedMessages), options, icons, items);
             }
+            if (NeoOptions.MENU_REMINDER.value() && NeoMessageActions.canRemind(chat, message)) {
+                insert(index++, OPTION_REMINDER, R.drawable.msg_calendar2, LocaleController.getString(R.string.SetReminder),
+                        options, icons, items);
+            }
             if (NeoOptions.MENU_COPY_PHOTO.value() && group == null && NeoMessageActions.photoFile(message) != null) {
                 insert(index++, OPTION_COPY_PHOTO, R.drawable.msg_copy, NeoStrings.get(R.string.NeoCopyPhoto), options, icons, items);
+            }
+            if (NeoOptions.MENU_QR.value() && group == null && NeoMessageActions.photoFile(message) != null) {
+                insert(index++, OPTION_QR, R.drawable.msg_qrcode, LocaleController.getString(R.string.QrCode), options, icons, items);
+            }
+            if (NeoOptions.MENU_OPEN_IN.value() && group == null && NeoMessageActions.canOpenIn(message)) {
+                insert(index++, OPTION_OPEN_IN, R.drawable.msg_openin, LocaleController.getString(R.string.OpenInExternalApp),
+                        options, icons, items);
             }
             if (NeoOptions.MENU_STATISTICS.value() && canShowStatistics(chat, message) && !options.contains(ChatActivity.OPTION_STATISTICS)) {
                 insert(index++, ChatActivity.OPTION_STATISTICS, R.drawable.msg_stats, LocaleController.getString(R.string.Statistics),
@@ -130,6 +144,15 @@ public final class NeoMessageMenu {
                 return true;
             case OPTION_DETAILS:
                 chat.presentFragment(new NeoMessageDetails(message));
+                return true;
+            case OPTION_REMINDER:
+                NeoMessageActions.remind(chat, message, group);
+                return true;
+            case OPTION_OPEN_IN:
+                NeoMessageActions.openIn(chat, message);
+                return true;
+            case OPTION_QR:
+                NeoMessageActions.scanQr(chat, message);
                 return true;
             default:
                 return false;

@@ -460,4 +460,9 @@
     <string name="NeoUnmuteVideosWithVolumeButtonsInfo">В чате кнопка громкости включает видео на экране со звуком. Если выключить, кнопки только меняют громкость.</string>
     <string name="NeoVoiceRecorderInfo">Голосовые записываются новым рекордером Telegram. Если выключить, используется классический; по умолчанию решает сервер.</string>
     <string name="NeoNoiseSuppressionInfo">RNNoise убирает фоновый шум из голосовых прямо на телефоне. Может искажать музыку и очень тихую речь.</string>
+    <string name="NeoMenuReminderInfo">Отправляет отложенную копию сообщения в «Избранное»: Telegram напомнит о нём в выбранное время.</string>
+    <string name="NeoReminderSet">Напоминание придёт в «Избранное»</string>
+    <string name="NeoMenuQrInfo">Читает QR-код с фото и предлагает открыть или скопировать его.</string>
+    <string name="NeoQrNotFound">На фото не найден QR-код</string>
+    <string name="NeoMenuOpenInInfo">Открывает загруженное видео в другом приложении, например во внешнем плеере.</string>
 </resources>

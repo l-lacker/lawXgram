@@ -481,4 +481,9 @@
     <string name="NeoUnmuteVideosWithVolumeButtonsInfo">In a chat, a volume button starts the video on screen with sound. Turned off, the buttons only change the volume.</string>
     <string name="NeoVoiceRecorderInfo">Voice messages are recorded with Telegram\'s new recorder. Off means the classic one; by default the server decides.</string>
     <string name="NeoNoiseSuppressionInfo">RNNoise removes background noise from voice messages on the phone. It may affect music or very quiet speech.</string>
+    <string name="NeoMenuReminderInfo">Schedules a copy of the message in Saved Messages: Telegram reminds you about it at the chosen time.</string>
+    <string name="NeoReminderSet">The reminder will arrive in Saved Messages</string>
+    <string name="NeoMenuQrInfo">Reads a QR code from a photo and offers to open or copy it.</string>
+    <string name="NeoQrNotFound">No QR code found in this photo</string>
+    <string name="NeoMenuOpenInInfo">Opens a downloaded video in another app, such as an external player.</string>
 </resources>

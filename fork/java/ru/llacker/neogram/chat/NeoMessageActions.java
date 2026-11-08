@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -21,9 +22,13 @@ import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SendMessagesHelper;
 import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.Utilities;
+import org.telegram.messenger.browser.Browser;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.Cells.ChatMessageCell;
 import org.telegram.ui.ChatActivity;
+import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.RecyclerListView;
 
@@ -91,6 +96,27 @@ public final class NeoMessageActions {
                 messages.size() > 1 ? R.string.FwdMessagesToSavedMessages : R.string.FwdMessageToSavedMessages))).show();
     }
 
+    // ---- reminder -------------------------------------------------------------------------------
+
+    /** "Set a reminder": a scheduled copy in Saved Messages, which Telegram shows as a reminder. */
+    static boolean canRemind(@NonNull ChatActivity chat, @NonNull MessageObject message) {
+        return isForwardable(message) && !chat.isInScheduleMode();
+    }
+
+    static void remind(@NonNull ChatActivity chat, @NonNull MessageObject message, @Nullable MessageObject.GroupedMessages group) {
+        Context context = chat.getParentActivity();
+        if (context == null) {
+            return;
+        }
+        int account = chat.getCurrentAccount();
+        long self = UserConfig.getInstance(account).getClientUserId();
+        ArrayList<MessageObject> messages = messagesOf(message, group);
+        AlertsCreator.createScheduleDatePickerDialog(context, self, (notify, scheduleDate, scheduleRepeatPeriod) -> {
+            SendMessagesHelper.getInstance(account).sendMessage(messages, self, false, false, true, scheduleDate, 0);
+            BulletinFactory.of(chat).createSimpleBulletin(R.raw.saved_messages, NeoStrings.get(R.string.NeoReminderSet)).show();
+        }, chat.getResourceProvider()).show();
+    }
+
     // ---- downloaded files -----------------------------------------------------------------------
 
     /** The file Telegram downloaded for the message (not a file the user sent from their device). */
@@ -125,6 +151,17 @@ public final class NeoMessageActions {
         }
     }
 
+    /** "Open in…" for a downloaded video the chat allows to save. */
+    static boolean canOpenIn(@NonNull MessageObject message) {
+        return message.isVideo() && message.canForwardMessage() && downloadedFile(message) != null;
+    }
+
+    static void openIn(@NonNull ChatActivity chat, @NonNull MessageObject message) {
+        if (chat.getParentActivity() != null) {
+            AndroidUtilities.openForView(message, chat.getParentActivity(), chat.getResourceProvider(), false);
+        }
+    }
+
     // ---- photos ---------------------------------------------------------------------------------
 
     @Nullable
@@ -134,6 +171,50 @@ public final class NeoMessageActions {
         }
         File file = FileLoader.getInstance(message.currentAccount).getPathToMessage(message.messageOwner);
         return file != null && file.isFile() ? file : null;
+    }
+
+    /** Reads a QR code from the photo off the main thread and offers to open or copy it. */
+    static void scanQr(@NonNull ChatActivity chat, @NonNull MessageObject message) {
+        File file = photoFile(message);
+        if (file == null) {
+            return;
+        }
+        Utilities.globalQueue.postRunnable(() -> {
+            String text = null;
+            try {
+                text = NeoQr.decode(file);
+            } catch (Exception | OutOfMemoryError e) {
+                FileLog.e(e);
+            }
+            String result = text;
+            AndroidUtilities.runOnUIThread(() -> showQr(chat, result));
+        });
+    }
+
+    private static void showQr(@NonNull ChatActivity chat, @Nullable String text) {
+        Context context = chat.getParentActivity();
+        if (context == null) {
+            return;
+        }
+        if (TextUtils.isEmpty(text)) {
+            BulletinFactory.of(chat).createSimpleBulletin(R.raw.error, NeoStrings.get(R.string.NeoQrNotFound)).show();
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(context, chat.getResourceProvider());
+        builder.setTitle(LocaleController.getString(R.string.QrCode));
+        builder.setMessage(text);
+        String scheme = Uri.parse(text).getScheme();
+        if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme) || "tg".equalsIgnoreCase(scheme)) {
+            builder.setPositiveButton(LocaleController.getString(R.string.Open), (dialog, which) -> Browser.openUrl(context, text));
+        }
+        builder.setNeutralButton(LocaleController.getString(R.string.Copy), (dialog, which) -> {
+            AndroidUtilities.addToClipboard(text);
+            if (AndroidUtilities.shouldShowClipboardToast()) {
+                BulletinFactory.of(chat).createCopyBulletin(LocaleController.getString(R.string.TextCopied)).show();
+            }
+        });
+        builder.setNegativeButton(LocaleController.getString(R.string.Close), null);
+        chat.showDialog(builder.create());
     }
 
     static void copyPhoto(@NonNull ChatActivity chat, @NonNull MessageObject message) {
