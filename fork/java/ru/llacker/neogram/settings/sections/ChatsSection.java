@@ -13,7 +13,7 @@ import ru.llacker.neogram.config.NeoOptions;
 import ru.llacker.neogram.settings.NeoSettingsRow;
 import ru.llacker.neogram.settings.NeoSettingsSection;
 
-/** Settings section "chats": the message menu, double tap and, as features are ported, chat tweaks. */
+/** Settings section "chats": the message menu, double tap and the chat screen. */
 public final class ChatsSection {
 
     public static final NeoSettingsSection SECTION = new NeoSettingsSection("chats", R.string.NeoSectionChats,
@@ -27,6 +27,14 @@ public final class ChatsSection {
         rows.add(NeoSettingsRow.page("message_menu", MessageMenuSection.SECTION, R.string.NeoMessageMenuInfo));
         rows.add(doubleTap("double_tap_in", NeoOptions.DOUBLE_TAP_IN, R.string.NeoDoubleTapIncoming));
         rows.add(doubleTap("double_tap_out", NeoOptions.DOUBLE_TAP_OUT, R.string.NeoDoubleTapOutgoing));
+
+        rows.add(NeoSettingsRow.header(R.string.NeoChatViewHeader));
+        rows.add(NeoSettingsRow.toggle("hide_time_on_stickers", NeoOptions.HIDE_TIME_ON_STICKERS,
+                R.string.NeoHideTimeOnSticker, R.string.NeoHideTimeOnStickerInfo));
+        rows.add(NeoSettingsRow.toggle("disable_next_channel", NeoOptions.DISABLE_NEXT_CHANNEL,
+                R.string.NeoDisableJumpToNextChannel, R.string.NeoDisableJumpToNextChannelInfo));
+        rows.add(NeoSettingsRow.toggle("hide_business_bot_panel", NeoOptions.HIDE_BUSINESS_BOT_PANEL,
+                R.string.NeoHideBusinessBotPanel, R.string.NeoHideBusinessBotPanelAbout));
     }
 
     private static NeoSettingsRow doubleTap(@NonNull String slug, @NonNull NeoConfigItem<NeoDoubleTap.Action> item, int titleRes) {

@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/hide-all-chats-tab: hide the All Chats folder tab
+
+Behind NeoOptions.HIDE_ALL_CHATS_TAB. updateFilterTabs leaves the default filter out of the tab strip unless the tabs are being reordered: the stock reorder code takes tab positions for folder indices, so All Chats comes back for editing and showDoneItem rebuilds the strip when editing starts or ends. A selected tab that is no longer there falls back to the first unlocked folder. FilterTabsView.getStableId looks the tab up by id (the same in stock, where ids equal positions), onMeasure lays the tabs out without a default tab, and scrollToFolder maps the folder index to its tab position. The archive is reachable from the chat list menu (stock ApplicationLoader.addItemOptions).
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java | 12 ++++++------
+ TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java           | 11 +++++++++++
+ 2 files changed, 17 insertions(+), 6 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java
+@@ -83,7 +83,7 @@ public class FilterTabsView extends FrameLayout {
+     }
+ 
+     public int getStableId(int selectedType) {
+-        return positionToStableId.get(selectedType, -1);
++        return positionToStableId.get(idToPosition.get(selectedType, -1), -1);
+     }
+ 
+     public boolean selectTabWithStableId(int stableId) {
+@@ -1545,12 +1545,12 @@ public class FilterTabsView extends FrameLayout {
+         if (!tabs.isEmpty()) {
+             final int width = MeasureSpec.getSize(widthMeasureSpec) - listViewPaddingH * 2;
+             Tab firstTab = findDefaultTab();
+-            if (firstTab != null) {
+-                firstTab.setTitle(LocaleController.getString(R.string.FilterAllChats), null, false);
+-                int tabWidth = firstTab.getWidth(false);
+-                firstTab.setTitle(allTabsWidth > width ? LocaleController.getString(R.string.FilterAllChatsShort) : LocaleController.getString(R.string.FilterAllChats), null, false);
++            if (firstTab != null || ru.llacker.neogram.dialogs.NeoDialogs.hideAllChatsTab()) {
++                if (firstTab != null) firstTab.setTitle(LocaleController.getString(R.string.FilterAllChats), null, false);
++                int tabWidth = firstTab != null ? firstTab.getWidth(false) : 0;
++                if (firstTab != null) firstTab.setTitle(allTabsWidth > width ? LocaleController.getString(R.string.FilterAllChatsShort) : LocaleController.getString(R.string.FilterAllChats), null, false);
+                 int trueTabsWidth = allTabsWidth - tabWidth;
+-                trueTabsWidth += firstTab.getWidth(false);
++                trueTabsWidth += firstTab != null ? firstTab.getWidth(false) : 0;
+                 int prevWidth = additionalTabWidth;
+                 additionalTabWidth = trueTabsWidth < width ? (width - trueTabsWidth) / tabs.size() : 0;
+                 if (prevWidth != additionalTabWidth) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -6712,6 +6712,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+             }
+         }
+ 
++        index = ru.llacker.neogram.dialogs.NeoDialogs.tabPosition(filterTabsView, filters, fid, index);
+         FilterTabsView.Tab tab = filterTabsView.getTab(index);
+         if (tab != null) {
+             if (viewPages != null && viewPages.length > 0 && viewPages[0].selectedType == tab.id) {
+@@ -6799,6 +6800,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+                 }
+                 filterTabsView.removeTabs();
+                 for (int a = 0, N = filters.size(); a < N; a++) {
++                    if (filters.get(a).isDefault() && ru.llacker.neogram.dialogs.NeoDialogs.skipAllChatsTab(filterTabsView)) {
++                        continue;
++                    }
+                     if (filters.get(a).isDefault()) {
+                         filterTabsView.addTab(a, 0, LocaleController.getString(R.string.FilterAllChats), null, false, true, filters.get(a).locked);
+                     } else {
+@@ -6828,6 +6832,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+                     }
+                     viewPages[a].listView.setScrollingTouchSlop(RecyclerView.TOUCH_SLOP_PAGING);
+                 }
++                if (ru.llacker.neogram.dialogs.NeoDialogs.hideAllChatsTab() && !filterTabsView.hasTab(viewPages[0].selectedType)) {
++                    viewPages[0].selectedType = ru.llacker.neogram.dialogs.NeoDialogs.selectFirstOpenTab(filterTabsView);
++                    updateCurrentTab = true;
++                }
+                 filterTabsView.finishAddingTabs(animatedUpdateItems);
+                 if (updateCurrentTab) {
+                     switchToCurrentSelectedMode(false);
+@@ -10184,6 +10192,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+ 
+     private void showDoneItem(boolean show) {
+         animatorDoneButtonVisible.setValue(show, true);
++        if (ru.llacker.neogram.dialogs.NeoDialogs.needsTabsRebuild(filterTabsView, getMessagesController().getDialogFilters().size())) {
++            updateFilterTabs(true, true);
++        }
+ 
+         if (doneItem == null) {
+             return;

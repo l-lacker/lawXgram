@@ -21,28 +21,38 @@ lawXgram is still to be ported. Stock behaviour that Neogram changes is always a
 | Video messages settings page (recorder, cameras, lenses, quality) | — | `RoundVideoSection` |
 | Send a gallery video as a video message | `feature/gallery-round` | `NeoGalleryRound`, core `RoundGeometry` |
 | Fix: a silent converted video message was sent as a GIF | `bugfix/round-video-muted-gif` | — |
+| Message menu: repeat (+1), save to Saved Messages, copy photo, delete the downloaded file, post statistics, message details, hide Report | `hooks/chat-message-menu` | `NeoMessageMenu`, `NeoMessageActions`, `NeoMessageDetails` |
+| Double tap on incoming / outgoing messages: reaction, reply, save, repeat, edit or nothing | `feature/double-tap` | `NeoDoubleTap` |
+| Times with seconds, exact numbers instead of 12.3K, first/last name order | `feature/format-tweaks` | `NeoFormat` |
+| Confirmation before a voice or video call | `feature/ask-before-call` | `NeoCalls` |
+| Notifications without sound from people who are not contacts | `feature/silence-non-contacts` | `NeoNotifications` |
+| Hide stories: the row above the chat list and in the archive, the post button and its hint | `debloat/stories` | `NeoDialogs` |
+| Open the hidden archive with a pull down | `feature/archive-on-pull` | `NeoDialogs` |
+| Hide the All Chats folder tab (shown again while reordering; archive in the chat list menu) | `feature/hide-all-chats-tab` | `NeoDialogs`, `NeoApplicationLoader` |
+| Hide the time on stickers and large emoji | `debloat/sticker-time` | `NeoChat` |
+| No pull up to the next channel or topic | `debloat/next-channel` | `NeoChat` |
+| Hide the business bot panel above chats | `debloat/business-bot-panel` | `NeoChat` |
 
 ## To port from lawXgram
 
 Grouped as in the plan; each becomes one or more small patches plus a settings page section.
 
-- **Chats:** extra message menu items (repeat, Saved Messages, mention, details, copy photo/ID,
-  JSON, history, delete downloaded file…), double-tap action, quick forward, search filter by
-  type, sticker size and time on stickers, hide keyboard on scroll, next-channel jump, greeting
-  sticker, channel buttons, business bot panel, Instant View links, blocked users' messages,
-  delete-for-everyone default, confirmations before voice/video messages and calls, Markdown
-  input with undo/redo, inline bots management.
-- **Main screen and folders:** hide stories, archive on pull-down, hide "All chats", tab titles or
-  icons, folder icons, tabs at the bottom, bottom navigation buttons, recent chats on long back.
+- **Chats:** remaining message menu items (mention, copy ID, JSON, history), double tap to
+  translate, quick forward, search filter by type, sticker size, hide keyboard on scroll,
+  greeting sticker, channel buttons, Instant View links, blocked users' messages,
+  delete-for-everyone default, confirmation before sending voice/video messages, Markdown input
+  with undo/redo, inline bots management.
+- **Main screen and folders:** tab titles or icons, folder icons, tabs at the bottom, bottom
+  navigation buttons, recent chats on long back.
 - **Media:** instant camera / camera in gallery switches, voice message autoplay, volume-button
   unmute, autopause, prefer original quality, proximity sensor, download speed boost, GIF export,
   copy photo, voice enhancements.
 - **Translator:** providers (Google, Yandex, DeepL, Microsoft, …), target language, auto
   translation, show original, keep formatting; transcription with Cloudflare Workers AI.
 - **Privacy and accounts:** account passcodes, hidden accounts, panic code, instant lock,
-  silence non-contacts, notification colour, name order, ID in profiles, IPv6, map drift fix.
+  notification colour, ID in profiles, IPv6, map drift fix.
 - **Appearance:** tablet mode, app bar shadow, system fonts and weight fallback, emoji sets,
-  seconds in times, no number rounding, predictive back, reduced colours, stroke on views.
+  predictive back, reduced colours, stroke on views.
 - **Accessibility:** seek bar announcements, item counts, file progress, dialog types.
 - **Accounts:** up to 8 accounts (native change), QR login.
 

@@ -433,4 +433,11 @@
     <string name="NeoDetailsMimeType">Тип</string>
     <string name="NeoDetailsFilePath">Путь на устройстве</string>
     <string name="NeoDetailsCopyHint">Нажмите на строку, чтобы скопировать значение.</string>
+    <string name="NeoChatListHeader">Список чатов</string>
+    <string name="NeoHideStoriesInfo">Убирает полосу историй над списком чатов и в архиве, а также кнопку публикации истории. Истории в профилях остаются доступны.</string>
+    <string name="NeoOpenArchiveOnPullInfo">Если архив скрыт, свайп вниз по списку чатов сразу открывает его, а не только показывает строку «Архив».</string>
+    <string name="NeoHideAllTabInfo">Вкладки папок начинаются с первой папки. «Все чаты» появляются только при перестановке вкладок, а архив открывается из меню в верхнем углу.</string>
+    <string name="NeoChatViewHeader">Экран чата</string>
+    <string name="NeoHideTimeOnStickerInfo">Стикеры и крупные эмодзи показываются без времени и отметок о прочтении. Они видны, пока сообщение выделено.</string>
+    <string name="NeoDisableJumpToNextChannelInfo">Свайп вверх в конце канала или темы форума больше не открывает следующий непрочитанный.</string>
 </resources>

@@ -29,6 +29,15 @@ public final class NeoOptions {
     /** Order of first and last names; AUTO follows the app language (stock). */
     public static final NeoConfigItem.EnumItem<NameOrder> NAME_ORDER = NeoConfig.choice("name_order", NameOrder.AUTO);
 
+    // ---- Chat list and folders ------------------------------------------------------------------
+
+    /** No stories row above the chat list and in the archive, no "post a story" button and hint. */
+    public static final NeoConfigItem.BoolItem HIDE_STORIES = NeoConfig.bool("hide_stories", false);
+    /** Pulling the chat list down past the hidden archive opens the archive instead of only revealing it. */
+    public static final NeoConfigItem.BoolItem ARCHIVE_ON_PULL = NeoConfig.bool("archive_on_pull", false);
+    /** Folder tabs start with the first folder; All Chats is shown only while the tabs are reordered. */
+    public static final NeoConfigItem.BoolItem HIDE_ALL_CHATS_TAB = NeoConfig.bool("hide_all_chats_tab", false);
+
     // ---- Chats: message menu and double tap ---------------------------------------------------------
 
     /** "Repeat" (+1): forward the message into the same chat. */
@@ -46,6 +55,15 @@ public final class NeoOptions {
             NeoConfig.choice("double_tap_in", ru.llacker.neogram.chat.NeoDoubleTap.Action.REACTION);
     public static final NeoConfigItem.EnumItem<ru.llacker.neogram.chat.NeoDoubleTap.Action> DOUBLE_TAP_OUT =
             NeoConfig.choice("double_tap_out", ru.llacker.neogram.chat.NeoDoubleTap.Action.REACTION);
+
+    // ---- Chats: chat screen ------------------------------------------------------------------------
+
+    /** No pull at the end of a channel or forum topic to the next unread one. */
+    public static final NeoConfigItem.BoolItem DISABLE_NEXT_CHANNEL = NeoConfig.bool("disable_next_channel", false);
+    /** No panel above chats that a business bot manages. */
+    public static final NeoConfigItem.BoolItem HIDE_BUSINESS_BOT_PANEL = NeoConfig.bool("hide_business_bot_panel", false);
+    /** No time pill on stickers and large emoji (still shown while the message is selected). */
+    public static final NeoConfigItem.BoolItem HIDE_TIME_ON_STICKERS = NeoConfig.bool("hide_time_on_stickers", false);
 
     // ---- Privacy -----------------------------------------------------------------------------------
 

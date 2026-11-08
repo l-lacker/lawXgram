@@ -454,4 +454,11 @@
     <string name="NeoDetailsMimeType">Type</string>
     <string name="NeoDetailsFilePath">Path on this device</string>
     <string name="NeoDetailsCopyHint">Tap a row to copy its value.</string>
+    <string name="NeoChatListHeader">Chat list</string>
+    <string name="NeoHideStoriesInfo">Removes the stories row above the chat list and in the archive, and the button for posting a story. Stories in profiles stay available.</string>
+    <string name="NeoOpenArchiveOnPullInfo">When the archive is hidden, pulling the chat list down opens it right away instead of only showing the Archived Chats row.</string>
+    <string name="NeoHideAllTabInfo">Folder tabs start with your first folder. All Chats appears only while you reorder the tabs, and the archive opens from the menu in the top corner.</string>
+    <string name="NeoChatViewHeader">Chat screen</string>
+    <string name="NeoHideTimeOnStickerInfo">Stickers and large emoji are shown without the time and read marks. They appear while the message is selected.</string>
+    <string name="NeoDisableJumpToNextChannelInfo">Pulling up at the end of a channel or forum topic no longer opens the next unread one.</string>
 </resources>

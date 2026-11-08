@@ -7,11 +7,13 @@ import android.view.ViewGroup;
 import org.telegram.messenger.ApplicationLoaderImpl;
 import org.telegram.messenger.BetaUpdate;
 import org.telegram.messenger.regular.BuildConfig;
+import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.IUpdateLayout;
 
 import java.io.File;
 
 import ru.llacker.neogram.NeoHooks;
+import ru.llacker.neogram.dialogs.NeoDialogs;
 import ru.llacker.neogram.update.NeoUpdateDialog;
 import ru.llacker.neogram.update.NeoUpdateLayout;
 import ru.llacker.neogram.update.NeoUpdater;
@@ -91,5 +93,12 @@ public class NeoApplicationLoader extends ApplicationLoaderImpl {
     @Override
     public IUpdateLayout takeUpdateLayout(Activity activity, ViewGroup sideMenuContainer) {
         return NeoUpdater.isEnabled() ? new NeoUpdateLayout(activity, sideMenuContainer) : null;
+    }
+
+    /** Items of the chat list menu (three dots), after New Group and Saved Messages. */
+    @Override
+    public void addItemOptions(ItemOptions itemOptions) {
+        super.addItemOptions(itemOptions);
+        NeoDialogs.addMenuItems(itemOptions);
     }
 }

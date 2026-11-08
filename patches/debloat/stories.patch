@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: debloat/stories: hide the stories row, the post story button and its hint
+
+Behind NeoOptions.HIDE_STORIES (Settings > Neogram > Chat list and folders). updateStoriesVisibility drops both visibility flags, so the row animates away in the chat list and in the archive; the post story button and its first-run hint follow the same option. onResume refreshes the floating buttons so a change made in settings shows when the chat list comes back.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -7126,6 +7126,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+         updateVisibleRows(0, false);
+         updateProxyButton(false, true);
+         updateStoriesVisibility(false);
++        updateFloatingButtonVisibility(false);
+         checkSuggestClearDatabase();
+         checkUi_mainTabsVisible();
+         if (filterTabsView != null && viewPages[0] != null && viewPages[0].dialogsAdapter != null) {
+@@ -7292,7 +7293,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+                 showArchiveHelp();
+             }
+         }
+-        if (canShowStoryHint && !storyHintShown && storyHint != null && storiesEnabled) {
++        if (canShowStoryHint && !storyHintShown && storyHint != null && storiesEnabled && !ru.llacker.neogram.dialogs.NeoDialogs.hideStories()) {
+             storyHintShown = true;
+             canShowStoryHint = false;
+             storyHint.show();
+@@ -8786,7 +8787,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+             floatingButton3.setButtonVisible(isVisible, animated);
+         }
+         if (floatingButtonStories != null) {
+-            floatingButtonStories.setButtonVisible(isVisible, animated);
++            floatingButtonStories.setButtonVisible(isVisible && !ru.llacker.neogram.dialogs.NeoDialogs.hideStories(), animated);
+         }
+     }
+ 
+@@ -12423,9 +12424,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+         if (StoryRecorder.isVisible() || (getLastStoryViewer() != null && getLastStoryViewer().isFullyVisible())) {
+             animated = false;
+         }
+-        boolean onlySelfStories = !isArchive() && getStoriesController().hasOnlySelfStories();
++        boolean onlySelfStories = !isArchive() && !ru.llacker.neogram.dialogs.NeoDialogs.hideStories() && getStoriesController().hasOnlySelfStories();
+         boolean newVisibility;
+-        if (communityId != 0) {
++        if (communityId != 0 || ru.llacker.neogram.dialogs.NeoDialogs.hideStories()) {
+             newVisibility = false;
+         } else if (isArchive()) {
+             newVisibility = !getStoriesController().getHiddenList().isEmpty();

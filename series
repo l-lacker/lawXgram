@@ -14,3 +14,9 @@ feature/format-tweaks.patch
 feature/ask-before-call.patch
 feature/silence-non-contacts.patch
 feature/double-tap.patch
+debloat/stories.patch
+feature/archive-on-pull.patch
+feature/hide-all-chats-tab.patch
+debloat/next-channel.patch
+debloat/business-bot-panel.patch
+debloat/sticker-time.patch

@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/archive-on-pull: open the hidden archive with a pull down
+
+Behind NeoOptions.ARCHIVE_ON_PULL. When a pull reveals the hidden archive row, NeoDialogs.onArchivePulled opens the archive after the stock reveal animation, the same way a tap on the row opens it. Only the chat list with a hidden archive can be pulled (stock hasHiddenArchive excludes the picker, folders and communities).
+---
+ TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -2275,6 +2275,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+                                 if (AndroidUtilities.isAccessibilityScreenReaderEnabled()) {
+                                     AndroidUtilities.makeAccessibilityAnnouncement(LocaleController.getString(R.string.AccDescrArchivedChatsShown));
+                                 }
++                                ru.llacker.neogram.dialogs.NeoDialogs.onArchivePulled(DialogsActivity.this);
+                             }
+                         }
+ 

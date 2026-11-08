@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: debloat/next-channel: turn off the pull up to the next channel or topic
+
+Behind NeoOptions.DISABLE_NEXT_CHANNEL. The stock pull at the end of a channel or forum topic opens the next unread one; with the option on, ChatActivity does not start the pull, so the list simply stops at the bottom.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -6727,7 +6727,7 @@ public class ChatActivity extends BaseFragment implements
+                 if (!foundTopView) {
+                     scrolled = super.scrollVerticallyBy(dy, recycler, state);
+                 }
+-                final boolean allowPullingDownScroll = !isInPollAddOptionMode() && !hasSelectedMessages();
++                final boolean allowPullingDownScroll = !isInPollAddOptionMode() && !hasSelectedMessages() && !ru.llacker.neogram.chat.NeoChat.disableNextChannel();
+                 if (allowPullingDownScroll && dy > 0 && scrolled == 0 && (ChatObject.isChannel(currentChat) && !currentChat.megagroup || isTopic && !UserObject.isBotForum(currentUser)) && chatMode != MODE_SAVED && chatMode != MODE_WELCOME_MESSAGES && chatMode != MODE_SCHEDULED && chatListView.getScrollState() == RecyclerView.SCROLL_STATE_DRAGGING && !chatListView.isFastScrollAnimationRunning() && !chatListView.isMultiselect() && !isReport()) {
+                     if (pullingDownOffset == 0 && pullingDownDrawable != null) {
+                         if (nextChannels != null && !nextChannels.isEmpty()) {
