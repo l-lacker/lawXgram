@@ -1,8 +1,14 @@
 package ru.llacker.neogram.chat;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.View;
@@ -13,11 +19,13 @@ import androidx.core.content.FileProvider;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SendMessagesHelper;
@@ -33,6 +41,8 @@ import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.RecyclerListView;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ru.llacker.neogram.NeoStrings;
@@ -160,6 +170,55 @@ public final class NeoMessageActions {
         if (chat.getParentActivity() != null) {
             AndroidUtilities.openForView(message, chat.getParentActivity(), chat.getResourceProvider(), false);
         }
+    }
+
+    // ---- stickers -------------------------------------------------------------------------------
+
+    /** A downloaded static sticker (WebP); animated and video stickers are not images. */
+    @Nullable
+    static File stickerFile(@NonNull MessageObject message) {
+        if (!message.isSticker() || message.isAnimatedSticker() || message.isVideoSticker() || !message.canForwardMessage()) {
+            return null;
+        }
+        File file = FileLoader.getInstance(message.currentAccount).getPathToMessage(message.messageOwner);
+        return file != null && file.isFile() ? file : null;
+    }
+
+    /** Saves the sticker to the gallery as a PNG with transparency. */
+    static void saveSticker(@NonNull ChatActivity chat, @NonNull MessageObject message) {
+        Activity activity = chat.getParentActivity();
+        File source = stickerFile(message);
+        if (activity == null || source == null) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 23 && (Build.VERSION.SDK_INT <= 28 || BuildVars.NO_SCOPED_STORAGE)
+                && activity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            activity.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 4);
+            return;
+        }
+        Context context = ApplicationLoader.applicationContext;
+        // MediaController.saveFile refuses files in the app's internal storage: the PNG goes next to
+        // Telegram's own media cache, where the sticker itself lives
+        File png = new File(FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE), "sticker_" + message.getDialogId() + "_" + message.getId() + ".png");
+        Utilities.globalQueue.postRunnable(() -> {
+            Bitmap image = BitmapFactory.decodeFile(source.getAbsolutePath());
+            if (image == null) {
+                return;
+            }
+            try (FileOutputStream out = new FileOutputStream(png)) {
+                image.compress(Bitmap.CompressFormat.PNG, 100, out);
+            } catch (IOException e) {
+                FileLog.e(e);
+                return;
+            } finally {
+                image.recycle();
+            }
+            MediaController.saveFile(png.getAbsolutePath(), context, 0, null, "image/png", uri -> {
+                if (!chat.isFinished && chat.getParentActivity() != null) {
+                    BulletinFactory.of(chat).createDownloadBulletin(BulletinFactory.FileType.PHOTO, chat.getResourceProvider()).show();
+                }
+            });
+        });
     }
 
     // ---- photos ---------------------------------------------------------------------------------

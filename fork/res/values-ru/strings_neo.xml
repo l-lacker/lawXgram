@@ -465,4 +465,6 @@
     <string name="NeoMenuQrInfo">Читает QR-код с фото и предлагает открыть или скопировать его.</string>
     <string name="NeoQrNotFound">На фото не найден QR-код</string>
     <string name="NeoMenuOpenInInfo">Открывает загруженное видео в другом приложении, например во внешнем плеере.</string>
+    <string name="NeoMenuSaveSticker">Сохранить стикер в галерею</string>
+    <string name="NeoMenuSaveStickerInfo">Сохраняет обычный (не анимированный) стикер в галерею как PNG с прозрачным фоном.</string>
 </resources>

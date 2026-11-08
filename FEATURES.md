@@ -21,7 +21,7 @@ lawXgram is still to be ported. Stock behaviour that Neogram changes is always a
 | Video messages settings page (recorder, cameras, lenses, quality) | — | `RoundVideoSection` |
 | Send a gallery video as a video message | `feature/gallery-round` | `NeoGalleryRound`, core `RoundGeometry` |
 | Fix: a silent converted video message was sent as a GIF | `bugfix/round-video-muted-gif` | — |
-| Message menu: repeat (+1), save to Saved Messages, set a reminder, copy photo, read a QR code from a photo, open a video in another app, delete the downloaded file, post statistics, message details, hide Report | `hooks/chat-message-menu` | `NeoMessageMenu`, `NeoMessageActions`, `NeoMessageDetails`, `NeoQr` |
+| Message menu: repeat (+1), save to Saved Messages, set a reminder, copy photo, read a QR code from a photo, save a sticker to the gallery, open a video in another app, delete the downloaded file, post statistics, message details, hide Report | `hooks/chat-message-menu` | `NeoMessageMenu`, `NeoMessageActions`, `NeoMessageDetails`, `NeoQr` |
 | Double tap on incoming / outgoing messages: reaction, reply, save, repeat, edit or nothing | `feature/double-tap` | `NeoDoubleTap` |
 | Times with seconds, exact numbers instead of 12.3K, first/last name order | `feature/format-tweaks` | `NeoFormat` |
 | Confirmation before a voice or video call | `feature/ask-before-call` | `NeoCalls` |
@@ -50,10 +50,10 @@ lawXgram is still to be ported. Stock behaviour that Neogram changes is always a
 
 Grouped as in the plan; each becomes one or more small patches plus a settings page section.
 
-- **Chats:** forward without author or caption and quick forward, save a sticker to the gallery,
-  double tap to translate, search filter by type, sticker size, channel buttons, blocked users'
-  messages, confirmation before sending voice/video messages (needs device testing: the stock
-  pause-to-preview path also sends), Markdown input with undo/redo, inline bots management.
+- **Chats:** forward without author or caption and quick forward, double tap to translate,
+  search filter by type, sticker size, channel buttons, blocked users' messages, confirmation
+  before sending voice/video messages (needs device testing: the stock pause-to-preview path
+  also sends), Markdown input with undo/redo, inline bots management.
 - **Main screen and folders:** tab titles or icons, folder icons, tabs at the bottom, bottom
   navigation buttons, recent chats on long back.
 - **Media:** instant camera switch, proximity sensor during calls, download speed boost, GIF

@@ -27,6 +27,8 @@ public final class MessageMenuSection {
         rows.add(NeoSettingsRow.toggle("reminder", NeoOptions.MENU_REMINDER, R.string.SetReminder, R.string.NeoMenuReminderInfo));
         rows.add(NeoSettingsRow.toggle("copy_photo", NeoOptions.MENU_COPY_PHOTO, R.string.NeoCopyPhoto, R.string.NeoMenuCopyPhotoInfo));
         rows.add(NeoSettingsRow.toggle("qr", NeoOptions.MENU_QR, R.string.QrCode, R.string.NeoMenuQrInfo));
+        rows.add(NeoSettingsRow.toggle("save_sticker", NeoOptions.MENU_SAVE_STICKER, R.string.NeoMenuSaveSticker,
+                R.string.NeoMenuSaveStickerInfo));
         rows.add(NeoSettingsRow.toggle("open_in", NeoOptions.MENU_OPEN_IN, R.string.OpenInExternalApp, R.string.NeoMenuOpenInInfo));
         rows.add(NeoSettingsRow.toggle("delete_file", NeoOptions.MENU_DELETE_FILE, R.string.NeoDeleteDownloadedFile,
                 R.string.NeoMenuDeleteFileInfo));

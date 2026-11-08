@@ -31,6 +31,7 @@ public final class NeoMessageMenu {
     public static final int OPTION_REMINDER = 1006;
     public static final int OPTION_OPEN_IN = 1007;
     public static final int OPTION_QR = 1008;
+    public static final int OPTION_SAVE_STICKER = 1009;
 
     private NeoMessageMenu() {
     }
@@ -57,6 +58,10 @@ public final class NeoMessageMenu {
             }
             if (NeoOptions.MENU_COPY_PHOTO.value() && group == null && NeoMessageActions.photoFile(message) != null) {
                 insert(index++, OPTION_COPY_PHOTO, R.drawable.msg_copy, NeoStrings.get(R.string.NeoCopyPhoto), options, icons, items);
+            }
+            if (NeoOptions.MENU_SAVE_STICKER.value() && NeoMessageActions.stickerFile(message) != null) {
+                insert(index++, OPTION_SAVE_STICKER, R.drawable.msg_gallery, LocaleController.getString(R.string.SaveToGallery),
+                        options, icons, items);
             }
             if (NeoOptions.MENU_QR.value() && group == null && NeoMessageActions.photoFile(message) != null) {
                 insert(index++, OPTION_QR, R.drawable.msg_qrcode, LocaleController.getString(R.string.QrCode), options, icons, items);
@@ -153,6 +158,9 @@ public final class NeoMessageMenu {
                 return true;
             case OPTION_QR:
                 NeoMessageActions.scanQr(chat, message);
+                return true;
+            case OPTION_SAVE_STICKER:
+                NeoMessageActions.saveSticker(chat, message);
                 return true;
             default:
                 return false;

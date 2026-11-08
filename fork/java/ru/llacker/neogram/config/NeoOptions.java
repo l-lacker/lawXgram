@@ -62,6 +62,8 @@ public final class NeoOptions {
     public static final NeoConfigItem.BoolItem MENU_OPEN_IN = NeoConfig.bool("menu_open_in", false);
     /** "QR Code": read a QR code from a photo. */
     public static final NeoConfigItem.BoolItem MENU_QR = NeoConfig.bool("menu_qr", false);
+    /** "Save to gallery" for static stickers, as PNG. */
+    public static final NeoConfigItem.BoolItem MENU_SAVE_STICKER = NeoConfig.bool("menu_save_sticker", false);
     /** The stock "Report" item; off hides it. */
     public static final NeoConfigItem.BoolItem MENU_REPORT = NeoConfig.bool("menu_report", true);
     /** Double tap on incoming / outgoing messages; REACTION is the stock behaviour. */

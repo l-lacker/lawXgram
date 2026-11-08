@@ -486,4 +486,6 @@
     <string name="NeoMenuQrInfo">Reads a QR code from a photo and offers to open or copy it.</string>
     <string name="NeoQrNotFound">No QR code found in this photo</string>
     <string name="NeoMenuOpenInInfo">Opens a downloaded video in another app, such as an external player.</string>
+    <string name="NeoMenuSaveSticker">Save sticker to gallery</string>
+    <string name="NeoMenuSaveStickerInfo">Saves a regular (not animated) sticker to the gallery as a PNG image with a transparent background.</string>
 </resources>
