@@ -467,4 +467,5 @@
     <string name="NeoMenuOpenInInfo">Открывает загруженное видео в другом приложении, например во внешнем плеере.</string>
     <string name="NeoMenuSaveSticker">Сохранить стикер в галерею</string>
     <string name="NeoMenuSaveStickerInfo">Сохраняет обычный (не анимированный) стикер в галерею как PNG с прозрачным фоном.</string>
+    <string name="NeoStickerSizeInfo">Размер стикеров в чатах относительно обычного. Анимированные эмодзи не меняются.</string>
 </resources>

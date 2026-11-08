@@ -43,6 +43,7 @@ lawXgram is still to be ported. Stock behaviour that Neogram changes is always a
 | "Delete for everyone" ticked by default | `feature/delete-for-all-default` | `NeoChat` |
 | Try Instant View for every link | `feature/links-in-instant-view` | `NeoChat` |
 | No greeting sticker in empty chats | `debloat/greeting-sticker` | `NeoChat` |
+| Sticker size in chats (60–140%) | `feature/sticker-size` | `NeoChat` |
 | Volume buttons only change the volume in chats (no video playback) | `debloat/volume-buttons-video` | `NeoMedia` |
 | Voice messages: Telegram's new recorder and RNNoise noise suppression (stock settings that release builds hide), included in backups | — | `MediaSection`, `NeoBackup` |
 
@@ -51,7 +52,7 @@ lawXgram is still to be ported. Stock behaviour that Neogram changes is always a
 Grouped as in the plan; each becomes one or more small patches plus a settings page section.
 
 - **Chats:** forward without author or caption and quick forward, double tap to translate,
-  search filter by type, sticker size, channel buttons, blocked users' messages, confirmation
+  search filter by type, channel buttons, blocked users' messages, confirmation
   before sending voice/video messages (needs device testing: the stock pause-to-preview path
   also sends), Markdown input with undo/redo, inline bots management.
 - **Main screen and folders:** tab titles or icons, folder icons, tabs at the bottom, bottom

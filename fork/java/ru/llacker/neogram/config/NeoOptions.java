@@ -78,6 +78,8 @@ public final class NeoOptions {
     public static final NeoConfigItem.BoolItem DISABLE_NEXT_CHANNEL = NeoConfig.bool("disable_next_channel", false);
     /** No panel above chats that a business bot manages. */
     public static final NeoConfigItem.BoolItem HIDE_BUSINESS_BOT_PANEL = NeoConfig.bool("hide_business_bot_panel", false);
+    /** Size of stickers in chats, percent of the stock size. */
+    public static final NeoConfigItem.IntItem STICKER_SIZE = NeoConfig.integer("sticker_size", 100);
     /** No time pill on stickers and large emoji (still shown while the message is selected). */
     public static final NeoConfigItem.BoolItem HIDE_TIME_ON_STICKERS = NeoConfig.bool("hide_time_on_stickers", false);
     /** Dragging the message list closes the keyboard or the emoji panel. */

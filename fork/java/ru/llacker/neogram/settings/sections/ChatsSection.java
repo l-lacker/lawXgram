@@ -29,6 +29,13 @@ public final class ChatsSection {
         rows.add(doubleTap("double_tap_out", NeoOptions.DOUBLE_TAP_OUT, R.string.NeoDoubleTapOutgoing));
 
         rows.add(NeoSettingsRow.header(R.string.NeoChatViewHeader));
+        rows.add(NeoSettingsRow.choice("sticker_size", NeoOptions.STICKER_SIZE, R.string.NeoStickerSize, R.string.NeoStickerSizeInfo)
+                .option(60, "60%")
+                .option(80, "80%")
+                .option(100, "100%")
+                .option(120, "120%")
+                .option(140, "140%")
+                .build());
         rows.add(NeoSettingsRow.toggle("hide_time_on_stickers", NeoOptions.HIDE_TIME_ON_STICKERS,
                 R.string.NeoHideTimeOnSticker, R.string.NeoHideTimeOnStickerInfo));
         rows.add(NeoSettingsRow.toggle("disable_next_channel", NeoOptions.DISABLE_NEXT_CHANNEL,

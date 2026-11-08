@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/sticker-size: sticker size in chats
+
+Behind NeoOptions.STICKER_SIZE (percent, 100 is stock). ChatMessageCell scales the box a sticker is fitted into (half the screen's shorter side on phones, 40% on tablets); animated emoji and dice keep the server zoom.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+@@ -8973,6 +8973,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                     } else {
+                         maxHeight = maxWidth = (int) (Math.min(getParentWidth(), AndroidUtilities.displaySize.y) * 0.5f);
+                     }
++                    maxHeight = maxWidth = (int) (maxWidth * ru.llacker.neogram.chat.NeoChat.stickerScale(messageObject));
+                     String filter;
+                     if (messageObject.isAnimatedEmoji() || messageObject.isDice()) {
+                         float zoom = MessagesController.getInstance(currentAccount).animatedEmojisZoom;

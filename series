@@ -32,3 +32,4 @@ feature/delete-for-all-default.patch
 feature/links-in-instant-view.patch
 debloat/volume-buttons-video.patch
 debloat/greeting-sticker.patch
+feature/sticker-size.patch

@@ -488,4 +488,5 @@
     <string name="NeoMenuOpenInInfo">Opens a downloaded video in another app, such as an external player.</string>
     <string name="NeoMenuSaveSticker">Save sticker to gallery</string>
     <string name="NeoMenuSaveStickerInfo">Saves a regular (not animated) sticker to the gallery as a PNG image with a transparent background.</string>
+    <string name="NeoStickerSizeInfo">Size of stickers in chats compared with the usual one. Animated emoji keep their size.</string>
 </resources>

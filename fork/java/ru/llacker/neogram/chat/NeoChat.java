@@ -19,7 +19,7 @@ import ru.llacker.neogram.config.NeoOptions;
 /**
  * Chat screen options: patches debloat/next-channel, debloat/business-bot-panel,
  * debloat/sticker-time, debloat/greeting-sticker, feature/hide-keyboard-on-scroll,
- * feature/delete-for-all-default and feature/links-in-instant-view.
+ * feature/delete-for-all-default, feature/links-in-instant-view and feature/sticker-size.
  */
 public final class NeoChat {
 
@@ -67,6 +67,14 @@ public final class NeoChat {
 
     public static boolean openLinksInInstantView() {
         return NeoOptions.LINKS_IN_INSTANT_VIEW.value();
+    }
+
+    /** Scale of the box stickers are fitted into; animated emoji and dice keep their server zoom. */
+    public static float stickerScale(@NonNull MessageObject message) {
+        if (message.isAnimatedEmoji() || message.isDice()) {
+            return 1f;
+        }
+        return NeoOptions.STICKER_SIZE.value() / 100f;
     }
 
     /** The time pill of this message is not drawn (stickers and large emoji, when the option is on). */
