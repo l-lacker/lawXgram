@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: bugfix/round-video-muted-gif: a converted video message without sound must not become a GIF
+
+SendMessagesHelper.prepareSendingVideo adds TL_documentAttributeAnimated to every muted
+video it converts, video messages included: a trimmed camera video message recorded or
+previewed without sound, or a silent gallery video sent as a video message, then goes
+out with both round_message and the GIF attribute and is shown as an animation. Muted
+video messages now take the regular branch (duration from the edited info, size from the
+crop), like unmuted ones; muted regular videos still become GIFs as before.
+---
+ TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+@@ -12211,7 +12211,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
+                         attributeVideo.duration = videoEditedInfo.estimatedDuration / 1000.0;
+                         document.size = videoEditedInfo.estimatedSize;
+                     } else if (videoEditedInfo != null && videoEditedInfo.needConvert()) {
+-                        if (videoEditedInfo.muted) {
++                        if (videoEditedInfo.muted && !isRound) {
+                             document.attributes.add(new TLRPC.TL_documentAttributeAnimated());
+                             fillVideoAttribute(videoPath, attributeVideo, videoEditedInfo);
+                             videoEditedInfo.originalWidth = attributeVideo.w;

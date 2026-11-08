@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/gallery-round: send a gallery video as a video message
+
+PhotoViewer and the attachment sheet get "Send as video message" in the send long-press
+menu, for a single gallery video in a chat that allows video messages (not scheduled, not
+editing, no paid messages). The menus only mark the video: its VideoEditedInfo gets
+roundVideo = true (PhotoViewer through NeoGalleryRound.onViewerSend right after the info
+is built, the attachment sheet on the selected entry, restored if nothing was sent).
+SendMessagesHelper.prepareSendingMedia hands marked videos to NeoGalleryRound.routeRounds,
+which takes them out of the album and, on a background thread, builds the video message
+from createCompressionSettings (now public) and the user's edits: the central square of
+their crop, at most a minute from their trim start, the side, bitrate and frame rate of the
+round video settings. The stock prepareSendingVideo then converts and sends it like a
+camera video message (round_message, blurred thumbnail, no caption or grouping).
+---
+ TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java  |  3 ++-
+ TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java | 10 ++++++++++
+ TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java                |  4 +++-
+ 3 files changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+@@ -10904,6 +10904,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
+ 
+     @UiThread
+     public static void prepareSendingMedia(AccountInstance accountInstance, ArrayList<SendingMediaInfo> media, long dialogId, MessageObject replyToMsg, MessageObject replyToTopMsg, TL_stories.StoryItem storyItem, ChatActivity.ReplyQuote quote, boolean forceDocument, boolean groupMedia, MessageObject editingMessageObject, TLRPC.TL_inputPollAnswer pollToAddOptionMessageObject, boolean notify, int scheduleDate, int scheduleRepeatPeriod, int mode, boolean updateStikcersOrder, InputContentInfoCompat inputContent, SendMessageChatArguments sendMessageChatArguments, long effectId, boolean invertMedia, long payStars, long monoForumPeerId, MessageSuggestionParams suggestionParams, PollSendParams pollSendParams, boolean forcedPollDoNotSendFinal) {
++        ru.llacker.neogram.round.NeoGalleryRound.routeRounds(accountInstance, media, dialogId, replyToMsg, replyToTopMsg, storyItem, quote, editingMessageObject, notify, scheduleDate, scheduleRepeatPeriod, sendMessageChatArguments, effectId, payStars, monoForumPeerId, suggestionParams);
+         if (media.isEmpty()) {
+             return;
+         }
+@@ -12006,7 +12007,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
+         return bitmap;
+     }
+ 
+-    private static VideoEditedInfo createCompressionSettings(String videoPath, long videoOffset) {
++    public static VideoEditedInfo createCompressionSettings(String videoPath, long videoOffset) {
+         int[] params = new int[AnimatedFileInfo.PARAM_NUM_COUNT];
+         AnimatedFileNative.getVideoInfo(videoPath, params, videoOffset);
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
+@@ -4038,6 +4038,16 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
+                 }
+                 messageSendPreview.setStars(amount);
+             }
++            ru.llacker.neogram.round.NeoGalleryRound.addAttachItem(options, chatActivity, editingMessageObject == null
++                    && (currentAttachLayout == photoLayout || currentAttachLayout == photoPreviewLayout) ? photoLayout.getSelectedPhotos() : null, () -> {
++                final long effectId = messageSendPreview != null ? messageSendPreview.getSelectedEffect() : 0;
++                writeButton.setEffect(ChatAttachAlert.this.effectId = effectId);
++                final boolean shownDialog = sendPressed(true, 0, 0, effectId, isCaptionAbove());
++                if (messageSendPreview != null) {
++                    messageSendPreview.dismiss(!shownDialog);
++                    messageSendPreview = null;
++                }
++            });
+             options.setupSelectors();
+             messageSendPreview.setItemOptions(options);
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+@@ -7455,6 +7455,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                 .addIf(canReplace, R.drawable.msg_replace, getString(R.string.ReplacePhoto), this::replacePressed)
+                 .addIf(showSchedule, R.drawable.msg_calendar2, getString(userIsSelf ? R.string.SetReminder : R.string.ScheduleMessage), this::showScheduleDatePickerDialog)
+                 .addIf(showWithoutSound, R.drawable.input_notify_off, getString(R.string.SendWithoutSound), () -> sendPressed(false, 0, 0));
++            ru.llacker.neogram.round.NeoGalleryRound.addViewerItem(options, parentChatActivity, isCurrentVideo && compressionsCount > 0 && !canEdit && !multipleSelected && sendPhotoType == 0
++                    && currentIndex >= 0 && currentIndex < imagesArrLocals.size() ? imagesArrLocals.get(currentIndex) : null, () -> sendPressed(true, 0, 0));
+ 
+             if (options.getItemsCount() == 0) return false;
+ 
+@@ -8089,7 +8091,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                     MessagesController.getNotificationsSettings(currentAccount).edit().putBoolean("silent_" + parentChatActivity.getDialogId(), !notify).commit();
+                 }
+             }
+-            VideoEditedInfo videoEditedInfo = getCurrentVideoEditedInfo();
++            VideoEditedInfo videoEditedInfo = ru.llacker.neogram.round.NeoGalleryRound.onViewerSend(getCurrentVideoEditedInfo());
+             if (!imagesArrLocals.isEmpty() && currentIndex >= 0 && currentIndex < imagesArrLocals.size()) {
+                 Object entry = imagesArrLocals.get(currentIndex);
+                 if (entry instanceof MediaController.MediaEditState) {

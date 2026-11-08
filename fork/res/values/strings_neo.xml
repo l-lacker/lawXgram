@@ -409,4 +409,6 @@
     <string name="NeoUpdateAvailable">%1$s %2$s is available</string>
     <string name="NeoUpdateSkip">Skip this version</string>
     <string name="NeoUpdateCheckFailed">Couldn\'t check for updates. Try again later.</string>
+    <string name="NeoSendAsRound">Send as video message</string>
+    <string name="NeoRoundConvertFailed">This video can\'t be turned into a video message.</string>
 </resources>

@@ -6,3 +6,5 @@ misc/settings-ui.patch
 feature/round-video-policy.patch
 feature/round-video-lenses.patch
 feature/round-video-quality.patch
+feature/gallery-round.patch
+bugfix/round-video-muted-gif.patch

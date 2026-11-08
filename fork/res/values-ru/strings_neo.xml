@@ -373,4 +373,6 @@
     <string name="NeoUpdateAvailable">Доступен %1$s %2$s</string>
     <string name="NeoUpdateSkip">Пропустить версию</string>
     <string name="NeoUpdateCheckFailed">Не удалось проверить обновления. Попробуйте позже.</string>
+    <string name="NeoSendAsRound">Отправить как видеосообщение</string>
+    <string name="NeoRoundConvertFailed">Это видео нельзя превратить в видеосообщение.</string>
 </resources>
