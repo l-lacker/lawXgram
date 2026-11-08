@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: misc/database: open Neogram tables after the stock database migrations
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Один вызов NeoDatabase.onOpened в MessagesStorage.openDatabase после стоковых миграций, на потоке storage. Таблицы Neogram называются neo_* и версионируются в neo_meta, стоковая схема и LAST_DB_VERSION не меняются; исключения форка не выходят наружу, чтобы не запустить стоковую очистку «malformed»-базы.
+---
+ TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
+@@ -385,6 +385,7 @@ public class MessagesStorage extends BaseController {
+                     }
+                 }
+             }
++            ru.llacker.neogram.data.NeoDatabase.onOpened(this, database);
+             databaseCreated = true;
+         } catch (Exception e) {
+             FileLog.e(e);

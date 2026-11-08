@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brand colors of the launcher icon and the Android 12+ splash icon. Temporary art, see docs/branding.md. -->
+<resources>
+    <color name="neo_launcher_background">#C4DEFF</color>
+    <color name="neo_splash_icon_background">#C4DEFF</color>
+</resources>

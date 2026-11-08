@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translated on Crowdin; do not edit by hand. -->
+<resources>
+    <string name="NeoBottomNavigationButtons">Malsupraj butonoj</string>
+    <string name="NeoBottomNavigationButtonsAbout">La antaŭvido montras la nunan malsupran breton. Trenu la antaŭvidon aŭ la subajn vicojn por ŝanĝi la ordon.</string>
+    <string name="NeoBottomNavigationButtonsShown">Montrataj butonoj</string>
+    <string name="NeoBottomNavigationButtonsHint">Malŝaltu butonojn, kiujn vi ne uzas. Almenaŭ unu butono ĉiam restas videbla.</string>
+    <string name="NeoHideBusinessBotPanel">Kaŝi la rubandon de la bota</string>
+    <string name="NeoHideBusinessBotPanelAbout">La komerca reĝima rubando de la aktiva bot estos kaŝita en ĉiuj babilejoj.</string>
+    <string name="NeoHideBusinessBotPanelAction">Kaŝi panelon</string>
+    <string name="NeoBusinessBotPanelHiddenTitle">La bot-panelo estas kaŝita en ĉiuj babilejoj.</string>
+    <string name="NeoBusinessBotPanelHiddenSubtitle">Vi povas reŝalti ĝin en la klientaj agordoj.</string>
+    <string name="NeoRestartNow">Rekomenci nun</string>
+    <string name="NeoInlineBotsManage">Administri enliniajn robotojn</string>
+    <string name="NeoInlineBotsManageMenu">Administri robotojn</string>
+    <string name="NeoShowInlineBotManageButton">Butono Administri robotojn</string>
+    <string name="NeoShowInlineBotManageButtonDesc">Montri la butonon Administri robotojn kiam vi tajpas @ en la mesaĝa kampo.</string>
+</resources>

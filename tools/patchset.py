@@ -1357,7 +1357,7 @@ def lint_fork_tree(ctx: Ctx, errors: List[str], warnings: List[str], stock_keys:
         if stock_keys and key in stock_keys:
             errors.append(f"strings_neo.xml: key '{key}' collides with a stock string")
     for loc in sorted(res.glob("values*/strings_neo.xml")):
-        text = loc.read_text(encoding="utf-8")
+        text = re.sub(r"<!--.*?-->", "", loc.read_text(encoding="utf-8"), flags=re.S)
         rel = loc.relative_to(ctx.root)
         if "<plurals" in text:
             errors.append(f"{rel}: <plurals> is not supported by the Telegram strings pipeline; use _one/_other keys")

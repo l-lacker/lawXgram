@@ -1,0 +1,70 @@
+// Applied from the root build.gradle of the worktree (patch misc/build-support).
+// Exposes `rootProject.ext.neo`: paths to the patchset repository, branding values,
+// local secrets and build options shared by neo-library.gradle and neo-app.gradle.
+
+def readProps = { File f ->
+    def p = new Properties()
+    if (f != null && f.exists()) {
+        f.withReader('UTF-8') { p.load(it) }
+    }
+    return p
+}
+
+def buildProps = readProps(rootProject.file('neo-build.properties'))
+def rootPath = (rootProject.findProperty('neo.root') ?: buildProps.getProperty('neo.root') ?: '..') as String
+def neoRoot = rootProject.file(rootPath).canonicalFile
+if (!new File(neoRoot, 'fork/branding.properties').exists()) {
+    throw new GradleException("Neogram patchset root not found at ${neoRoot}. Run `patchset setup` " +
+            "or pass -Pneo.root=<path to the patchset repository>.")
+}
+
+def branding = readProps(new File(neoRoot, 'fork/branding.properties'))
+def secrets = readProps(new File(neoRoot, 'local/secrets.properties'))
+def patchset = readProps(new File(neoRoot, 'patchset.properties'))
+
+// `telegram.apiId` -> NEO_TELEGRAM_API_ID; environment variables win over local/secrets.properties.
+def envName = { String key -> 'NEO_' + key.replaceAll(/([a-z])([A-Z])/, '$1_$2').replace('.', '_').toUpperCase() }
+
+def neo = [:]
+neo.root = neoRoot
+neo.file = { String rel -> new File(neoRoot, rel) }
+neo.script = { String name -> new File(neoRoot, "fork/gradle/${name}") }
+neo.brand = { String key ->
+    def value = branding.getProperty(key)
+    if (value == null) {
+        throw new GradleException("fork/branding.properties: missing ${key}")
+    }
+    return value.trim()
+}
+neo.secret = { String key, String fallback = '' ->
+    def env = System.getenv(envName(key))
+    if (env != null && !env.isEmpty()) {
+        return env
+    }
+    def value = secrets.getProperty(key)
+    return value != null && !value.trim().isEmpty() ? value.trim() : fallback
+}
+neo.hasSecret = { String key -> !neo.secret(key, '').isEmpty() }
+neo.secretFile = { String key ->
+    def path = neo.secret(key, '')
+    if (path.isEmpty()) {
+        return null
+    }
+    def f = new File(path)
+    return f.absolute ? f : new File(neoRoot, path)
+}
+neo.option = { String key, String fallback = null ->
+    def value = rootProject.findProperty(key) ?: neo.secret(key, '')
+    return value ? value.toString() : fallback
+}
+
+def abiOption = neo.option('neo.abis')
+neo.abis = abiOption ? abiOption.split(',').collect { it.trim() }.findAll { it } : null
+neo.allAbis = ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64']
+// 0..9, appended to the upstream version code (versionCode * 10 + revision)
+neo.revision = Integer.parseInt(neo.option('neo.revision', '0'))
+neo.upstreamVersion = patchset.getProperty('upstream.version', '')
+neo.upstreamCommit = patchset.getProperty('upstream.commit', '')
+neo.javaString = { String s -> '"' + (s ?: '').replace('\\', '\\\\').replace('"', '\\"') + '"' }
+
+rootProject.ext.neo = neo

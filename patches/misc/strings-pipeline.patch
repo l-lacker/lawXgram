@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: misc/strings-pipeline: let the Telegram strings tasks take the fork's strings_neo.xml
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Задачи buildSrc (TelegramStringsTask, GenerateLocalizationUtilsJavaTask) собирают asset-локализации только из values*/strings.xml, а LocaleController.getStringV2 ищет строки только там. Патч добавляет файлы из ext.telegramExtraDefaultStrings / ext.telegramExtraLocalizedStrings модуля TMessagesProj (их задаёт fork/gradle/neo-library.gradle), так что строки Neogram и их переводы проходят тем же путём, что и стоковые, включая языки, которых нет среди встроенных переводов Telegram.
+---
+ buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt | 10 ++++++++--
+ buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildPlugin.kt    |  3 ++-
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt b/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt
+index 0000000..0000000 100644
+--- a/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt
++++ b/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt
+@@ -30,7 +30,8 @@ class TelegramBuildAppPlugin : Plugin<Project> {
+                     },
+                     project.fileTree("src/main/res/values") {
+                         include("strings.xml")
+-                    }
++                    },
++                    telegramModule.provider { telegramModule.extraStringFiles("telegramExtraDefaultStrings") }
+                 )
+ 
+                 localizationFiles.from(
+@@ -39,7 +40,8 @@ class TelegramBuildAppPlugin : Plugin<Project> {
+                     },
+                     project.fileTree("src/main/res") {
+                         include("values-*/strings.xml")
+-                    }
++                    },
++                    telegramModule.provider { telegramModule.extraStringFiles("telegramExtraLocalizedStrings") }
+                 )
+ 
+                 stringsOutputDir.set(
+@@ -128,3 +130,7 @@ class TelegramBuildAppPlugin : Plugin<Project> {
+         }
+     }
+ }
++
++/** Extra string files (e.g. a fork's own strings) declared as `ext.<name>` on the module. */
++internal fun Project.extraStringFiles(name: String): Any =
++    if (extensions.extraProperties.has(name)) extensions.extraProperties.get(name)!! else emptyList<Any>()
+diff --git a/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildPlugin.kt b/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildPlugin.kt
+index 0000000..0000000 100644
+--- a/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildPlugin.kt
++++ b/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildPlugin.kt
+@@ -22,7 +22,8 @@ class TelegramBuildPlugin : Plugin<Project> {
+                 localizationFiles.from(
+                     project.fileTree("src/main/res") {
+                         include("values-*/strings.xml")
+-                    }
++                    },
++                    project.provider { project.extraStringFiles("telegramExtraLocalizedStrings") }
+                 )
+ 
+                 javaOutputDir.set(

@@ -43,7 +43,39 @@ patchset.cmd setup            # Windows
 
 `setup` downloads the pinned upstream commit with its submodules into `worktree/`
 and applies every patch as one git commit. Open `worktree/` in Android Studio and
-build `TMessagesProj_App` as usual.
+build `TMessagesProj_App` (variant `afatDebug` / `afatRelease`), or from the command line:
+
+```
+cd worktree
+gradlew.bat :TMessagesProj_App:assembleAfatDebug          # Windows
+./gradlew :TMessagesProj_App:assembleAfatDebug             # Linux / macOS
+```
+
+Add `-Pneo.abis=arm64-v8a` for a much faster single-ABI build.
+
+### Local secrets
+
+Secrets never enter the repository. Create `local/secrets.properties` (the `local/` folder
+is ignored by git); environment variables `NEO_<KEY>` (e.g. `NEO_TELEGRAM_API_ID`) override it:
+
+```
+# https://my.telegram.org — required to log in
+telegram.apiId=12345
+telegram.apiHash=0123456789abcdef0123456789abcdef
+# release signing (a release build fails without it; debug falls back to a public key)
+signing.storeFile=local/release.jks
+signing.storePassword=...
+signing.keyAlias=...
+signing.keyPassword=...
+# optional
+maps.apiKey=
+sentry.dsn=
+playstore.url=
+```
+
+Optional Firebase configs go to `local/google-services/{debug,release,play}.json`
+(Firebase apps for `ru.llacker.neogram.beta` and `ru.llacker.neogram`); without them the app
+builds and runs without Firebase.
 
 ## Everyday workflow
 

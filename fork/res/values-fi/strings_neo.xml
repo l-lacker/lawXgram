@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translated on Crowdin; do not edit by hand. -->
+<resources>
+    <string name="NeoSettings">%1$s Asetukset</string>
+    <string name="NeoMessageMenu">Viestivalikko</string>
+    <string name="NeoHidePhone">Piilota puhelinnumeroni</string>
+    <string name="NeoDeleteAllFromSelf">Poista myös viestini</string>
+    <string name="NeoDeleteAllFromSelfAlert">Varoitus! Tämä **poistaa kaikki viestit sinulta** tässä keskustelussa **kaikille** osallistujille.</string>
+    <string name="NeoConnection">Yhteys</string>
+    <string name="NeoChat">Chatti</string>
+    <string name="NeoNameOrder">Nimijärjestys</string>
+    <string name="NeoFirstLast">Etunimi Sukunimi</string>
+    <string name="NeoLastFirst">Sukunimi Etunimi</string>
+    <string name="NeoRepeat">Toistaa</string>
+    <string name="NeoAddToSavedMessages">Tallenna viesti</string>
+    <string name="NeoCreateMention">Luo Maininta</string>
+    <string name="NeoPrpr">Peropero</string>
+    <string name="NeoEnableResidentNotification">Näytä asukasilmoitus</string>
+    <string name="NeoDisableResidentNotification">Poista asukasilmoitus käytöstä</string>
+    <string name="NeoIdTypeHidden">Piilota</string>
+    <string name="NeoBottomNavigationButtons">Alapainikkeet</string>
+    <string name="NeoBottomNavigationButtonsAbout">Esikatselu näyttää nykyisen alapalkin. Muuta järjestystä vetämällä esikatselua tai alla olevia rivejä.</string>
+    <string name="NeoBottomNavigationButtonsShown">Näytettävät painikkeet</string>
+    <string name="NeoBottomNavigationButtonsHint">Poista käytöstä painikkeet, joita et käytä. Vähintään yksi painike pysyy aina näkyvissä.</string>
+    <string name="NeoHideBusinessBotPanel">Piilota botin banneri</string>
+    <string name="NeoHideBusinessBotPanelAbout">Aktiivista bottia koskeva yritystilan banneri piilotetaan kaikissa keskusteluissa.</string>
+    <string name="NeoHideBusinessBotPanelAction">Piilota paneeli</string>
+    <string name="NeoBusinessBotPanelHiddenTitle">Bottipaneeli on piilotettu kaikissa keskusteluissa.</string>
+    <string name="NeoBusinessBotPanelHiddenSubtitle">Voit ottaa sen uudelleen käyttöön asiakasasetuksissa.</string>
+    <string name="NeoRestartNow">Käynnistä uudelleen nyt</string>
+    <string name="NeoInlineBotsManage">Hallitse inline-botteja</string>
+    <string name="NeoInlineBotsManageMenu">Hallitse botteja</string>
+    <string name="NeoShowInlineBotManageButton">Hallitse botteja -painike</string>
+    <string name="NeoShowInlineBotManageButtonDesc">Näytä Hallitse botteja -painike, kun kirjoitat @ viestikenttään.</string>
+</resources>

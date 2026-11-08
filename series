@@ -1,0 +1,5 @@
+misc/build-support.patch
+misc/strings-pipeline.patch
+misc/branding.patch
+misc/database.patch
+misc/settings-ui.patch

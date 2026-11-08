@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Overlay merged into every variant of TMessagesProj_App (fork/gradle/neo-app.gradle). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:name="ru.llacker.neogram.app.NeoApplicationLoader"
+        tools:replace="name">
+
+        <!-- Telegram's alternative launcher icons are Telegram's brand: not shipped. -->
+        <activity-alias android:name="org.telegram.messenger.VintageIcon" tools:node="remove" />
+        <activity-alias android:name="org.telegram.messenger.AquaIcon" tools:node="remove" />
+        <activity-alias android:name="org.telegram.messenger.PremiumIcon" tools:node="remove" />
+        <activity-alias android:name="org.telegram.messenger.TurboIcon" tools:node="remove" />
+        <activity-alias android:name="org.telegram.messenger.NoxIcon" tools:node="remove" />
+    </application>
+</manifest>

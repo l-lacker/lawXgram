@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translated on Crowdin; do not edit by hand. -->
+<resources>
+    <string name="NeoBottomNavigationButtons">Onderste knoppies</string>
+    <string name="NeoBottomNavigationButtonsAbout">Die voorskou wys die huidige onderste balk. Sleep die voorskou of die rye hieronder om die volgorde te verander.</string>
+    <string name="NeoBottomNavigationButtonsShown">Sigbare knoppies</string>
+    <string name="NeoBottomNavigationButtonsHint">Skakel knoppies af wat jy nie gebruik nie. Ten minste een knoppie bly altyd sigbaar.</string>
+    <string name="NeoHideBusinessBotPanel">Versteek die botbanier</string>
+    <string name="NeoHideBusinessBotPanelAbout">Die besigheidsmodus-banier oor die aktiewe bot sal in alle kletse versteek word.</string>
+    <string name="NeoHideBusinessBotPanelAction">Versteek paneel</string>
+    <string name="NeoBusinessBotPanelHiddenTitle">Die bot-paneel is in alle kletse versteek.</string>
+    <string name="NeoBusinessBotPanelHiddenSubtitle">Jy kan dit weer in die klientinstellings aktiveer.</string>
+    <string name="NeoRestartNow">Herbegin nou</string>
+    <string name="NeoInlineBotsManage">Bestuur inline-bots</string>
+    <string name="NeoInlineBotsManageMenu">Bestuur bots</string>
+    <string name="NeoShowInlineBotManageButton">Bestuur bots-knoppie</string>
+    <string name="NeoShowInlineBotManageButtonDesc">Wys die Bestuur bots-knoppie wanneer jy @ in die boodskapveld tik.</string>
+</resources>

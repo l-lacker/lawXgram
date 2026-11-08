@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- White version of a stock menu icon for the colored icon square of a settings row. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/msg_video"
+    android:tint="#FFFFFFFF" />

@@ -1,0 +1,66 @@
+// Applied at the end of TMessagesProj/build.gradle (patch misc/build-support).
+// Wires Neogram sources into the library module and adds Neogram build options.
+
+def neo = rootProject.ext.neo
+
+android {
+    sourceSets.main {
+        java.srcDirs += [neo.file('fork/java'), neo.file('fork/core/src/main/java')]
+        res.srcDirs += neo.file('fork/res')
+        assets.srcDirs += neo.file('fork/assets')
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        def apiId = neo.secret('telegram.apiId', '0')
+        if (!(apiId ==~ /\d+/)) {
+            throw new GradleException("telegram.apiId must be a number, got '${apiId}'")
+        }
+        buildConfigField 'int', 'NEO_API_ID', apiId
+        buildConfigField 'String', 'NEO_API_HASH', neo.javaString(neo.secret('telegram.apiHash', ''))
+        buildConfigField 'String', 'NEO_APP_NAME', neo.javaString(neo.brand('app.name'))
+        buildConfigField 'String', 'NEO_APP_NAME_BETA', neo.javaString(neo.brand('app.nameBeta'))
+        buildConfigField 'String', 'NEO_APPLICATION_ID', neo.javaString(neo.brand('app.applicationId'))
+        buildConfigField 'String', 'NEO_MEDIA_FOLDER', neo.javaString(neo.brand('app.mediaFolder'))
+        buildConfigField 'String', 'NEO_LINK_SOURCE_CODE', neo.javaString(neo.brand('links.sourceCode'))
+        buildConfigField 'String', 'NEO_LINK_ISSUES', neo.javaString(neo.brand('links.issues'))
+        buildConfigField 'String', 'NEO_LINK_CHANNEL', neo.javaString(neo.brand('links.channel'))
+        buildConfigField 'String', 'NEO_LINK_TRANSLATE', neo.javaString(neo.brand('links.translate'))
+        buildConfigField 'String', 'NEO_LINK_DONATE', neo.javaString(neo.brand('links.donate'))
+        buildConfigField 'String', 'NEO_UPDATES_REPO', neo.javaString(neo.brand('updates.githubRepo'))
+        buildConfigField 'String', 'NEO_PLAYSTORE_URL', neo.javaString(neo.secret('playstore.url', ''))
+        buildConfigField 'String', 'NEO_SENTRY_DSN', neo.javaString(neo.secret('sentry.dsn', ''))
+        buildConfigField 'String', 'NEO_UPSTREAM_VERSION', neo.javaString(neo.upstreamVersion)
+        buildConfigField 'String', 'NEO_UPSTREAM_COMMIT', neo.javaString(neo.upstreamCommit)
+        buildConfigField 'int', 'NEO_REVISION', String.valueOf(neo.revision)
+
+        if (neo.abis) {
+            ndk {
+                abiFilters.clear()
+                abiFilters.addAll(neo.abis)
+            }
+        }
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
+            }
+        }
+    }
+
+    buildTypes {
+        // Stock debug builds enable Telegram-internal tooling (private debug menus, rethrowing
+        // database migration errors); Neogram debug builds are ordinary test builds.
+        debug {
+            buildConfigField 'boolean', 'DEBUG_PRIVATE_VERSION', 'false'
+        }
+    }
+}
+
+// Strings of fork/res go through Telegram's asset-based localization instead of plain Android
+// resources (patch misc/strings-pipeline reads these two properties).
+ext.telegramExtraDefaultStrings = files(neo.file('fork/res/values/strings_neo.xml'))
+ext.telegramExtraLocalizedStrings = fileTree(neo.file('fork/res')) { include 'values-*/strings_neo.xml' }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translated on Crowdin; do not edit by hand. -->
+<resources>
+    <string name="NeoSettings">Мама</string>
+    <string name="NeoMessageMenu">Инетик</string>
+    <string name="NeoHidePhone">Спрятать телефончик</string>
+    <string name="NeoDeleteAllFromSelf">Удалить для котов</string>
+    <string name="NeoIgnoreBlocked">Блок</string>
+    <string name="NeoConnection">Инетик</string>
+    <string name="NeoChat">Банда</string>
+    <string name="NeoNameOrder">Имечко</string>
+    <string name="NeoFirstLast">Ебалась</string>
+    <string name="NeoLastFirst">Была с котиками</string>
+    <string name="NeoBottomNavigationButtons">Botons inferiors</string>
+    <string name="NeoBottomNavigationButtonsAbout">La previsualització mostra la barra inferior actual. Arrossega la previsualització o les files de sota per canviar-ne l’ordre.</string>
+    <string name="NeoBottomNavigationButtonsShown">Botons visibles</string>
+    <string name="NeoBottomNavigationButtonsHint">Desactiva els botons que no facis servir. Com a mínim un botó sempre queda visible.</string>
+    <string name="NeoHideBusinessBotPanel">Amaga el bàner del bot</string>
+    <string name="NeoHideBusinessBotPanelAbout">El banner del mode de negoci del bot actiu quedarà amagat a tots els xats.</string>
+    <string name="NeoHideBusinessBotPanelAction">Amaga el panell</string>
+    <string name="NeoBusinessBotPanelHiddenTitle">El panell del bot està amagat a tots els xats.</string>
+    <string name="NeoBusinessBotPanelHiddenSubtitle">El pots tornar a activar a la configuració del client.</string>
+    <string name="NeoRestartNow">Reinicia ara</string>
+    <string name="NeoInlineBotsManage">Gestiona bots inline</string>
+    <string name="NeoInlineBotsManageMenu">Gestiona bots</string>
+    <string name="NeoShowInlineBotManageButton">Botó Gestiona bots</string>
+    <string name="NeoShowInlineBotManageButtonDesc">Mostra el botó Gestiona bots quan escriguis @ al camp del missatge.</string>
+</resources>

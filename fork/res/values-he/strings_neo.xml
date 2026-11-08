@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translated on Crowdin; do not edit by hand. -->
+<resources>
+    <string name="NeoBottomNavigationButtons">כפתורים תחתונים</string>
+    <string name="NeoBottomNavigationButtonsAbout">התצוגה המקדימה מציגה את הסרגל התחתון הנוכחי. גרור את התצוגה המקדימה או את השורות למטה כדי לשנות את הסדר.</string>
+    <string name="NeoBottomNavigationButtonsShown">כפתורים מוצגים</string>
+    <string name="NeoBottomNavigationButtonsHint">כבה כפתורים שאינך משתמש בהם. לפחות כפתור אחד תמיד יישאר גלוי.</string>
+    <string name="NeoHideBusinessBotPanel">הסתרת באנר הבוט</string>
+    <string name="NeoHideBusinessBotPanelAbout">באנר מצב העסק של הבוט הפעיל יוסתר בכל הצ׳אטים.</string>
+    <string name="NeoHideBusinessBotPanelAction">הסתרת הפאנל</string>
+    <string name="NeoBusinessBotPanelHiddenTitle">פאנל הבוט מוסתר בכל הצ׳אטים.</string>
+    <string name="NeoBusinessBotPanelHiddenSubtitle">אפשר להפעיל אותו שוב בהגדרות הלקוח.</string>
+    <string name="NeoRestartNow">הפעל מחדש עכשיו</string>
+    <string name="NeoInlineBotsManage">ניהול בוטים inline</string>
+    <string name="NeoInlineBotsManageMenu">ניהול בוטים</string>
+    <string name="NeoShowInlineBotManageButton">כפתור ניהול בוטים</string>
+    <string name="NeoShowInlineBotManageButtonDesc">הצג את כפתור ניהול הבוטים בעת הקלדת @ בשדה ההודעה.</string>
+</resources>

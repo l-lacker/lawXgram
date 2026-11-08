@@ -1,0 +1,368 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: misc/branding: Neogram identity: own API id, account type, app name, folders, icons
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+API id/hash берутся из local/secrets.properties (BuildConfig.NEO_API_ID/HASH), официальные функции Google и Telegram (SafetyNet-ключ, passkeys, Firebase phone verification, Google Play Billing) выключены. Тип аккаунта и mime-типы контактов строятся от имени установленного пакета, чтобы Neogram не конфликтовал с Telegram и со своей beta-сборкой. AppName/AppNameBeta больше не берутся из серверных языковых пакетов (там «Telegram»), строка версии, заголовок интро и папки в общем хранилище используют NeoBrand. Альтернативные иконки Telegram убраны из LauncherIconController (их alias удаляет манифест-оверлей).
+---
+ TMessagesProj/src/main/AndroidManifest.xml                             |  6 +++---
+ .../src/main/java/org/telegram/messenger/AndroidUtilities.java         |  4 ++--
+ TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java      | 14 +++++++-------
+ .../src/main/java/org/telegram/messenger/ContactsController.java       | 16 ++++++++--------
+ TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java    |  2 +-
+ .../src/main/java/org/telegram/messenger/LocaleController.java         |  4 ++++
+ .../src/main/java/org/telegram/messenger/MediaController.java          | 22 +++++++++++-----------
+ TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java         |  2 +-
+ TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java        |  4 ++--
+ .../src/main/java/org/telegram/ui/LauncherIconController.java          |  7 +------
+ TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java      |  2 +-
+ 11 files changed, 41 insertions(+), 42 deletions(-)
+
+diff --git a/TMessagesProj/src/main/AndroidManifest.xml b/TMessagesProj/src/main/AndroidManifest.xml
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/AndroidManifest.xml
++++ b/TMessagesProj/src/main/AndroidManifest.xml
+@@ -250,7 +250,7 @@
+             <intent-filter>
+                 <action android:name="android.intent.action.VIEW"/>
+                 <category android:name="android.intent.category.DEFAULT"/>
+-                <data android:mimeType="vnd.android.cursor.item/vnd.org.telegram.messenger.android.profile"/>
++                <data android:mimeType="vnd.android.cursor.item/vnd.${applicationId}.android.profile"/>
+             </intent-filter>
+             <intent-filter>
+                 <action android:name="android.intent.action.VIEW"/>
+@@ -306,8 +306,8 @@
+             <intent-filter>
+                 <action android:name="android.intent.action.VIEW"/>
+                 <category android:name="android.intent.category.DEFAULT"/>
+-                <data android:mimeType="vnd.android.cursor.item/vnd.org.telegram.messenger.android.call"/>
+-                <data android:mimeType="vnd.android.cursor.item/vnd.org.telegram.messenger.android.call.video"/>
++                <data android:mimeType="vnd.android.cursor.item/vnd.${applicationId}.android.call"/>
++                <data android:mimeType="vnd.android.cursor.item/vnd.${applicationId}.android.call.video"/>
+             </intent-filter>
+         </activity-alias>
+         <activity
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/AndroidUtilities.java b/TMessagesProj/src/main/java/org/telegram/messenger/AndroidUtilities.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/AndroidUtilities.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/AndroidUtilities.java
+@@ -3762,7 +3762,7 @@ public class AndroidUtilities {
+         }
+         File storageDir = null;
+         if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+-            storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Telegram");
++            storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), ru.llacker.neogram.NeoBrand.mediaFolder());
+             if (!storageDir.mkdirs()) {
+                 if (!storageDir.exists()) {
+                     if (BuildVars.LOGS_ENABLED) {
+@@ -6729,7 +6729,7 @@ public class AndroidUtilities {
+                     }
+                     break;
+             }
+-            return formatString("TelegramVersion", R.string.TelegramVersion, String.format(Locale.US, "v%s (%d) %s", pInfo.versionName, code, abi));
++            return ru.llacker.neogram.NeoBrand.versionLine(pInfo.versionName, code, abi, " ");
+         } catch (Exception e) {
+             FileLog.e(e);
+         }
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java b/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
+@@ -26,25 +26,25 @@ public class BuildVars {
+     public static boolean NO_SCOPED_STORAGE = Build.VERSION.SDK_INT <= 29;
+     public static String BUILD_VERSION_STRING = BuildConfig.BUILD_VERSION_STRING;
+ 
+-    public static int APP_ID = 4;
+-    public static String APP_HASH = "014b35b6184100b085b0d0572f9b5103";
++    public static int APP_ID = BuildConfig.NEO_API_ID;
++    public static String APP_HASH = BuildConfig.NEO_API_HASH;
+ 
+     // SafetyNet key for Google Identity SDK, set it to empty to disable
+-    public static String SAFETYNET_KEY = "AIzaSyDqt8P-7F7CPCseMkOiVRgb1LY8RN1bvH8";
+-    public static String PLAYSTORE_APP_URL = "https://play.google.com/store/apps/details?id=org.telegram.messenger";
++    public static String SAFETYNET_KEY = "";
++    public static String PLAYSTORE_APP_URL = BuildConfig.NEO_PLAYSTORE_URL;
+     public static String HUAWEI_STORE_URL = "https://appgallery.huawei.com/app/C101184875";
+     public static String GOOGLE_AUTH_CLIENT_ID = "760348033671-81kmi3pi84p11ub8hp9a1funsv0rn2p9.apps.googleusercontent.com";
+ 
+     public static String HUAWEI_APP_ID = "101184875";
+ 
+     // You can use this flag to disable Google Play Billing (If you're making fork and want it to be in Google Play)
+-    public static boolean IS_BILLING_UNAVAILABLE = false;
++    public static boolean IS_BILLING_UNAVAILABLE = true;
+ 
+     // works only on official app ids, disable on your forks
+-    public static boolean SUPPORTS_PASSKEYS = true;
++    public static boolean SUPPORTS_PASSKEYS = false;
+     // the second main tab: News, or Contacts as before them
+ 
+-    public static boolean SUPPORTS_FPNV = true;
++    public static boolean SUPPORTS_FPNV = false;
+ 
+     static {
+         if (ApplicationLoader.applicationContext != null) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/ContactsController.java b/TMessagesProj/src/main/java/org/telegram/messenger/ContactsController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/ContactsController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/ContactsController.java
+@@ -391,7 +391,7 @@ public class ContactsController extends BaseController {
+         Utilities.globalQueue.postRunnable(() -> {
+             AccountManager am = AccountManager.get(ApplicationLoader.applicationContext);
+             try {
+-                Account[] accounts = am.getAccountsByType("org.telegram.messenger");
++                Account[] accounts = am.getAccountsByType(ru.llacker.neogram.NeoBrand.accountType());
+                 for (int a = 0; a < accounts.length; a++) {
+                     Account acc = accounts[a];
+                     boolean found = false;
+@@ -423,7 +423,7 @@ public class ContactsController extends BaseController {
+                 readContacts();
+                 if (systemAccount == null) {
+                     try {
+-                        systemAccount = new Account("" + getUserConfig().getClientUserId(), "org.telegram.messenger");
++                        systemAccount = new Account("" + getUserConfig().getClientUserId(), ru.llacker.neogram.NeoBrand.accountType());
+                         am.addAccountExplicitly(systemAccount, "", null);
+                     } catch (Exception ignore) {
+ 
+@@ -437,7 +437,7 @@ public class ContactsController extends BaseController {
+         try {
+             systemAccount = null;
+             AccountManager am = AccountManager.get(ApplicationLoader.applicationContext);
+-            Account[] accounts = am.getAccountsByType("org.telegram.messenger");
++            Account[] accounts = am.getAccountsByType(ru.llacker.neogram.NeoBrand.accountType());
+             for (int a = 0; a < accounts.length; a++) {
+                 Account acc = accounts[a];
+                 boolean found = false;
+@@ -513,7 +513,7 @@ public class ContactsController extends BaseController {
+                 AndroidUtilities.runOnUIThread(() -> {
+                     AccountManager am = AccountManager.get(ApplicationLoader.applicationContext);
+                     try {
+-                        Account[] accounts = am.getAccountsByType("org.telegram.messenger");
++                        Account[] accounts = am.getAccountsByType(ru.llacker.neogram.NeoBrand.accountType());
+                         systemAccount = null;
+                         for (int a = 0; a < accounts.length; a++) {
+                             Account acc = accounts[a];
+@@ -531,7 +531,7 @@ public class ContactsController extends BaseController {
+ 
+                     }
+                     try {
+-                        systemAccount = new Account("" + getUserConfig().getClientUserId(), "org.telegram.messenger");
++                        systemAccount = new Account("" + getUserConfig().getClientUserId(), ru.llacker.neogram.NeoBrand.accountType());
+                         am.addAccountExplicitly(systemAccount, "", null);
+                     } catch (Exception ignore) {
+ 
+@@ -2353,7 +2353,7 @@ public class ContactsController extends BaseController {
+ 
+         builder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
+         builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, rawContactId);
+-        builder.withValue(ContactsContract.Data.MIMETYPE, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.profile");
++        builder.withValue(ContactsContract.Data.MIMETYPE, ru.llacker.neogram.NeoBrand.contactsMimeType("profile"));
+         builder.withValue(ContactsContract.Data.DATA1, user.id);
+         builder.withValue(ContactsContract.Data.DATA2, "Telegram Profile");
+         builder.withValue(ContactsContract.Data.DATA3, LocaleController.formatString("ContactShortcutMessage", R.string.ContactShortcutMessage, phoneOrName));
+@@ -2362,7 +2362,7 @@ public class ContactsController extends BaseController {
+ 
+         builder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
+         builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, rawContactId);
+-        builder.withValue(ContactsContract.Data.MIMETYPE, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.call");
++        builder.withValue(ContactsContract.Data.MIMETYPE, ru.llacker.neogram.NeoBrand.contactsMimeType("call"));
+         builder.withValue(ContactsContract.Data.DATA1, user.id);
+         builder.withValue(ContactsContract.Data.DATA2, "Telegram Voice Call");
+         builder.withValue(ContactsContract.Data.DATA3, LocaleController.formatString("ContactShortcutVoiceCall", R.string.ContactShortcutVoiceCall, phoneOrName));
+@@ -2371,7 +2371,7 @@ public class ContactsController extends BaseController {
+ 
+         builder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
+         builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, rawContactId);
+-        builder.withValue(ContactsContract.Data.MIMETYPE, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.call.video");
++        builder.withValue(ContactsContract.Data.MIMETYPE, ru.llacker.neogram.NeoBrand.contactsMimeType("call.video"));
+         builder.withValue(ContactsContract.Data.DATA1, user.id);
+         builder.withValue(ContactsContract.Data.DATA2, "Telegram Video Call");
+         builder.withValue(ContactsContract.Data.DATA3, LocaleController.formatString("ContactShortcutVideoCall", R.string.ContactShortcutVideoCall, phoneOrName));
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java b/TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java
+@@ -2481,7 +2481,7 @@ public class ImageLoader {
+                     try {
+                         if (ApplicationLoader.applicationContext.getExternalMediaDirs().length > 0) {
+                             publicMediaDir = getPublicStorageDir();
+-                            publicMediaDir = new File(publicMediaDir, "Telegram");
++                            publicMediaDir = new File(publicMediaDir, ru.llacker.neogram.NeoBrand.mediaFolder());
+                             publicMediaDir.mkdirs();
+                         }
+                     } catch (Exception e) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java b/TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java
+@@ -4781,6 +4781,10 @@ public class LocaleController {
+ 
+     @Nullable
+     private String getStringV2(String key, @StringRes int stringRes, String fallback) {
++        final String neoBrand = ru.llacker.neogram.NeoBrand.overrideString(key, stringRes);
++        if (neoBrand != null) {
++            return neoBrand;
++        }
+         final Context context = ApplicationLoader.applicationContext;
+         String value;
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
+@@ -5875,7 +5875,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+             if (Build.VERSION.SDK_INT >= 29) {
+                 final ContentValues cv = new ContentValues();
+                 final Uri uriToInsert = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+-                final File dirDest = new File(Environment.DIRECTORY_DOWNLOADS, "Telegram");
++                final File dirDest = new File(Environment.DIRECTORY_DOWNLOADS, ru.llacker.neogram.NeoBrand.mediaFolder());
+                 cv.put(MediaStore.MediaColumns.RELATIVE_PATH, dirDest + File.separator);
+                 cv.put(MediaStore.Downloads.DISPLAY_NAME, filename);
+                 cv.put(MediaStore.MediaColumns.MIME_TYPE, outputMime);
+@@ -5897,7 +5897,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                     }
+                 }
+             } else {
+-                final File destDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Telegram");
++                final File destDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), ru.llacker.neogram.NeoBrand.mediaFolder());
+                 destDir.mkdirs();
+                 File destFile = new File(destDir, filename);
+                 if (!destFile.exists()) {
+@@ -6117,11 +6117,11 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                     } else {
+                         File destFile;
+                         if (type == 0) {
+-                            destFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Telegram");
++                            destFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), ru.llacker.neogram.NeoBrand.mediaFolder());
+                             destFile.mkdirs();
+                             destFile = new File(destFile, AndroidUtilities.generateFileName(0, FileLoader.getFileExtension(sourceFile)));
+                         } else if (type == 1) {
+-                            destFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "Telegram");
++                            destFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), ru.llacker.neogram.NeoBrand.mediaFolder());
+                             destFile.mkdirs();
+                             destFile = new File(destFile, AndroidUtilities.generateFileName(1, FileLoader.getFileExtension(sourceFile)));
+                         } else {
+@@ -6131,7 +6131,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                             } else {
+                                 dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
+                             }
+-                            dir = new File(dir, "Telegram");
++                            dir = new File(dir, ru.llacker.neogram.NeoBrand.mediaFolder());
+                             dir.mkdirs();
+                             destFile = new File(dir, name);
+                             if (destFile.exists()) {
+@@ -6276,7 +6276,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                     final String filename = AndroidUtilities.generateFileName(0, "jpg");
+                     final ContentValues cv = new ContentValues();
+                     final Uri uriToInsert = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+-                    final File dirDest = new File(Environment.DIRECTORY_PICTURES, "Telegram");
++                    final File dirDest = new File(Environment.DIRECTORY_PICTURES, ru.llacker.neogram.NeoBrand.mediaFolder());
+                     cv.put(MediaStore.MediaColumns.RELATIVE_PATH, dirDest + File.separator);
+                     cv.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+                     cv.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+@@ -6298,7 +6298,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                         }
+                     }
+                 } else {
+-                    final File destDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Telegram");
++                    final File destDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), ru.llacker.neogram.NeoBrand.mediaFolder());
+                     destDir.mkdirs();
+                     File destFile = new File(destDir, AndroidUtilities.generateFileName(0, "jpg"));
+                     if (!destFile.exists()) {
+@@ -6429,7 +6429,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                     filename = AndroidUtilities.generateFileName(0, extension);
+                 }
+                 uriToInsert = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+-                File dirDest = new File(Environment.DIRECTORY_PICTURES, "Telegram");
++                File dirDest = new File(Environment.DIRECTORY_PICTURES, ru.llacker.neogram.NeoBrand.mediaFolder());
+                 contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, dirDest + File.separator);
+                 contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+                 contentValues.put(MediaStore.Images.Media.MIME_TYPE, mimeType);
+@@ -6437,7 +6437,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                 if (filename == null) {
+                     filename = AndroidUtilities.generateFileName(1, extension);
+                 }
+-                File dirDest = new File(Environment.DIRECTORY_MOVIES, "Telegram");
++                File dirDest = new File(Environment.DIRECTORY_MOVIES, ru.llacker.neogram.NeoBrand.mediaFolder());
+                 contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, dirDest + File.separator);
+                 uriToInsert = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                 contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, filename);
+@@ -6445,7 +6445,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                 if (filename == null) {
+                     filename = sourceFile.getName();
+                 }
+-                File dirDest = new File(Environment.DIRECTORY_DOWNLOADS, "Telegram");
++                File dirDest = new File(Environment.DIRECTORY_DOWNLOADS, ru.llacker.neogram.NeoBrand.mediaFolder());
+                 contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, dirDest + File.separator);
+                 uriToInsert = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                 contentValues.put(MediaStore.Downloads.DISPLAY_NAME, filename);
+@@ -6453,7 +6453,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                 if (filename == null) {
+                     filename = sourceFile.getName();
+                 }
+-                File dirDest = new File(Environment.DIRECTORY_MUSIC, "Telegram");
++                File dirDest = new File(Environment.DIRECTORY_MUSIC, ru.llacker.neogram.NeoBrand.mediaFolder());
+                 contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, dirDest + File.separator);
+                 uriToInsert = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                 contentValues.put(MediaStore.Audio.Media.DISPLAY_NAME, filename);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java
+@@ -156,7 +156,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
+     public View createView(Context context) {
+         logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();
+         logoDrawable.setBounds(0, dp(8.666f), dp(115), dp(35));
+-        SpannableStringBuilder ssb = new SpannableStringBuilder(LocaleController.getString(R.string.Page1Title));
++        SpannableStringBuilder ssb = new SpannableStringBuilder(ru.llacker.neogram.NeoBrand.appName());
+         ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+         titles[0] = ssb;
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -2907,9 +2907,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+                                             NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
+                                             push_user_id = userId;
+                                             String mimeType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
+-                                            if (TextUtils.equals(mimeType, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.call")) {
++                                            if (TextUtils.equals(mimeType, ru.llacker.neogram.NeoBrand.contactsMimeType("call"))) {
+                                                 audioCallUser = true;
+-                                            } else if (TextUtils.equals(mimeType, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.call.video")) {
++                                            } else if (TextUtils.equals(mimeType, ru.llacker.neogram.NeoBrand.contactsMimeType("call.video"))) {
+                                                 videoCallUser = true;
+                                             }
+                                         }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LauncherIconController.java b/TMessagesProj/src/main/java/org/telegram/ui/LauncherIconController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LauncherIconController.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LauncherIconController.java
+@@ -34,12 +34,7 @@ public class LauncherIconController {
+     }
+ 
+     public enum LauncherIcon {
+-        DEFAULT("DefaultIcon", R.drawable.icon_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconDefault),
+-        VINTAGE("VintageIcon", R.drawable.icon_6_background_sa, R.mipmap.icon_6_foreground_sa, R.string.AppIconVintage),
+-        AQUA("AquaIcon", R.drawable.icon_4_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconAqua),
+-        PREMIUM("PremiumIcon", R.drawable.icon_3_background_sa, R.mipmap.icon_3_foreground_sa, R.string.AppIconPremium, true),
+-        TURBO("TurboIcon", R.drawable.icon_5_background_sa, R.mipmap.icon_5_foreground_sa, R.string.AppIconTurbo, true),
+-        NOX("NoxIcon", R.mipmap.icon_2_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconNox, true);
++        DEFAULT("DefaultIcon", R.drawable.icon_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconDefault);
+ 
+         public final String key;
+         public final int background;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+@@ -1056,7 +1056,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+                     }
+                     break;
+             }
+-            return formatString(R.string.TelegramVersion, String.format(Locale.US, "v%s (%d)\n%s", pInfo.versionName, code, abi));
++            return ru.llacker.neogram.NeoBrand.versionLine(pInfo.versionName, code, abi, "\n");
+         } catch (Exception e) {
+             FileLog.e(e);
+         }

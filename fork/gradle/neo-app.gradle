@@ -1,0 +1,178 @@
+// Applied at the end of TMessagesProj_App/build.gradle (patch misc/build-support).
+// Turns the stock application module into Neogram: identity, signing, APK splits and naming,
+// the manifest overlay and optional Firebase. Everything brand-related comes from
+// fork/branding.properties, everything secret from local/secrets.properties or NEO_* env vars.
+
+def neo = rootProject.ext.neo
+def applicationIdBase = neo.brand('app.applicationId')
+def apkBaseName = neo.brand('app.apkBaseName')
+def baseVersionCode = Integer.parseInt(APP_VERSION_CODE)
+def neoVersionCode = baseVersionCode * 10 + neo.revision
+def allowDebugSignedRelease = project.hasProperty('neo.allowDebugSignedRelease')
+
+android {
+    defaultConfig {
+        applicationId applicationIdBase
+        resValue 'string', 'AppName', neo.brand('app.name')
+        resValue 'string', 'AppNameBeta', neo.brand('app.nameBeta')
+        manifestPlaceholders += [neoMapsApiKey: neo.secret('maps.apiKey', '')]
+    }
+
+    sourceSets.main {
+        java.srcDirs += neo.file('fork/app/java')
+        res.srcDirs += neo.file('fork/app/res')
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix neo.brand('app.applicationIdSuffixDebug')
+        }
+        // Google Play flavour of release: no self-updates.
+        play {
+            initWith release
+            matchingFallbacks = ['release']
+        }
+    }
+    sourceSets.play.manifest.srcFile '../TMessagesProj/config/release/AndroidManifest_SDK23.xml'
+
+    // One APK per ABI (+ universal for full builds); the stock flavours' abiFilters would conflict.
+    productFlavors.all { flavor -> flavor.ndk.abiFilters.clear() }
+    splits {
+        abi {
+            enable true
+            reset()
+            include(*(neo.abis ?: neo.allAbis))
+            universalApk neo.abis == null
+        }
+    }
+
+    // dependency metadata blobs are only meaningful for Google Play
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+}
+
+// ---- signing --------------------------------------------------------------------------------
+
+def releaseSigning = null
+def storeFile = neo.secretFile('signing.storeFile')
+if (storeFile != null) {
+    if (!storeFile.exists()) {
+        throw new GradleException("signing.storeFile does not exist: ${storeFile}")
+    }
+    releaseSigning = android.signingConfigs.create('neo') {
+        it.storeFile = storeFile
+        it.storePassword = neo.secret('signing.storePassword')
+        it.keyAlias = neo.secret('signing.keyAlias')
+        it.keyPassword = neo.secret('signing.keyPassword')
+        it.enableV1Signing = true
+        it.enableV2Signing = true
+        it.enableV3Signing = true
+    }
+}
+// Debug builds use the release key when it is configured (so they update each other on the
+// owner's devices) and Telegram's public debug keystore otherwise (stock behaviour).
+if (releaseSigning != null) {
+    android.buildTypes.debug.signingConfig = releaseSigning
+}
+android.buildTypes.matching { it.name != 'debug' }.all { bt ->
+    bt.signingConfig = releaseSigning ?: (allowDebugSignedRelease ? android.signingConfigs.debug : null)
+}
+if (releaseSigning == null && !allowDebugSignedRelease) {
+    tasks.configureEach { t ->
+        if (t.name ==~ /package(Afat|BundleAfat)(Release|Play|Standalone)/) {
+            t.doFirst {
+                throw new GradleException('Release signing is not configured. Put signing.storeFile, ' +
+                        'signing.storePassword, signing.keyAlias and signing.keyPassword into ' +
+                        'local/secrets.properties (or NEO_SIGNING_* environment variables), or pass ' +
+                        '-Pneo.allowDebugSignedRelease for a test build.')
+            }
+        }
+    }
+}
+
+// ---- outputs ----------------------------------------------------------------------------------
+
+android.applicationVariants.all { variant ->
+    variant.outputs.all { output ->
+        def abi = output.getFilter('ABI') ?: 'universal'
+        outputFileName = "${apkBaseName}-${variant.versionName}-${neoVersionCode}-${abi}.apk"
+        output.versionCodeOverride = neoVersionCode
+    }
+}
+
+// ---- manifest overlay and per-build-type identity resources ------------------------------------
+
+androidComponents {
+    onVariants(selector().all(), { variant ->
+        variant.sources.manifests.addStaticManifestFile(neo.file('fork/app/AndroidManifest.xml').absolutePath)
+        if (variant.buildType == 'play') {
+            variant.sources.manifests.addStaticManifestFile(neo.file('fork/app/AndroidManifest-play.xml').absolutePath)
+        }
+    })
+}
+
+// The contacts account type and data mime types must be unique per installed package, otherwise
+// Neogram fights with Telegram (or with its own beta build) over the system account.
+android.buildTypes.all { bt ->
+    def suffix = bt.applicationIdSuffix ?: ''
+    def appId = applicationIdBase + suffix
+    def dir = new File(buildDir, "generated/neo/identity-res/${bt.name}")
+    def xml = new File(dir, 'xml')
+    xml.mkdirs()
+    new File(xml, 'auth.xml').setText("""<?xml version="1.0" encoding="utf-8"?>
+<account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accountType="${appId}"
+    android:icon="@mipmap/ic_launcher"
+    android:smallIcon="@mipmap/ic_launcher"
+    android:label="@string/AppName"
+    android:accountPreferences="@xml/auth_menu"/>
+""", 'UTF-8')
+    new File(xml, 'sync_contacts.xml').setText("""<?xml version="1.0" encoding="utf-8"?>
+<sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
+    android:contentAuthority="com.android.contacts"
+    android:accountType="${appId}"/>
+""", 'UTF-8')
+    def kinds = ['profile', 'call', 'call.video'].collect { kind ->
+        """    <ContactsDataKind android:icon="@mipmap/ic_launcher"
+        android:mimeType="vnd.android.cursor.item/vnd.${appId}.android.${kind}"
+        android:summaryColumn="data2"
+        android:detailColumn="data3"
+        android:detailSocialSummary="true"/>"""
+    }.join('\n')
+    new File(xml, 'contacts.xml').setText("""<?xml version="1.0" encoding="utf-8"?>
+<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android">
+${kinds}
+</ContactsAccountType>
+""", 'UTF-8')
+    android.sourceSets.maybeCreate(bt.name).res.srcDirs += dir
+}
+
+// ---- Firebase (optional) ----------------------------------------------------------------------
+
+def googleServicesFound = false
+android.buildTypes.all { bt ->
+    def src = neo.file("local/google-services/${bt.name}.json")
+    def dst = file("src/${bt.name}/google-services.json")
+    if (src.exists()) {
+        if (!dst.exists() || dst.bytes != src.bytes) {
+            dst.parentFile.mkdirs()
+            dst.bytes = src.bytes
+        }
+        googleServicesFound = true
+    } else if (dst.exists()) {
+        dst.delete()
+    }
+}
+if (googleServicesFound) {
+    apply plugin: 'com.google.gms.google-services'
+    googleServices {
+        missingGoogleServicesStrategy = 'WARN'
+    }
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Replaces Telegram's animated plane on the Android 12+ splash screen with the Neogram icon. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/neo_splash_icon_background" />
+        </shape>
+    </item>
+    <item android:drawable="@mipmap/ic_launcher_foreground" />
+</layer-list>

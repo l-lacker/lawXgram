@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: misc/settings-ui: Neogram settings hub entry, settings search and tg://settings/neo links
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Строка «Neogram» в стоковых Настройках (после «Языка») открывает хаб настроек Neogram; разделы и опции хаба добавляются в стоковый поиск по настройкам; ссылки tg://settings/neo[/раздел[/опция]] открывают нужную страницу и подсвечивают строку. Вся логика — в ru.llacker.neogram.settings, в стоке только точки вызова.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/LinkManager.java      | 4 ++++
+ TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java  | 4 ++--
+ TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java | 4 ++++
+ 3 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LinkManager.java b/TMessagesProj/src/main/java/org/telegram/ui/LinkManager.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LinkManager.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LinkManager.java
+@@ -330,6 +330,10 @@ public class LinkManager {
+         final String fourth = segments.size() > 3 ? segments.get(3) : null;
+         final String fifth  = segments.size() > 4 ? segments.get(4) : null;
+ 
++        if ("neo".equalsIgnoreCase(first)) {
++            return ru.llacker.neogram.settings.NeoSettings.openLink(this::presentFragment, segments.subList(1, segments.size()));
++        }
++
+         // legacy paths:
+         if ("theme".equalsIgnoreCase(first) || "themes".equalsIgnoreCase(first)) { // open_settings = 2;
+             presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC));
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+@@ -9577,7 +9577,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+             }
+         } else if (id == NotificationCenter.updateSearchSettings) {
+             if (searchAdapter != null) {
+-                searchAdapter.searchArray = searchAdapter.onCreateSearchArray(ProfileActivity.this);
++                searchAdapter.searchArray = ru.llacker.neogram.settings.NeoSettingsSearch.extend(searchAdapter.onCreateSearchArray(ProfileActivity.this), ProfileActivity.this);
+                 searchAdapter.recentSearches.clear();
+                 searchAdapter.updateSearchArray();
+                 searchAdapter.search(searchAdapter.lastSearchString);
+@@ -14540,7 +14540,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+             this.fragment = fragment;
+             this.currentAccount = fragment.getCurrentAccount();
+             mContext = context;
+-            searchArray = onCreateSearchArray(fragment);
++            searchArray = ru.llacker.neogram.settings.NeoSettingsSearch.extend(onCreateSearchArray(fragment), fragment);
+             updateSearchArray();
+         }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+@@ -804,6 +804,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+         items.add(SettingCell.Factory.of(8, IconBackgroundColors.CYAN.top, IconBackgroundColors.CYAN.bottom, R.drawable.settings_devices, getString(R.string.SettingsDevices), getString(R.string.SettingsDevicesInfo)));
+         items.add(SettingCell.Factory.of(9, IconBackgroundColors.ORANGE_DEEP.top, IconBackgroundColors.ORANGE_DEEP.bottom, R.drawable.settings_power, getString(R.string.SettingsPowerSaving), getString(R.string.SettingsPowerSavingInfo)));
+         items.add(SettingCell.Factory.of(10, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_language, getString(R.string.SettingsLanguage), LocaleController.getCurrentLanguageName()));
++        items.add(ru.llacker.neogram.settings.NeoSettings.hubEntry());
+ 
+         items.add(UItem.asShadow(null));
+         if (!walletAbove && getMessagesController().config.walletAvailable.get()) {
+@@ -944,6 +945,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+             case 10:
+                 presentSettingFragment(new LanguageSelectActivity());
+                 break;
++            case ru.llacker.neogram.settings.NeoSettings.HUB_ITEM_ID:
++                presentSettingFragment(ru.llacker.neogram.settings.NeoSettings.createHub());
++                break;
+ 
+             case 11:
+                 presentSettingFragment(new PremiumPreviewFragment("settings"));
