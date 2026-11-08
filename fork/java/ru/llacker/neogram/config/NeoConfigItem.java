@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * written with {@code apply()}, like the stock {@code org.telegram.utils.settings} settings, but
  * items also know whether they may be exported to a backup and notify listeners on change.
  */
-public abstract class NeoConfigItem<T> {
+public abstract class NeoConfigItem<T> implements NeoValue<T> {
 
     public interface Listener<T> {
         void onChanged(NeoConfigItem<T> item, T value);
@@ -44,6 +44,7 @@ public abstract class NeoConfigItem<T> {
         return exportable;
     }
 
+    @Override
     public T get() {
         if (!loaded) {
             synchronized (this) {
@@ -57,6 +58,7 @@ public abstract class NeoConfigItem<T> {
         return value;
     }
 
+    @Override
     public void set(T newValue) {
         synchronized (this) {
             value = newValue;

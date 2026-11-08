@@ -1325,11 +1325,20 @@ def overlap_report(ctx: Ctx, errors: List[str], warnings: List[str]) -> None:
             warnings.append(f"{by} modifies {count} line(s) added by {owner}")
 
 
+def fork_files(root: Path) -> List[Path]:
+    """Files under fork/ that git tracks or would track: build outputs and other ignored files are skipped."""
+    fork = root / "fork"
+    if git_ok(root, "rev-parse", "--is-inside-work-tree"):
+        out = git_bytes(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "fork")
+        return sorted(root / name for name in out.decode("utf-8", "surrogateescape").split("\0") if name)
+    return sorted(path for path in fork.rglob("*") if path.is_file())
+
+
 def lint_fork_tree(ctx: Ctx, errors: List[str], warnings: List[str], stock_keys: Optional[set]) -> None:
     fork = ctx.root / "fork"
     if not fork.exists():
         return
-    for path in fork.rglob("*"):
+    for path in fork_files(ctx.root):
         if not path.is_file() or path.suffix in (".png", ".webp", ".jpg", ".jpeg", ".ttf", ".otf", ".so", ".jar",
                                                  ".jks", ".keystore", ".gif", ".bin", ".zip", ".mp3", ".ogg"):
             continue

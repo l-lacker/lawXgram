@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Objects;
 
 import ru.llacker.neogram.NeoStrings;
-import ru.llacker.neogram.config.NeoConfigItem;
+import ru.llacker.neogram.config.NeoValue;
 
 /**
  * Renders a {@link NeoSettingsSection} with stock 13.x settings building blocks (sectioned list,
@@ -99,14 +99,15 @@ public class NeoSettingsPage extends UniversalFragment {
                     groupOpen = true;
                     break;
                 case INFO:
-                    items.add(UItem.asShadow(NeoStrings.get(row.descriptionRes)));
+                    items.add(UItem.asShadow(row.description()));
                     groupOpen = false;
                     break;
                 case TOGGLE: {
                     final CharSequence title = NeoStrings.get(row.titleRes);
-                    final boolean checked = row.toggle != null && row.toggle.value();
-                    items.add(row.descriptionRes != 0
-                            ? UItem.asButtonCheck(id, title, NeoStrings.get(row.descriptionRes)).setChecked(checked)
+                    final CharSequence description = row.description();
+                    final boolean checked = isChecked(row);
+                    items.add(description != null
+                            ? UItem.asButtonCheck(id, title, description).setChecked(checked)
                             : UItem.asCheck(id, title).setChecked(checked));
                     groupOpen = true;
                     break;
@@ -134,11 +135,16 @@ public class NeoSettingsPage extends UniversalFragment {
 
     /** Choice and action cells have no description line: their explanation closes the group. */
     private static boolean describe(ArrayList<UItem> items, NeoSettingsRow row) {
-        if (row.descriptionRes != 0) {
-            items.add(UItem.asShadow(NeoStrings.get(row.descriptionRes)));
+        final CharSequence description = row.description();
+        if (description != null) {
+            items.add(UItem.asShadow(description));
             return false;
         }
         return true;
+    }
+
+    private static boolean isChecked(NeoSettingsRow row) {
+        return row.toggle != null && Boolean.TRUE.equals(row.toggle.get());
     }
 
     @Nullable
@@ -156,7 +162,7 @@ public class NeoSettingsPage extends UniversalFragment {
         switch (row.kind) {
             case TOGGLE:
                 if (row.toggle != null) {
-                    row.toggle.toggle();
+                    row.toggle.set(!isChecked(row));
                     listView.adapter.update(true);
                 }
                 break;
@@ -187,7 +193,7 @@ public class NeoSettingsPage extends UniversalFragment {
 
     @SuppressWarnings("unchecked")
     private void showChoice(NeoSettingsRow row, View anchor) {
-        final NeoConfigItem<Object> item = (NeoConfigItem<Object>) row.choiceItem;
+        final NeoValue<Object> item = (NeoValue<Object>) row.choice;
         if (item == null || getParentActivity() == null) {
             return;
         }
@@ -208,7 +214,7 @@ public class NeoSettingsPage extends UniversalFragment {
     }
 
     private static CharSequence currentLabel(NeoSettingsRow row) {
-        final Object current = row.choiceItem == null ? null : row.choiceItem.get();
+        final Object current = row.choice == null ? null : row.choice.get();
         for (NeoSettingsRow.Option<?> option : row.options) {
             if (Objects.equals(option.value, current)) {
                 return label(option);

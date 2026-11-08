@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/round-video-quality: 560x560 and 624x624 video messages
+
+RoundVideoSession.OutputResolution gets P560 and P624: 16-aligned squares below the 640
+pixel limit of video messages, for sharper round videos than the stock 480. They are
+listed first so no stock line changes; the setting is stored by name, so dropping the
+patch falls back to the default 480. RoundVideoCameraController.getSourceCropSize asks
+NeoRoundCamera for the camera square of these sizes (High: twice the output capped at
+1080, Medium: 1.5 times); 480 and 360 keep the stock table. The rest of the recorder
+(GL, encoder, overlays, upload) already works with any output size.
+---
+ .../main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java  | 4 ++++
+ .../src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java       | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
++++ b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
+@@ -2820,6 +2820,10 @@ final class RoundVideoCameraController {
+         if (cameraResolution == RoundVideoSession.CameraResolution.LOW) {
+             return outputResolution.getSize();
+         }
++        if (outputResolution.getSize() > 480) {
++            return ru.llacker.neogram.round.NeoRoundCamera.sourceCropSize(outputResolution.getSize(),
++                    cameraResolution == RoundVideoSession.CameraResolution.HIGH);
++        }
+         if (outputResolution == RoundVideoSession.OutputResolution.P480) {
+             return cameraResolution == RoundVideoSession.CameraResolution.HIGH ? 960 : 720;
+         }
+diff --git a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java
++++ b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java
+@@ -33,6 +33,10 @@ public final class RoundVideoSession {
+ 
+     /** Square resolution written by the video encoder. */
+     public enum OutputResolution {
++        /** Neogram: 624 x 624 output, the largest 16-aligned square below Telegram's 640 limit. */
++        P624(624),
++        /** Neogram: 560 x 560 output. */
++        P560(560),
+         /** 480 x 480 output. */
+         P480(480),
+         /** 360 x 360 output. */

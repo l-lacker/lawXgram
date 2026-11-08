@@ -1,0 +1,3 @@
+// Pure-Java logic of Neogram with fast JVM tests (no Android). The sources are also compiled into
+// TMessagesProj by fork/gradle/neo-library.gradle. Run: worktree/gradlew -p fork/core test
+rootProject.name = 'neogram-core'

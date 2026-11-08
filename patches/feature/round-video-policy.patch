@@ -1,0 +1,108 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/round-video-policy: pick the round video recorder per device, fall back by itself, limit load
+
+InstantCameraViewBase.create asks NeoCameraPolicy which recorder to use: the stock
+round_video_camera2_enabled setting when the user set it, otherwise Auto = the server
+switch plus device checks (LEGACY cameras, repeated start failures of the new recorder).
+BooleanSetting.neo_reset lets the settings page return the stock setting to Auto.
+InstantCameraView2 reports the first recording and start errors to the policy, takes the
+output size through NeoRoundCamera.outputResolution (480 instead of 360 when the encoder
+needs 16-aligned sizes) and lets NeoRoundCamera.configure adjust the session builder
+(start camera, 30 fps when the encoder lacks 60 fps or in battery saver and heavy thermal
+load, a lighter camera mode then). RoundVideoCameraController starts with the warm/dual
+camera switch disabled when the policy forbids it (battery saver, heat, user choice); the
+stock capability checks still apply on top.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java   | 9 +++++----
+ .../src/main/java/org/telegram/ui/Components/InstantCameraViewBase.java          | 2 +-
+ .../main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java  | 2 +-
+ TMessagesProj/src/main/java/org/telegram/utils/settings/BooleanSetting.java      | 8 ++++++++
+ 4 files changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java
+@@ -382,8 +382,8 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+         progressView.setProgress(0f);
+         showInitialPlaceholder();
+         upload = new TelegramRoundVideoUpload(currentAccount, secretChat);
+-        activeOutputResolution = SharedSettings.roundVideoOutputResolution.get();
+-        session = new RoundVideoSession.Builder(getContext(), textureView)
++        activeOutputResolution = ru.llacker.neogram.round.NeoRoundCamera.outputResolution(SharedSettings.roundVideoOutputResolution.get());
++        session = ru.llacker.neogram.round.NeoRoundCamera.configure(new RoundVideoSession.Builder(getContext(), textureView)
+                 .setOutputDirectory(new File(ApplicationLoader.getFilesDirFixed(), "cache"))
+                 .setInitialFacing(SharedSettings.roundVideoLastCamera.get())
+                 .setOutputResolution(activeOutputResolution)
+@@ -393,8 +393,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+                 .setCompositionEnabled(SharedSettings.roundVideoComposition.get())
+                 .setListener(sessionListener)
+                 .setOutputListener(upload)
+-                .setScreenFlashController(this::setScreenFlashEnabled)
+-                .build();
++                .setScreenFlashController(this::setScreenFlashEnabled)).build();
+         MediaController.getInstance().requestRecordAudioFocus(true);
+         session.start();
+         startAnimation(true, fromPaused);
+@@ -713,6 +712,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+                 updateRecordingUiFrame();
+                 if (!startedNotificationSent) {
+                     startedNotificationSent = true;
++                    ru.llacker.neogram.round.NeoCameraPolicy.onNewRecorderWorked();
+                     NotificationCenter.getInstance(currentAccount).postNotificationName(
+                             NotificationCenter.recordStarted,
+                             recordingGuid,
+@@ -826,6 +826,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+             if (startedNotificationSent) {
+                 postRecordStopped(6);
+             } else {
++                ru.llacker.neogram.round.NeoCameraPolicy.onNewRecorderFailed(error);
+                 NotificationCenter.getInstance(currentAccount).postNotificationName(
+                     NotificationCenter.recordStartError,
+                     recordingGuid
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraViewBase.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraViewBase.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraViewBase.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraViewBase.java
+@@ -50,7 +50,7 @@ public abstract class InstantCameraViewBase extends FrameLayout {
+             Theme.ResourcesProvider resourcesProvider,
+             boolean isNewDesign
+     ) {
+-        return isCamera2Enabled(UserConfig.selectedAccount)
++        return ru.llacker.neogram.round.NeoCameraPolicy.useNewRecorder(UserConfig.selectedAccount)
+                 ? new InstantCameraView2(context, delegate, resourcesProvider, isNewDesign)
+                 : new InstantCameraView(context, delegate, resourcesProvider, isNewDesign);
+     }
+diff --git a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
++++ b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
+@@ -199,7 +199,7 @@ final class RoundVideoCameraController {
+     private CameraSelection frontSelection;
+     private CameraSelection backSelection;
+     private boolean warmSwitchSupported;
+-    private boolean warmSwitchDisabled;
++    private boolean warmSwitchDisabled = !ru.llacker.neogram.round.NeoRoundCamera.isFastSwitchAllowed();
+     private boolean dualActiveMode;
+     private boolean glPreviewEnabled;
+     private boolean activeDualSessionConfigured;
+diff --git a/TMessagesProj/src/main/java/org/telegram/utils/settings/BooleanSetting.java b/TMessagesProj/src/main/java/org/telegram/utils/settings/BooleanSetting.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/utils/settings/BooleanSetting.java
++++ b/TMessagesProj/src/main/java/org/telegram/utils/settings/BooleanSetting.java
+@@ -33,6 +33,14 @@ public final class BooleanSetting {
+         setLocked(value);
+     }
+ 
++    /** Neogram: forgets the stored value, so isSet() is false again ("Auto"). */
++    public synchronized void neo_reset() {
++        value = defaultValue;
++        present = false;
++        loaded = true;
++        SettingsPreferences.get().edit().remove(name).apply();
++    }
++
+     public synchronized boolean toggle() {
+         loadLocked();
+         boolean newValue = !value;

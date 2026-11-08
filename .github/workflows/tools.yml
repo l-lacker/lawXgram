@@ -42,3 +42,18 @@ jobs:
         run: python tools/patchset.py lint --fast
       - name: Check (sparse, from scratch)
         run: python tools/patchset.py check --sparse
+
+  core:
+    name: fork/core tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: JUnit
+        run: gradle -p fork/core test --console=plain

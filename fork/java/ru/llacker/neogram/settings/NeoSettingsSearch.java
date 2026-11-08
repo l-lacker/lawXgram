@@ -35,23 +35,36 @@ public final class NeoSettingsSearch {
             results.add(new ProfileActivity.SearchAdapter.SearchResult(guid("hub"), app, R.drawable.msg_settings_premium,
                     () -> fragment.presentFragment(NeoSettings.createHub())).withLink("tg://settings/neo"));
             for (NeoSettingsSection section : NeoSettings.visibleSections()) {
-                final String sectionTitle = NeoStrings.get(section.titleRes);
-                results.add(new ProfileActivity.SearchAdapter.SearchResult(guid(section.slug), sectionTitle, app, 0,
-                        () -> fragment.presentFragment(section.createFragment())).withLink(NeoSettings.link(section, null)));
-                for (NeoSettingsRow row : section.rows()) {
-                    if (!row.isSearchable() || !row.isVisible()) {
-                        continue;
-                    }
-                    final String slug = row.slug;
-                    results.add(new ProfileActivity.SearchAdapter.SearchResult(guid(section.slug + "/" + slug),
-                            NeoStrings.get(row.titleRes), null, app, sectionTitle, 0,
-                            () -> fragment.presentFragment(section.createFragment(slug))).withLink(NeoSettings.link(section, row)));
-                }
+                addSection(results, section, app, fragment);
             }
         } catch (Throwable e) {
             org.telegram.messenger.FileLog.e(e);
         }
         return results.toArray(new ProfileActivity.SearchAdapter.SearchResult[0]);
+    }
+
+    /** The section, its rows and the pages its rows open; {@code parent} is the path shown above. */
+    private static void addSection(List<ProfileActivity.SearchAdapter.SearchResult> results, NeoSettingsSection section,
+                                   String parent, BaseFragment fragment) {
+        final String sectionTitle = NeoStrings.get(section.titleRes);
+        results.add(new ProfileActivity.SearchAdapter.SearchResult(guid(section.slug), sectionTitle, parent, 0,
+                () -> fragment.presentFragment(section.createFragment())).withLink(NeoSettings.link(section, null)));
+        for (NeoSettingsRow row : section.rows()) {
+            if (!row.isVisible()) {
+                continue;
+            }
+            if (row.target != null) {
+                addSection(results, row.target, sectionTitle, fragment);
+                continue;
+            }
+            if (!row.isSearchable()) {
+                continue;
+            }
+            final String slug = row.slug;
+            results.add(new ProfileActivity.SearchAdapter.SearchResult(guid(section.slug + "/" + slug),
+                    NeoStrings.get(row.titleRes), null, parent, sectionTitle, 0,
+                    () -> fragment.presentFragment(section.createFragment(slug))).withLink(NeoSettings.link(section, row)));
+        }
     }
 
     static int guid(String path) {

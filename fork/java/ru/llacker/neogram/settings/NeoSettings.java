@@ -82,9 +82,37 @@ public final class NeoSettings {
         return result;
     }
 
+    /** Hub sections and the pages their rows open (depth first, each once). */
+    @NonNull
+    public static List<NeoSettingsSection> allSections() {
+        return collect(sections());
+    }
+
+    @NonNull
+    private static List<NeoSettingsSection> collect(@NonNull List<NeoSettingsSection> roots) {
+        List<NeoSettingsSection> result = new ArrayList<>();
+        for (NeoSettingsSection section : roots) {
+            collect(section, result);
+        }
+        return result;
+    }
+
+    private static void collect(@NonNull NeoSettingsSection section, @NonNull List<NeoSettingsSection> result) {
+        if (result.contains(section)) {
+            return;
+        }
+        result.add(section);
+        for (NeoSettingsRow row : section.rows()) {
+            if (row.target != null) {
+                collect(row.target, result);
+            }
+        }
+    }
+
+    /** A hub section or a page opened from one. */
     @Nullable
     public static NeoSettingsSection find(@Nullable String slug) {
-        for (NeoSettingsSection section : sections()) {
+        for (NeoSettingsSection section : allSections()) {
             if (section.slug.equals(slug)) {
                 return section;
             }
@@ -129,9 +157,9 @@ public final class NeoSettings {
     }
 
     /** Slugs are part of links and of the search history: they must be unique and stable. */
-    private static void verify(List<NeoSettingsSection> list) {
+    private static void verify(List<NeoSettingsSection> roots) {
         Set<String> sectionSlugs = new HashSet<>();
-        for (NeoSettingsSection section : list) {
+        for (NeoSettingsSection section : collect(roots)) {
             if (!sectionSlugs.add(section.slug)) {
                 throw new IllegalStateException("duplicate settings section " + section.slug);
             }

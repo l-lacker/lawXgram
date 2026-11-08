@@ -3,3 +3,6 @@ misc/strings-pipeline.patch
 misc/branding.patch
 misc/database.patch
 misc/settings-ui.patch
+feature/round-video-policy.patch
+feature/round-video-lenses.patch
+feature/round-video-quality.patch

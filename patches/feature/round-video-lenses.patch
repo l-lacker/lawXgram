@@ -1,0 +1,135 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/round-video-lenses: back camera lens button for video messages via CONTROL_ZOOM_RATIO
+
+RoundVideoCameraController gets a base zoom ratio for the back camera (the selected lens,
+below 1 = ultra-wide of a logical multi-camera); pinch zoom multiplies it and the result is
+clamped to CONTROL_ZOOM_RATIO_RANGE, or to at least 1 on the crop-region path. The initial
+value is the start lens chosen in Neogram settings. isPreferredCameraCandidate lets
+NeoRoundCamera pick the back camera the lens catalog describes when it reaches an
+ultra-wide; otherwise the stock choice stays. RoundVideoSession.neo_setBaseZoomRatio stores
+the ratio and applies it right away only while recording and not switching cameras, like
+setZoom. InstantCameraView2 adds NeoLensButton after the flash button and feeds it the
+camera capabilities, the session start and the camera-control state.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java  |  6 ++++++
+ .../main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java | 13 ++++++++++++-
+ .../src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java      |  8 ++++++++
+ 3 files changed, 26 insertions(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/InstantCameraView2.java
+@@ -79,6 +79,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+     private final LinearLayout buttonsLayout;
+     private final FlashViews.ImageViewInvertable switchCameraButton;
+     private final FlashViews.ImageViewInvertable flashButton;
++    private ru.llacker.neogram.round.NeoLensButton neo_lensButton;
+     private final ImageView muteImageView;
+     private final FlashViews flashViews;
+     private final int[] screenPosition = new int[2];
+@@ -274,6 +275,8 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+             switchCameraButton.setInvert(0.6f);
+             flashButton.setInvert(0.6f);
+         }
++        neo_lensButton = ru.llacker.neogram.round.NeoRoundCamera.attachLensButton(buttonsLayout, flashViews, isNewDesign,
++                resourcesProvider, ratio -> session != null && session.neo_setBaseZoomRatio(ratio));
+ 
+         muteImageView = new ImageView(context);
+         muteImageView.setScaleType(ImageView.ScaleType.CENTER);
+@@ -381,6 +384,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+         lastVisibleDurationMs = 0L;
+         progressView.setProgress(0f);
+         showInitialPlaceholder();
++        neo_lensButton.reset();
+         upload = new TelegramRoundVideoUpload(currentAccount, secretChat);
+         activeOutputResolution = ru.llacker.neogram.round.NeoRoundCamera.outputResolution(SharedSettings.roundVideoOutputResolution.get());
+         session = ru.llacker.neogram.round.NeoRoundCamera.configure(new RoundVideoSession.Builder(getContext(), textureView)
+@@ -754,6 +758,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+                 @NonNull RoundVideoSession.CameraCapabilities cameraCapabilities
+         ) {
+             capabilities = cameraCapabilities;
++            neo_lensButton.onCapabilities(cameraCapabilities);
+             if (cameraCapabilities.getActiveFacing() != null) {
+                 SharedSettings.roundVideoLastCamera.set(cameraCapabilities.getActiveFacing());
+             }
+@@ -1016,6 +1021,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
+         flashButton.setEnabled(cameraControls
+                 && capabilities != null
+                 && capabilities.getFlashType() != RoundVideoSession.FlashType.NONE);
++        neo_lensButton.setEnabled(cameraControls);
+         updateFlashIcon();
+     }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
++++ b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoCameraController.java
+@@ -175,6 +175,7 @@ final class RoundVideoCameraController {
+     private OutputPair regularFallbackPair;
+     private long timelineOffsetUs;
+     private volatile float zoomProgress;
++    private volatile float neo_baseZoomRatio = ru.llacker.neogram.round.NeoRoundCamera.initialBackZoomRatio();
+     private float maximumZoomRatio = 1f;
+     private boolean torchEnabled;
+     private boolean torchVerificationPending;
+@@ -331,6 +332,11 @@ final class RoundVideoCameraController {
+         return true;
+     }
+ 
++    void neo_setBaseZoomRatio(float ratio, boolean apply) {
++        neo_baseZoomRatio = ratio;
++        if (apply) setZoom(zoomProgress);
++    }
++
+     boolean setTorchEnabled(boolean enabled) {
+         Handler handler = cameraHandler;
+         if (!active || handler == null) return false;
+@@ -1880,7 +1886,8 @@ final class RoundVideoCameraController {
+     }
+ 
+     private void applyZoom(@NonNull CaptureRequest.Builder builder) {
+-        float ratio = 1f + zoomProgress * (maximumZoomRatio - 1f);
++        float ratio = (selectedFacing == RoundVideoSession.CameraFacing.BACK ? neo_baseZoomRatio : 1f)
++                * (1f + zoomProgress * (maximumZoomRatio - 1f));
+         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+             Range<Float> range = characteristics == null
+                     ? null
+@@ -1894,6 +1901,7 @@ final class RoundVideoCameraController {
+                 ? null
+                 : characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+         if (activeArray == null) return;
++        ratio = Math.max(1f, ratio);
+         int cropWidth = Math.max(1, Math.round(activeArray.width() / ratio));
+         int cropHeight = Math.max(1, Math.round(activeArray.height() / ratio));
+         int left = activeArray.centerX() - cropWidth / 2;
+@@ -2250,6 +2258,9 @@ final class RoundVideoCameraController {
+             @NonNull CameraCandidate current,
+             @NonNull RoundVideoSession.CameraFacing facing
+     ) {
++        Boolean neoPreferred = ru.llacker.neogram.round.NeoRoundCamera.isPreferredCamera(
++                candidate.id, current.id, facing == RoundVideoSession.CameraFacing.BACK);
++        if (neoPreferred != null) return neoPreferred;
+         return facing == RoundVideoSession.CameraFacing.BACK
+                 && hasFlashUnit(candidate.characteristics)
+                 && !hasFlashUnit(current.characteristics);
+diff --git a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java
++++ b/TMessagesProj/src/main/java/org/telegram/utils/recorder/round/RoundVideoSession.java
+@@ -750,6 +750,14 @@ public final class RoundVideoSession {
+         return cameraController.setZoom(zoomProgress);
+     }
+ 
++    /** Neogram: zoom ratio of the back camera lens (below 1 = ultra-wide); pinch zoom multiplies it. */
++    @MainThread
++    public boolean neo_setBaseZoomRatio(float ratio) {
++        requireMainThread();
++        cameraController.neo_setBaseZoomRatio(ratio, state == State.RECORDING && !cameraSwitching);
++        return true;
++    }
++
+     /** Enables the rear torch or requests front-camera screen flash. */
+     @MainThread
+     public boolean setFlashEnabled(boolean enabled) {

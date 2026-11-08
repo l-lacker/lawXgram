@@ -53,6 +53,12 @@ gradlew.bat :TMessagesProj_App:assembleAfatDebug          # Windows
 
 Add `-Pneo.abis=arm64-v8a` for a much faster single-ABI build.
 
+Pure-Java logic lives in `fork/core` and has JVM unit tests that run in seconds:
+
+```
+worktree/gradlew -p fork/core test        # Windows: worktree\gradlew.bat -p fork\core test
+```
+
 ### Local secrets
 
 Secrets never enter the repository. Create `local/secrets.properties` (the `local/` folder
