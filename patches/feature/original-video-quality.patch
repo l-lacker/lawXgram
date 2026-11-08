@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/original-video-quality: play videos in their original quality by default
+
+Behind NeoOptions.PREFER_ORIGINAL_QUALITY. When the user has not picked a quality for a video, VideoPlayer.getSavedQuality returns its original quality instead of none (adaptive), so the viewer opens the original file. A quality chosen in the viewer still wins; downloads and the cached-media checks keep the stock choice (getQualityForPlayer).
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Components/VideoPlayer.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/VideoPlayer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/VideoPlayer.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/VideoPlayer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/VideoPlayer.java
+@@ -434,7 +434,7 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
+     public static Quality getSavedQuality(ArrayList<Quality> qualities, long did, int mid) {
+         final SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("media_saved_pos", Activity.MODE_PRIVATE);
+         final String setting = preferences.getString(did + "_" + mid + "q2", "");
+-        if (TextUtils.isEmpty(setting)) return null;
++        if (TextUtils.isEmpty(setting)) return ru.llacker.neogram.media.NeoMedia.defaultQuality(qualities);
+         for (Quality q : qualities) {
+             final String idx = q.width + "x" + q.height + (q.original ? "s" : "");
+             if (TextUtils.equals(setting, idx)) return q;

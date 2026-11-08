@@ -7,10 +7,11 @@ import org.telegram.ui.Components.IconBackgroundColors;
 
 import java.util.List;
 
+import ru.llacker.neogram.config.NeoOptions;
 import ru.llacker.neogram.settings.NeoSettingsRow;
 import ru.llacker.neogram.settings.NeoSettingsSection;
 
-/** Settings section "media": video messages and, as features are ported, playback and downloads. */
+/** Settings section "media": video messages, attachments and playback. */
 public final class MediaSection {
 
     public static final NeoSettingsSection SECTION = new NeoSettingsSection("media", R.string.NeoSectionMedia,
@@ -21,5 +22,15 @@ public final class MediaSection {
 
     private static void rows(@NonNull List<NeoSettingsRow> rows) {
         rows.add(NeoSettingsRow.page("round_video", RoundVideoSection.SECTION, R.string.NeoRoundVideoInfo));
+
+        rows.add(NeoSettingsRow.header(R.string.NeoAttachHeader));
+        rows.add(NeoSettingsRow.toggle("gallery_camera", NeoOptions.GALLERY_CAMERA,
+                R.string.NeoShowGalleryCamera, R.string.NeoShowGalleryCameraInfo));
+
+        rows.add(NeoSettingsRow.header(R.string.NeoPlaybackHeader));
+        rows.add(NeoSettingsRow.toggle("disable_voice_autoplay", NeoOptions.DISABLE_VOICE_AUTOPLAY,
+                R.string.NeoDisableVoiceMessagesAutoPlay, R.string.NeoDisableVoiceMessagesAutoPlayInfo));
+        rows.add(NeoSettingsRow.toggle("prefer_original_quality", NeoOptions.PREFER_ORIGINAL_QUALITY,
+                R.string.NeoPreferOriginalQuality, R.string.NeoPreferOriginalQualityInfo));
     }
 }

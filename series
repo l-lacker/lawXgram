@@ -20,3 +20,10 @@ feature/hide-all-chats-tab.patch
 debloat/next-channel.patch
 debloat/business-bot-panel.patch
 debloat/sticker-time.patch
+feature/profile-id.patch
+debloat/app-bar-shadow.patch
+feature/notification-color.patch
+debloat/gallery-camera.patch
+debloat/voice-autoplay.patch
+debloat/dialog-media-preview.patch
+feature/original-video-quality.patch

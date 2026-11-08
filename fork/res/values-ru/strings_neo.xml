@@ -440,4 +440,15 @@
     <string name="NeoChatViewHeader">Экран чата</string>
     <string name="NeoHideTimeOnStickerInfo">Стикеры и крупные эмодзи показываются без времени и отметок о прочтении. Они видны, пока сообщение выделено.</string>
     <string name="NeoDisableJumpToNextChannelInfo">Свайп вверх в конце канала или темы форума больше не открывает следующий непрочитанный.</string>
+    <string name="NeoProfilesHeader">Профили</string>
+    <string name="NeoIdCopied">ID скопирован в буфер обмена</string>
+    <string name="NeoInterfaceHeader">Интерфейс</string>
+    <string name="NeoDisableAppBarShadowInfo">Заголовки экранов рисуются без тени под ними.</string>
+    <string name="NeoAccentAsNotificationColorInfo">Уведомления о сообщениях окрашиваются в цвет акцента текущей темы вместо синего цвета Telegram.</string>
+    <string name="NeoMediaPreviewInfo">В строках списка чатов показывается маленькое превью фото или видео из последнего сообщения.</string>
+    <string name="NeoAttachHeader">Вложения</string>
+    <string name="NeoShowGalleryCameraInfo">Галерея вложений начинается с живого окна камеры. Если выключить, камера не запускается при прикреплении файлов.</string>
+    <string name="NeoPlaybackHeader">Воспроизведение</string>
+    <string name="NeoDisableVoiceMessagesAutoPlayInfo">Воспроизведение останавливается после голосового или видеосообщения, которое вы включили, а не переходит к следующему.</string>
+    <string name="NeoPreferOriginalQualityInfo">Видео открываются в исходном качестве, если в плеере для них не выбрано другое.</string>
 </resources>

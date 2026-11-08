@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: debloat/app-bar-shadow: hide the shadow under the title bar
+
+Behind NeoOptions.HIDE_APP_BAR_SHADOW. Both places where ActionBarLayout draws the header shadow (under an action bar that casts shadows, and drawHeaderShadow for fragments) skip it; the change shows on the next frame, no restart.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
+@@ -212,7 +212,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
+                     }
+                 }
+                 boolean result = super.drawChild(canvas, child, drawingTime);
+-                if (actionBarHeight != 0 && headerShadowDrawable != null) {
++                if (actionBarHeight != 0 && headerShadowDrawable != null && !ru.llacker.neogram.NeoAppearance.hideAppBarShadow()) {
+                     int wasAlpha = headerShadowDrawable.getAlpha();
+                     headerShadowDrawable.setBounds(0, actionBarY + actionBarHeight, getMeasuredWidth(), actionBarY + actionBarHeight + headerShadowDrawable.getIntrinsicHeight());
+                     headerShadowDrawable.setAlpha(actionBarShadowAlpha);
+@@ -1053,7 +1053,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
+ 
+     @Override
+     public void drawHeaderShadow(Canvas canvas, int alpha, int y) {
+-        if (headerShadowDrawable != null && SharedConfig.drawActionBarShadow) {
++        if (headerShadowDrawable != null && SharedConfig.drawActionBarShadow && !ru.llacker.neogram.NeoAppearance.hideAppBarShadow()) {
+             alpha = alpha / 2;
+             if (headerShadowDrawable.getAlpha() != alpha) {
+                 headerShadowDrawable.setAlpha(alpha);

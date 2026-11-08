@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import ru.llacker.neogram.config.NeoOptions;
 
 /**
- * Chat list (DialogsActivity) options: patches debloat/stories, feature/archive-on-pull and
- * feature/hide-all-chats-tab.
+ * Chat list (DialogsActivity) options: patches debloat/stories, debloat/dialog-media-preview,
+ * feature/archive-on-pull and feature/hide-all-chats-tab.
  */
 public final class NeoDialogs {
 
@@ -42,6 +42,11 @@ public final class NeoDialogs {
     /** The stories row, the "post a story" button and its hint are hidden. */
     public static boolean hideStories() {
         return NeoOptions.HIDE_STORIES.value();
+    }
+
+    /** No thumbnails of the last message's media in chat list rows. */
+    public static boolean hideMediaPreview() {
+        return !NeoOptions.DIALOG_MEDIA_PREVIEW.value();
     }
 
     // ---- archive ------------------------------------------------------------------------------

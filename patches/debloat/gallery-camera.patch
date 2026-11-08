@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: debloat/gallery-camera: hide the camera tile in the attachment gallery
+
+Behind NeoOptions.GALLERY_CAMERA (on by default). With it off, ChatAttachAlertPhotoLayout is created without the live camera tile, so the attachment menu does not start the camera when it shows the gallery.
+---
+ .../src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java     | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java
+@@ -734,7 +734,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
+     public ChatAttachAlertPhotoLayout(ChatAttachAlert alert, Context context, boolean forceDarkTheme, boolean needCamera, Theme.ResourcesProvider resourcesProvider) {
+         super(alert, context, resourcesProvider);
+         this.forceDarkTheme = forceDarkTheme;
+-        this.needCamera = needCamera;
++        this.needCamera = needCamera && !ru.llacker.neogram.media.NeoMedia.hideGalleryCamera();
+         NotificationCenter.getGlobalInstance().addWeakObserver(this, NotificationCenter.albumsDidLoad);
+         NotificationCenter.getGlobalInstance().addWeakObserver(this, NotificationCenter.cameraInitied);
+         FrameLayout container = alert.getContainer();

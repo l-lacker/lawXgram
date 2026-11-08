@@ -28,5 +28,7 @@ public final class PrivacySection {
         rows.add(NeoSettingsRow.header(R.string.NeoNotificationsHeader));
         rows.add(NeoSettingsRow.toggle("silence_non_contacts", NeoOptions.SILENCE_NON_CONTACTS,
                 R.string.NeoSilenceNonContacts, R.string.NeoSilenceNonContactsAbout));
+        rows.add(NeoSettingsRow.toggle("accent_notification_color", NeoOptions.ACCENT_NOTIFICATION_COLOR,
+                R.string.NeoAccentAsNotificationColor, R.string.NeoAccentAsNotificationColorInfo));
     }
 }

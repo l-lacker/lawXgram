@@ -10,6 +10,7 @@ import java.util.List;
 
 import ru.llacker.neogram.config.NeoOptions;
 import ru.llacker.neogram.config.NeoValue;
+import ru.llacker.neogram.profile.NeoProfile;
 import ru.llacker.neogram.settings.NeoSettingsRow;
 import ru.llacker.neogram.settings.NeoSettingsSection;
 
@@ -23,6 +24,10 @@ public final class AppearanceSection {
     }
 
     private static void rows(@NonNull List<NeoSettingsRow> rows) {
+        rows.add(NeoSettingsRow.header(R.string.NeoInterfaceHeader));
+        rows.add(NeoSettingsRow.toggle("hide_app_bar_shadow", NeoOptions.HIDE_APP_BAR_SHADOW,
+                R.string.NeoDisableAppBarShadow, R.string.NeoDisableAppBarShadowInfo));
+
         rows.add(NeoSettingsRow.header(R.string.NeoTimesAndNumbers));
         rows.add(NeoSettingsRow.toggle("time_with_seconds", NeoOptions.TIME_WITH_SECONDS,
                 R.string.NeoFormatWithSeconds, R.string.NeoFormatWithSecondsInfo));
@@ -35,6 +40,13 @@ public final class AppearanceSection {
                 .option(NeoOptions.NameOrder.AUTO, R.string.NeoNameOrderAuto)
                 .option(NeoOptions.NameOrder.FIRST_LAST, R.string.NeoFirstLast)
                 .option(NeoOptions.NameOrder.LAST_FIRST, R.string.NeoLastFirst)
+                .build());
+
+        rows.add(NeoSettingsRow.header(R.string.NeoProfilesHeader));
+        rows.add(NeoSettingsRow.choice("profile_id", NeoOptions.PROFILE_ID, R.string.NeoIdType, R.string.NeoIdTypeAbout)
+                .option(NeoProfile.IdFormat.API, R.string.NeoIdTypeAPI)
+                .option(NeoProfile.IdFormat.BOT_API, R.string.NeoIdTypeBOTAPI)
+                .option(NeoProfile.IdFormat.HIDDEN, R.string.NeoIdTypeHidden)
                 .build());
     }
 }

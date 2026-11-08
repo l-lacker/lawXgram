@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/profile-id: show the user or chat ID in profiles
+
+Behind NeoOptions.PROFILE_ID (Telegram API, Bot API or hidden). ProfileActivity gets a neo_idRow text detail row: for users after the username, birthday and business rows, for chats before notifications. NeoProfile binds the ID with its data centre and copies the ID on tap.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+@@ -671,6 +671,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+     private int userInfoRow;
+     private int channelInfoRow;
+     private int usernameRow;
++    private int neo_idRow;
+     private int notificationsDividerRow;
+     private int notificationsRow;
+     private int bizHoursRow;
+@@ -4452,6 +4453,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+                 onMemberClick(participant, false, view);
+             } else if (position == addMemberRow) {
+                 openAddMember();
++            } else if (position == neo_idRow) {
++                ru.llacker.neogram.profile.NeoProfile.copyId(ProfileActivity.this, userId != 0 ? userId : -chatId);
+             } else if (position == usernameRow) {
+                 processOnClickOrPress(position, view, x, y);
+             } else if (position == linkedCommunityRow) {
+@@ -10774,6 +10777,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+         locationRow = -1;
+         channelInfoRow = -1;
+         usernameRow = -1;
++        neo_idRow = -1;
+         settingsTimerRow = -1;
+         settingsKeyRow = -1;
+         notificationsDividerRow = -1;
+@@ -10982,6 +10986,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+                         noteRow = rowCount++;
+                     }
+                 }
++                if (ru.llacker.neogram.profile.NeoProfile.showId()) {
++                    neo_idRow = rowCount++;
++                }
+                 if (actionsView == null && userId != getUserConfig().getClientUserId()) {
+                     notificationsRow = rowCount++;
+                 }
+@@ -11134,6 +11141,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+                     emptyRow = rowCount++;
+                 }
+             }
++            if (ru.llacker.neogram.profile.NeoProfile.showId()) {
++                neo_idRow = rowCount++;
++            }
+             if (actionsView == null) {
+                 if (infoHeaderRow != -1) {
+                     notificationsDividerRow = rowCount++;
+@@ -13513,6 +13523,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+                     TextDetailCell detailCell = (TextDetailCell) holder.itemView;
+                     boolean containsQr = false;
+                     boolean containsGift = false;
++                    if (position == neo_idRow) {
++                        ru.llacker.neogram.profile.NeoProfile.bindId(detailCell, userId != 0 ? userId : -chatId, currentAccount);
++                    }
+                     if (position == birthdayRow) {
+                         TLRPC.UserFull userFull = getMessagesController().getUserFull(userId);
+                         if (userFull != null && userFull.birthday != null) {
+@@ -14374,7 +14387,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
+                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
+                 return VIEW_TYPE_HEADER;
+-            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow) {
++            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow || position == neo_idRow) {
+                 return VIEW_TYPE_TEXT_DETAIL;
+             } else if (position == usernameRow || position == setUsernameRow) {
+                 return VIEW_TYPE_TEXT_DETAIL_MULTILINE;
+@@ -15697,6 +15710,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+             put(++pointer, userInfoRow, sparseIntArray);
+             put(++pointer, channelInfoRow, sparseIntArray);
+             put(++pointer, usernameRow, sparseIntArray);
++            put(++pointer, neo_idRow, sparseIntArray);
+             put(++pointer, notificationsDividerRow, sparseIntArray);
+             put(++pointer, reportDividerRow, sparseIntArray);
+             put(++pointer, notificationsRow, sparseIntArray);

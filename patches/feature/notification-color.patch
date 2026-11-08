@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/notification-color: theme accent colour for message notifications
+
+Behind NeoOptions.ACCENT_NOTIFICATION_COLOR. The summary and the per-chat message notifications take their colour from NeoNotifications.color(): the stock blue, or the accent of the current theme, replaced by a header blue of the theme when it is too light or too dark to read on a notification.
+---
+ TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+@@ -4665,7 +4665,7 @@ public class NotificationsController extends BaseController implements Notificat
+                     .setGroupSummary(true)
+                     .setShowWhen(true)
+                     .setWhen(((long) lastMessageObject.messageOwner.date) * 1000)
+-                    .setColor(0xff11acfa);
++                    .setColor(ru.llacker.neogram.NeoNotifications.color());
+ 
+             long[] vibrationPattern = null;
+             Uri sound = null;
+@@ -5664,7 +5664,7 @@ public class NotificationsController extends BaseController implements Notificat
+                     .setContentText(text.toString())
+                     .setAutoCancel(true)
+                     .setNumber(dialogKey.story ? storyPushMessages.size() : messageObjects.size())
+-                    .setColor(0xff11acfa)
++                    .setColor(ru.llacker.neogram.NeoNotifications.color())
+                     .setGroupSummary(false)
+                     .setWhen(date)
+                     .setShowWhen(true)

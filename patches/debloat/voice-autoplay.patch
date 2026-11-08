@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: debloat/voice-autoplay: do not play the next voice or video message by itself
+
+Behind NeoOptions.DISABLE_VOICE_AUTOPLAY. MediaController keeps no voice playlist, so playback stops after the message that was tapped instead of going on to the next voice or video message (in chats, shared media and search).
+---
+ TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
+@@ -3236,7 +3236,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+     }
+ 
+     public void setVoiceMessagesPlaylist(ArrayList<MessageObject> playlist, boolean unread) {
+-        voiceMessagesPlaylist = playlist != null ? new ArrayList<>(playlist) : null;
++        voiceMessagesPlaylist = playlist != null && !ru.llacker.neogram.media.NeoMedia.disableVoiceAutoplay() ? new ArrayList<>(playlist) : null;
+         if (voiceMessagesPlaylist != null) {
+             voiceMessagesPlaylistUnread = unread;
+             voiceMessagesPlaylistMap = new SparseArray<>();

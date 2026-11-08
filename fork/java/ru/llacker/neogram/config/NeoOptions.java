@@ -28,6 +28,12 @@ public final class NeoOptions {
 
     /** Order of first and last names; AUTO follows the app language (stock). */
     public static final NeoConfigItem.EnumItem<NameOrder> NAME_ORDER = NeoConfig.choice("name_order", NameOrder.AUTO);
+    /** The ID row in profiles and how it is written (shown in the Telegram API form by default, as in lawXgram). */
+    public static final NeoConfigItem.EnumItem<ru.llacker.neogram.profile.NeoProfile.IdFormat> PROFILE_ID =
+            NeoConfig.choice("profile_id", ru.llacker.neogram.profile.NeoProfile.IdFormat.API);
+
+    /** No shadow under title bars. */
+    public static final NeoConfigItem.BoolItem HIDE_APP_BAR_SHADOW = NeoConfig.bool("hide_app_bar_shadow", false);
 
     // ---- Chat list and folders ------------------------------------------------------------------
 
@@ -35,6 +41,8 @@ public final class NeoOptions {
     public static final NeoConfigItem.BoolItem HIDE_STORIES = NeoConfig.bool("hide_stories", false);
     /** Pulling the chat list down past the hidden archive opens the archive instead of only revealing it. */
     public static final NeoConfigItem.BoolItem ARCHIVE_ON_PULL = NeoConfig.bool("archive_on_pull", false);
+    /** Thumbnails of the last message's photo or video in chat list rows (stock). */
+    public static final NeoConfigItem.BoolItem DIALOG_MEDIA_PREVIEW = NeoConfig.bool("dialog_media_preview", true);
     /** Folder tabs start with the first folder; All Chats is shown only while the tabs are reordered. */
     public static final NeoConfigItem.BoolItem HIDE_ALL_CHATS_TAB = NeoConfig.bool("hide_all_chats_tab", false);
 
@@ -71,6 +79,17 @@ public final class NeoOptions {
     public static final NeoConfigItem.BoolItem ASK_BEFORE_CALL = NeoConfig.bool("ask_before_call", true);
     /** Private chats with people who are not contacts notify without sound. */
     public static final NeoConfigItem.BoolItem SILENCE_NON_CONTACTS = NeoConfig.bool("silence_non_contacts", false);
+    /** Message notifications take the accent colour of the current theme instead of the stock blue. */
+    public static final NeoConfigItem.BoolItem ACCENT_NOTIFICATION_COLOR = NeoConfig.bool("accent_notification_color", false);
+
+    // ---- Media -------------------------------------------------------------------------------------
+
+    /** The live camera tile at the start of the attachment gallery (stock). */
+    public static final NeoConfigItem.BoolItem GALLERY_CAMERA = NeoConfig.bool("gallery_camera", true);
+    /** Playback stops after the tapped voice or video message instead of going on to the next one. */
+    public static final NeoConfigItem.BoolItem DISABLE_VOICE_AUTOPLAY = NeoConfig.bool("disable_voice_autoplay", false);
+    /** Videos open in their original quality unless another one was picked for them. */
+    public static final NeoConfigItem.BoolItem PREFER_ORIGINAL_QUALITY = NeoConfig.bool("prefer_original_quality", false);
 
     // ---- Media: video messages ---------------------------------------------------------------
 

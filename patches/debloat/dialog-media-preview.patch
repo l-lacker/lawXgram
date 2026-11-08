@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: debloat/dialog-media-preview: no media thumbnails in the chat list
+
+Behind NeoOptions.DIALOG_MEDIA_PREVIEW (on by default). With it off, DialogCell.updateMessageThumbs leaves the thumbnails out (thumbsCount is reset for every layout), so the last message of a chat shows only its text.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+@@ -5734,7 +5734,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+     }
+ 
+     public void updateMessageThumbs() {
+-        if (message == null) {
++        if (message == null || ru.llacker.neogram.dialogs.NeoDialogs.hideMediaPreview()) {
+             return;
+         }
+         String restrictionReason = MessagesController.getInstance(message.currentAccount).getRestrictionReason(message.messageOwner.restriction_reason);

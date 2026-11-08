@@ -32,6 +32,13 @@ lawXgram is still to be ported. Stock behaviour that Neogram changes is always a
 | Hide the time on stickers and large emoji | `debloat/sticker-time` | `NeoChat` |
 | No pull up to the next channel or topic | `debloat/next-channel` | `NeoChat` |
 | Hide the business bot panel above chats | `debloat/business-bot-panel` | `NeoChat` |
+| ID row in user and chat profiles (Telegram API or Bot API form, data centre, copy on tap) | `feature/profile-id` | `NeoProfile` |
+| No shadow under title bars | `debloat/app-bar-shadow` | `NeoAppearance` |
+| Theme accent colour for message notifications | `feature/notification-color` | `NeoNotifications` |
+| No media thumbnails in the chat list | `debloat/dialog-media-preview` | `NeoDialogs` |
+| No camera tile in the attachment gallery | `debloat/gallery-camera` | `NeoMedia` |
+| Voice and video messages do not play on by themselves | `debloat/voice-autoplay` | `NeoMedia` |
+| Videos open in their original quality | `feature/original-video-quality` | `NeoMedia` |
 
 ## To port from lawXgram
 
@@ -44,15 +51,14 @@ Grouped as in the plan; each becomes one or more small patches plus a settings p
   with undo/redo, inline bots management.
 - **Main screen and folders:** tab titles or icons, folder icons, tabs at the bottom, bottom
   navigation buttons, recent chats on long back.
-- **Media:** instant camera / camera in gallery switches, voice message autoplay, volume-button
-  unmute, autopause, prefer original quality, proximity sensor, download speed boost, GIF export,
-  copy photo, voice enhancements.
+- **Media:** instant camera switch, volume-button unmute, autopause, proximity sensor, download
+  speed boost, GIF export, voice enhancements.
 - **Translator:** providers (Google, Yandex, DeepL, Microsoft, …), target language, auto
   translation, show original, keep formatting; transcription with Cloudflare Workers AI.
-- **Privacy and accounts:** account passcodes, hidden accounts, panic code, instant lock,
-  notification colour, ID in profiles, IPv6, map drift fix.
-- **Appearance:** tablet mode, app bar shadow, system fonts and weight fallback, emoji sets,
-  predictive back, reduced colours, stroke on views.
+- **Privacy and accounts:** account passcodes, hidden accounts, panic code, instant lock, IPv6,
+  map drift fix.
+- **Appearance:** tablet mode, system fonts and weight fallback, emoji sets, predictive back,
+  reduced colours, stroke on views.
 - **Accessibility:** seek bar announcements, item counts, file progress, dialog types.
 - **Accounts:** up to 8 accounts (native change), QR login.
 

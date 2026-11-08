@@ -28,6 +28,8 @@ public final class DialogsSection {
                 R.string.NeoHideStories, R.string.NeoHideStoriesInfo));
         rows.add(NeoSettingsRow.toggle("archive_on_pull", NeoOptions.ARCHIVE_ON_PULL,
                 R.string.NeoOpenArchiveOnPull, R.string.NeoOpenArchiveOnPullInfo));
+        rows.add(NeoSettingsRow.toggle("dialog_media_preview", NeoOptions.DIALOG_MEDIA_PREVIEW,
+                R.string.NeoMediaPreview, R.string.NeoMediaPreviewInfo));
 
         rows.add(NeoSettingsRow.header(R.string.Filters));
         rows.add(NeoSettingsRow.toggle("hide_all_chats_tab", NeoValue.of(NeoOptions.HIDE_ALL_CHATS_TAB::get, hide -> {
