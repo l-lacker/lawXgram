@@ -1,9 +1,20 @@
 package ru.llacker.neogram.app;
 
+import android.app.Activity;
+import android.content.Context;
+import android.view.ViewGroup;
+
 import org.telegram.messenger.ApplicationLoaderImpl;
+import org.telegram.messenger.BetaUpdate;
 import org.telegram.messenger.regular.BuildConfig;
+import org.telegram.ui.IUpdateLayout;
+
+import java.io.File;
 
 import ru.llacker.neogram.NeoHooks;
+import ru.llacker.neogram.update.NeoUpdateDialog;
+import ru.llacker.neogram.update.NeoUpdateLayout;
+import ru.llacker.neogram.update.NeoUpdater;
 
 /**
  * Neogram's Application class (set by fork/app/AndroidManifest.xml). Uses the stock
@@ -29,6 +40,8 @@ public class NeoApplicationLoader extends ApplicationLoaderImpl {
         return !BUILD_TYPE_PLAY.equals(BuildConfig.BUILD_TYPE);
     }
 
+    // ---- updates: Telegram's custom-update hooks, served from GitHub releases (NeoUpdater) ----
+
     /** Never fall back to Telegram's own help.getAppUpdate: it would offer the official APK. */
     @Override
     public boolean isCustomUpdate() {
@@ -37,8 +50,46 @@ public class NeoApplicationLoader extends ApplicationLoaderImpl {
 
     @Override
     public void checkUpdate(boolean force, Runnable whenDone) {
-        if (whenDone != null) {
-            whenDone.run();
-        }
+        NeoUpdater.check(force, whenDone);
+    }
+
+    @Override
+    public BetaUpdate getUpdate() {
+        return NeoUpdater.getUpdate();
+    }
+
+    @Override
+    public void downloadUpdate() {
+        NeoUpdater.download();
+    }
+
+    @Override
+    public void cancelDownloadingUpdate() {
+        NeoUpdater.cancelDownload();
+    }
+
+    @Override
+    public boolean isDownloadingUpdate() {
+        return NeoUpdater.isDownloading();
+    }
+
+    @Override
+    public float getDownloadingUpdateProgress() {
+        return NeoUpdater.getDownloadProgress();
+    }
+
+    @Override
+    public File getDownloadedUpdateFile() {
+        return NeoUpdater.getDownloadedFile();
+    }
+
+    @Override
+    public boolean showCustomUpdateAppPopup(Context context, BetaUpdate update, int account) {
+        return NeoUpdateDialog.show(context, update);
+    }
+
+    @Override
+    public IUpdateLayout takeUpdateLayout(Activity activity, ViewGroup sideMenuContainer) {
+        return NeoUpdater.isEnabled() ? new NeoUpdateLayout(activity, sideMenuContainer) : null;
     }
 }

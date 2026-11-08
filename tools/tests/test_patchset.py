@@ -345,7 +345,9 @@ class PatchsetTest(unittest.TestCase):
     def test_strings_lint(self):
         res = self.f.root / "fork" / "res"
         write(res / "values" / "strings_neo.xml",
-              '<resources>\n    <string name="NeoGood">ok %1$s</string>\n    <string name="Bad">x</string>\n</resources>\n')
+              '<resources>\n    <string name="NeoGood">ok %1$s</string>\n    <string name="Bad">x</string>\n'
+              '    <string name="NeoQuote">Can\'t</string>\n    <string name="NeoEscaped">Can\\\'t "fine"?</string>\n'
+              '    <string name="NeoQuoted">"Can\'t"</string>\n</resources>\n')
         write(res / "values-ru" / "strings_neo.xml",
               '<resources>\n    <string name="NeoGood">локсграм</string>\n    <string name="NeoExtra">y</string>\n</resources>\n')
         code, out = self.f.tool("lint", "--fast", check=False)
@@ -353,6 +355,9 @@ class PatchsetTest(unittest.TestCase):
         self.assertIn("key 'Bad' must start with 'Neo'", out)
         self.assertIn("literal brand", out)
         self.assertIn("NeoExtra", out)
+        self.assertIn("string 'NeoQuote' has an unescaped apostrophe", out)
+        self.assertIn("string 'NeoEscaped' has an unescaped", out)  # the bare double quotes
+        self.assertNotIn("string 'NeoQuoted'", out)
 
 
 if __name__ == "__main__":

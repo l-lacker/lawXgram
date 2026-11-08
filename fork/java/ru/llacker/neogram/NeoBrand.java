@@ -43,6 +43,16 @@ public final class NeoBrand {
         return BuildConfig.NEO_MEDIA_FOLDER;
     }
 
+    /** Application id of release builds (debug builds add a suffix). */
+    public static String releaseApplicationId() {
+        return BuildConfig.NEO_APPLICATION_ID;
+    }
+
+    /** First part of APK file names: {@code <apkBaseName>-<version>-<versionCode>-<abi>.apk}. */
+    public static String apkBaseName() {
+        return BuildConfig.NEO_APK_BASE_NAME;
+    }
+
     public static boolean isDirectBuild() {
         return ApplicationLoader.isStandaloneBuild();
     }

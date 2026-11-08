@@ -1372,6 +1372,9 @@ def lint_fork_tree(ctx: Ctx, errors: List[str], warnings: List[str], stock_keys:
             errors.append(f"{rel}: <plurals> is not supported by the Telegram strings pipeline; use _one/_other keys")
         if re.search(r">\s*@string/", text):
             errors.append(f"{rel}: @string/ references are not resolved by the Telegram strings pipeline")
+        for key, value in STRING_VALUE_RE.findall(text):
+            if not (value.startswith('"') and value.endswith('"')) and UNESCAPED_QUOTE_RE.search(value):
+                errors.append(f"{rel}: string '{key}' has an unescaped apostrophe or quote (use \\' and \\\")")
         for brand in ("lawXgram", "lawxgram", "локсграм", "Neogram"):
             if brand in text:
                 errors.append(f"{rel}: literal brand '{brand}'; pass the app name as a format argument")
@@ -1380,6 +1383,11 @@ def lint_fork_tree(ctx: Ctx, errors: List[str], warnings: List[str], stock_keys:
             extra = set(key_re.findall(text)) - default_keys
             for key in sorted(extra):
                 warnings.append(f"{rel}: key '{key}' is not in the default strings_neo.xml")
+
+
+STRING_VALUE_RE = re.compile(r'<string\s+name="([^"]+)"[^>]*>(.*?)</string>', re.S)
+# aapt rejects ' and " in a string resource unless escaped or the whole value is quoted
+UNESCAPED_QUOTE_RE = re.compile(r"(?<!\\)['\"]")
 
 
 def stock_string_keys(ctx: Ctx) -> Optional[set]:

@@ -32,6 +32,7 @@ android {
         buildConfigField 'String', 'NEO_LINK_TRANSLATE', neo.javaString(neo.brand('links.translate'))
         buildConfigField 'String', 'NEO_LINK_DONATE', neo.javaString(neo.brand('links.donate'))
         buildConfigField 'String', 'NEO_UPDATES_REPO', neo.javaString(neo.brand('updates.githubRepo'))
+        buildConfigField 'String', 'NEO_APK_BASE_NAME', neo.javaString(neo.brand('app.apkBaseName'))
         buildConfigField 'String', 'NEO_PLAYSTORE_URL', neo.javaString(neo.secret('playstore.url', ''))
         buildConfigField 'String', 'NEO_SENTRY_DSN', neo.javaString(neo.secret('sentry.dsn', ''))
         buildConfigField 'String', 'NEO_UPSTREAM_VERSION', neo.javaString(neo.upstreamVersion)

@@ -366,4 +366,11 @@
     <string name="NeoRoundBitrateInfo">Минутный кружочек с таким битрейтом займёт около %1$s.</string>
     <string name="NeoRoundStyling">Оформление кружочка</string>
     <string name="NeoRoundStylingInfo">Если выключить, записывается простой квадрат без размытия, затемнения и элементов Telegram вокруг круга.</string>
+    <string name="NeoUpdatesHeader">Обновления</string>
+    <string name="NeoCheckUpdateInfo">Новые версии берутся из релизов проекта на GitHub; каждая загрузка проверяется перед установкой.</string>
+    <string name="NeoAutoUpdateCheck">Проверять автоматически</string>
+    <string name="NeoAutoUpdateCheckInfo">Раз в день при запуске приложения.</string>
+    <string name="NeoUpdateAvailable">Доступен %1$s %2$s</string>
+    <string name="NeoUpdateSkip">Пропустить версию</string>
+    <string name="NeoUpdateCheckFailed">Не удалось проверить обновления. Попробуйте позже.</string>
 </resources>

@@ -402,4 +402,11 @@
     <string name="NeoRoundBitrateInfo">A one-minute video message at this bitrate takes about %1$s.</string>
     <string name="NeoRoundStyling">Round video styling</string>
     <string name="NeoRoundStylingInfo">Turn off to record a plain square without the blur, dimming and Telegram overlays outside the circle.</string>
+    <string name="NeoUpdatesHeader">Updates</string>
+    <string name="NeoCheckUpdateInfo">New versions come from the project releases on GitHub; each download is verified before it is installed.</string>
+    <string name="NeoAutoUpdateCheck">Check automatically</string>
+    <string name="NeoAutoUpdateCheckInfo">Once a day when the app starts.</string>
+    <string name="NeoUpdateAvailable">%1$s %2$s is available</string>
+    <string name="NeoUpdateSkip">Skip this version</string>
+    <string name="NeoUpdateCheckFailed">Couldn\'t check for updates. Try again later.</string>
 </resources>

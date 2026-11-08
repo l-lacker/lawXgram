@@ -2,6 +2,7 @@ package ru.llacker.neogram.settings.sections;
 
 import androidx.annotation.NonNull;
 
+import org.telegram.messenger.BetaUpdate;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.browser.Browser;
@@ -14,9 +15,12 @@ import java.util.List;
 import ru.llacker.neogram.NeoBrand;
 import ru.llacker.neogram.NeoStrings;
 import ru.llacker.neogram.config.NeoConfig;
+import ru.llacker.neogram.config.NeoOptions;
 import ru.llacker.neogram.settings.NeoSettingsPage;
 import ru.llacker.neogram.settings.NeoSettingsRow;
 import ru.llacker.neogram.settings.NeoSettingsSection;
+import ru.llacker.neogram.update.NeoUpdateDialog;
+import ru.llacker.neogram.update.NeoUpdater;
 
 /** "About Neogram": links of the project and resetting Neogram options. */
 public final class AboutSection {
@@ -28,6 +32,12 @@ public final class AboutSection {
     }
 
     private static void rows(@NonNull List<NeoSettingsRow> rows) {
+        rows.add(NeoSettingsRow.header(R.string.NeoUpdatesHeader).onlyIf(NeoUpdater::isEnabled));
+        rows.add(NeoSettingsRow.action("check_updates", R.string.NeoCheckUpdate, R.string.NeoCheckUpdateInfo,
+                (page, view) -> checkForUpdates(page)).onlyIf(NeoUpdater::isEnabled));
+        rows.add(NeoSettingsRow.toggle("auto_update_check", NeoOptions.AUTO_UPDATE_CHECK,
+                R.string.NeoAutoUpdateCheck, R.string.NeoAutoUpdateCheckInfo).onlyIf(NeoUpdater::isEnabled));
+
         rows.add(NeoSettingsRow.header(R.string.NeoLinksHeader));
         rows.add(NeoSettingsRow.action("source_code", R.string.NeoViewSourceCode, R.string.NeoViewSourceCodeInfo,
                 (page, view) -> open(page, NeoBrand.sourceCodeUrl())).onlyIf(() -> NeoBrand.hasLink(NeoBrand.sourceCodeUrl())));
@@ -43,6 +53,25 @@ public final class AboutSection {
         rows.add(NeoSettingsRow.header(R.string.NeoDangerZone));
         rows.add(NeoSettingsRow.action("reset", R.string.NeoResetSettings, R.string.NeoResetSettingsInfo,
                 (page, view) -> confirmReset(page)).asDestructive());
+    }
+
+    private static void checkForUpdates(NeoSettingsPage page) {
+        if (page.getParentActivity() == null) {
+            return;
+        }
+        AlertDialog progress = new AlertDialog(page.getParentActivity(), AlertDialog.ALERT_TYPE_SPINNER);
+        progress.showDelayed(300);
+        NeoUpdater.check(true, () -> {
+            progress.dismiss();
+            BetaUpdate update = NeoUpdater.getUpdate();
+            if (update != null) {
+                NeoUpdateDialog.show(page.getParentActivity(), update);
+            } else if (NeoUpdater.lastCheckFailed()) {
+                BulletinFactory.of(page).createSimpleBulletin(R.raw.error, LocaleController.getString(R.string.NeoUpdateCheckFailed)).show();
+            } else {
+                BulletinFactory.of(page).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.YourVersionIsLatest)).show();
+            }
+        });
     }
 
     private static void open(NeoSettingsPage page, String url) {
