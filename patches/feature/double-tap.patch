@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/double-tap: double tap actions besides the reaction
+
+The double tap listener of ChatActivity asks NeoDoubleTap first: for the action chosen
+for incoming or outgoing messages (reply, save to Saved Messages, repeat, edit, nothing)
+it answers hasDoubleTap itself and handles onDoubleTap; with the stock reaction chosen
+(the default) it returns null/false and the stock code runs unchanged. Choosing nothing
+also removes the single-tap delay the double tap detector adds.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -1962,6 +1962,8 @@ public class ChatActivity extends BaseFragment implements
+             if (isQuickRepliesOrWelcomeMessagesMode()) return false;
+             // A double tap over a widget is the widget's (dblclick, docs/sdk-v1.md §5.5): the reaction is outside it.
+             if (view instanceof ChatMessageCell && ((ChatMessageCell) view).isWidgetPress()) return false;
++            final Boolean neoDoubleTap = ru.llacker.neogram.chat.NeoDoubleTap.hasDoubleTap(ChatActivity.this, view);
++            if (neoDoubleTap != null) return neoDoubleTap;
+             String reactionStringSetting = getMediaDataController().getDoubleTapReaction();
+             TLRPC.TL_availableReaction reaction = getMediaDataController().getReactionsMap().get(reactionStringSetting);
+             if (reaction == null && (reactionStringSetting == null || !reactionStringSetting.startsWith("animated_"))) {
+@@ -1990,6 +1992,9 @@ public class ChatActivity extends BaseFragment implements
+             if (getParentActivity() == null || isSecretChat() || isInScheduleMode() || isInPreviewMode() || isQuickRepliesOrWelcomeMessagesMode()) {
+                 return;
+             }
++            if (ru.llacker.neogram.chat.NeoDoubleTap.onDoubleTap(ChatActivity.this, view)) {
++                return;
++            }
+             MessageObject messageObject;
+             if (view instanceof ChatMessageCell) {
+                 messageObject = ((ChatMessageCell) view).getPrimaryMessageObject();

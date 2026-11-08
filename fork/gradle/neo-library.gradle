@@ -50,6 +50,7 @@ android {
                 arguments '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
             }
         }
+        buildConfigField 'boolean', 'NEO_SIGNATURE_CHECK', 'false'
     }
 
     buildTypes {
@@ -57,6 +58,22 @@ android {
         // database migration errors); Neogram debug builds are ordinary test builds.
         debug {
             buildConfigField 'boolean', 'DEBUG_PRIVATE_VERSION', 'false'
+        }
+        // APK signature check (patch misc/signature-check, fork/jni/colorado): release builds with a
+        // release keystore compile the certificate of that keystore into the native library.
+        release {
+            def certificate = neo.releaseCertificate()
+            if (certificate != null) {
+                buildConfigField 'boolean', 'NEO_SIGNATURE_CHECK', 'true'
+                externalNativeBuild {
+                    cmake {
+                        arguments "-DNEO_COLORADO=${neo.file('fork/jni/colorado/colorado.cmake').absolutePath.replace('\\', '/')}",
+                                "-DNEO_SIGNATURE_CRC=${certificate.crc}",
+                                "-DNEO_SIGNATURE_SIZE=${certificate.size}",
+                                "-DNEO_SIGNATURE_PACKAGE=${neo.brand('app.applicationId')}"
+                    }
+                }
+            }
         }
     }
 }

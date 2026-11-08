@@ -1,6 +1,9 @@
 package ru.llacker.neogram.settings;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
+import android.util.SparseArray;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -32,6 +35,16 @@ public class NeoSettingsPage extends UniversalFragment {
 
     protected final NeoSettingsSection section;
     private final List<NeoSettingsRow> rows = new ArrayList<>();
+
+    /** Receives the result of an activity started with {@link #startForResult}. */
+    public interface ResultCallback {
+        void onResult(int resultCode, @Nullable Intent data);
+    }
+
+    /** Request codes of this page; far from the small numbers stock fragments use. */
+    private static final int REQUEST_BASE = 0x4E00;
+    private final SparseArray<ResultCallback> pendingResults = new SparseArray<>();
+    private int nextRequest;
     @Nullable
     private String pendingHighlight;
 
@@ -182,6 +195,30 @@ public class NeoSettingsPage extends UniversalFragment {
     @Override
     protected boolean onLongClick(UItem item, View view, int position, float x, float y) {
         return false;
+    }
+
+    /** Starts an activity (a document picker, for example) and hands its result to the callback. */
+    public boolean startForResult(@NonNull Intent intent, @NonNull ResultCallback callback) {
+        int requestCode = REQUEST_BASE + (nextRequest++ & 0xFF);
+        pendingResults.put(requestCode, callback);
+        try {
+            startActivityForResult(intent, requestCode);
+            return true;
+        } catch (ActivityNotFoundException e) {
+            pendingResults.remove(requestCode);
+            return false;
+        }
+    }
+
+    @Override
+    public void onActivityResultFragment(int requestCode, int resultCode, Intent data) {
+        ResultCallback callback = pendingResults.get(requestCode);
+        if (callback != null) {
+            pendingResults.remove(requestCode);
+            callback.onResult(resultCode, data);
+            return;
+        }
+        super.onActivityResultFragment(requestCode, resultCode, data);
     }
 
     /** Rebuilds the list, e.g. after an option changed outside of a click. */

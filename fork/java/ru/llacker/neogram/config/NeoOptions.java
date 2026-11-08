@@ -17,6 +17,43 @@ public final class NeoOptions {
     static void ensureLoaded() {
     }
 
+    // ---- Appearance ------------------------------------------------------------------------------
+
+    /** Message and chat list times with seconds (the stock "HH:mm:ss" formatter). */
+    public static final NeoConfigItem.BoolItem TIME_WITH_SECONDS = NeoConfig.bool("time_with_seconds", false);
+    /** Exact view, member and reaction counts instead of 12.3K. */
+    public static final NeoConfigItem.BoolItem EXACT_NUMBERS = NeoConfig.bool("exact_numbers", false);
+
+    public enum NameOrder { AUTO, FIRST_LAST, LAST_FIRST }
+
+    /** Order of first and last names; AUTO follows the app language (stock). */
+    public static final NeoConfigItem.EnumItem<NameOrder> NAME_ORDER = NeoConfig.choice("name_order", NameOrder.AUTO);
+
+    // ---- Chats: message menu and double tap ---------------------------------------------------------
+
+    /** "Repeat" (+1): forward the message into the same chat. */
+    public static final NeoConfigItem.BoolItem MENU_REPEAT = NeoConfig.bool("menu_repeat", true);
+    /** "Save Message": forward to Saved Messages in one tap. */
+    public static final NeoConfigItem.BoolItem MENU_SAVE = NeoConfig.bool("menu_save", true);
+    public static final NeoConfigItem.BoolItem MENU_COPY_PHOTO = NeoConfig.bool("menu_copy_photo", false);
+    public static final NeoConfigItem.BoolItem MENU_DELETE_FILE = NeoConfig.bool("menu_delete_file", false);
+    public static final NeoConfigItem.BoolItem MENU_STATISTICS = NeoConfig.bool("menu_statistics", false);
+    public static final NeoConfigItem.BoolItem MENU_DETAILS = NeoConfig.bool("menu_details", false);
+    /** The stock "Report" item; off hides it. */
+    public static final NeoConfigItem.BoolItem MENU_REPORT = NeoConfig.bool("menu_report", true);
+    /** Double tap on incoming / outgoing messages; REACTION is the stock behaviour. */
+    public static final NeoConfigItem.EnumItem<ru.llacker.neogram.chat.NeoDoubleTap.Action> DOUBLE_TAP_IN =
+            NeoConfig.choice("double_tap_in", ru.llacker.neogram.chat.NeoDoubleTap.Action.REACTION);
+    public static final NeoConfigItem.EnumItem<ru.llacker.neogram.chat.NeoDoubleTap.Action> DOUBLE_TAP_OUT =
+            NeoConfig.choice("double_tap_out", ru.llacker.neogram.chat.NeoDoubleTap.Action.REACTION);
+
+    // ---- Privacy -----------------------------------------------------------------------------------
+
+    /** Confirm before starting a voice or video call (as in lawXgram, on by default). */
+    public static final NeoConfigItem.BoolItem ASK_BEFORE_CALL = NeoConfig.bool("ask_before_call", true);
+    /** Private chats with people who are not contacts notify without sound. */
+    public static final NeoConfigItem.BoolItem SILENCE_NON_CONTACTS = NeoConfig.bool("silence_non_contacts", false);
+
     // ---- Media: video messages ---------------------------------------------------------------
 
     public enum RoundCamera { LAST, FRONT, BACK }

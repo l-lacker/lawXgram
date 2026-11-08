@@ -80,8 +80,6 @@
     <string name="NeoDisableInstantCamera">إيقاف الكاميرا الفورية</string>
     <string name="NeoOpenAllLinksInInstantView">محاولة فتح جميع الروابط في العرض السريع</string>
     <string name="NeoDonateThankYou">شكرا لك!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">جعل الوقت مع الثواني</string>
     <string name="NeoJumpToBeginning">الانتقال إلى البداية</string>
     <string name="NeoProviderDeepLTranslate">ترجمة الذكاء الاصطناعي</string>

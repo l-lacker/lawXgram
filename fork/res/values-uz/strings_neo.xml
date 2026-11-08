@@ -78,8 +78,6 @@
     <string name="NeoDisableInstantCamera">Tezkor kamerani o\'chirish</string>
     <string name="NeoOpenAllLinksInInstantView">InstantView-da barcha havolalarni ochishga harakat qilish</string>
     <string name="NeoDonateThankYou">Raxmat!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Vaqtni sekund bilan ko\'rsatish</string>
     <string name="NeoJumpToBeginning">Boshiga borish</string>
     <string name="NeoProviderDeepLTranslate">DeepL Tarjimon</string>

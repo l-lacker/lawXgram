@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/format-tweaks: message times with seconds, exact numbers, name order
+
+LocaleController.getFormatterDay returns the stock formatter with seconds and
+formatShortNumber returns the exact number (also as the rounded value) when the Neogram
+options time_with_seconds and exact_numbers are on (NeoFormat); both are guarded early
+returns. recreateFormatters takes nameDisplayOrder through NeoFormat.nameOrder, so the
+user's first/last name order applies everywhere the stock order does (by default the
+stock order of the app language stays).
+---
+ TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java b/TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/LocaleController.java
+@@ -82,6 +82,9 @@ public class LocaleController {
+ 
+     private volatile FastDateFormat formatterDay;
+     public FastDateFormat getFormatterDay() {
++        if (ru.llacker.neogram.NeoFormat.timeWithSeconds()) {
++            return getFormatterDayWithSeconds();
++        }
+         if (formatterDay == null) {
+             synchronized (this) {
+                 if (formatterDay == null) {
+@@ -2703,7 +2706,7 @@ public class LocaleController {
+         isRTL = lang.length() == 2 && (lang.equals("ar") || lang.equals("fa") || lang.equals("he") || lang.equals("iw")) ||
+                 lang.startsWith("ar_") || lang.startsWith("fa_") || lang.startsWith("he_") || lang.startsWith("iw_")
+                 || currentLocaleInfo != null && currentLocaleInfo.isRtl;
+-        nameDisplayOrder = lang.equals("ko") ? 2 : 1;
++        nameDisplayOrder = ru.llacker.neogram.NeoFormat.nameOrder(lang.equals("ko") ? 2 : 1);
+ 
+         formatterBoostExpired = null;
+         formatterGiveawayCard = null;
+@@ -2890,6 +2893,9 @@ public class LocaleController {
+     }
+ 
+     public static String formatShortNumber(int number, int[] rounded) {
++        if (ru.llacker.neogram.NeoFormat.exactNumbers()) {
++            return ru.llacker.neogram.NeoFormat.exactNumber(number, rounded);
++        }
+         StringBuilder K = new StringBuilder();
+         int lastDec = 0;
+         int KCount = 0;

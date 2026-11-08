@@ -17,5 +17,6 @@ public final class NeoHooks {
 
     /** After ApplicationLoader.onCreate(): applicationContext and the main handler exist. */
     public static void afterApplicationCreate(Application application) {
+        ru.llacker.neogram.security.NeoSignature.schedule(application);
     }
 }

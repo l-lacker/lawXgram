@@ -3,8 +3,14 @@ misc/strings-pipeline.patch
 misc/branding.patch
 misc/database.patch
 misc/settings-ui.patch
+misc/signature-check.patch
+hooks/chat-message-menu.patch
 feature/round-video-policy.patch
 feature/round-video-lenses.patch
 feature/round-video-quality.patch
 feature/gallery-round.patch
 bugfix/round-video-muted-gif.patch
+feature/format-tweaks.patch
+feature/ask-before-call.patch
+feature/silence-non-contacts.patch
+feature/double-tap.patch

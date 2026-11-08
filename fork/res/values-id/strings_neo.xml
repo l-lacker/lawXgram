@@ -82,8 +82,6 @@
     <string name="NeoDisableInstantCamera">Matikan kamera instan</string>
     <string name="NeoOpenAllLinksInInstantView">Coba buka semua tautan di tampilan instan</string>
     <string name="NeoDonateThankYou">Terima kasih!</string>
-    <string name="NeoFormatterDay24HSec">HH.mm.ss</string>
-    <string name="NeoFormatterDay12HSec">h.mm.ss a</string>
     <string name="NeoFormatWithSeconds">Gunakan format waktu dengan detik</string>
     <string name="NeoJumpToBeginning">Lompat ke awal</string>
     <string name="NeoProviderDeepLTranslate">Terjemahan DeepL</string>

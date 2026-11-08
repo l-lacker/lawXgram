@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/silence-non-contacts: notify without sound for private chats with non-contacts
+
+NotificationsController.showOrUpdateNotification asks NeoNotifications.isSilenced right
+after the stock silent checks: with the Neogram option silence_non_contacts on, a private
+or secret chat with someone who is not a contact (not the service account 777000, not
+oneself) is notified without sound. Groups and channels keep their own settings.
+---
+ TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+@@ -4424,6 +4424,9 @@ public class NotificationsController extends BaseController implements Notificat
+             if (!notifyAboutLast || !value || MediaController.getInstance().isRecordingAudio() || silent == 1) {
+                 notifyDisabled = true;
+             }
++            if (ru.llacker.neogram.NeoNotifications.isSilenced(currentAccount, chat, dialog_id)) {
++                notifyDisabled = true;
++            }
+ 
+             if (!notifyDisabled && dialog_id == override_dialog_id && chat != null) {
+                 int notifyMaxCount;

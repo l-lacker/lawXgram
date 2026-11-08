@@ -76,8 +76,6 @@
     <string name="NeoDisableInstantCamera">Tūlītējās kameras atspējošana</string>
     <string name="NeoOpenAllLinksInInstantView">Mēģiniet atvērt visas saites programmā InstantView</string>
     <string name="NeoDonateThankYou">Paldies!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Laika formāts ar sekundēm</string>
     <string name="NeoJumpToBeginning">Pāriet uz sākumu</string>
     <string name="NeoProviderDeepLTranslate">DeepL Tulkošana</string>

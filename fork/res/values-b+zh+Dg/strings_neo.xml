@@ -81,8 +81,6 @@
     <string name="NeoDisableInstantCamera">禁用即时相机</string>
     <string name="NeoOpenAllLinksInInstantView">尝试将所有链接在即时预览中打开</string>
     <string name="NeoDonateThankYou">谢谢！</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">时间精确到秒</string>
     <string name="NeoJumpToBeginning">跳转到最初消息</string>
     <string name="NeoProviderDeepLTranslate">DeepL 翻译</string>

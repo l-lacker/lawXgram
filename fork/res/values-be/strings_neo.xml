@@ -80,8 +80,6 @@
     <string name="NeoDisableInstantCamera">Адключыць убудаваную камеру</string>
     <string name="NeoOpenAllLinksInInstantView">Спрабаваць адкрыць усе спасылкі ў Instant View</string>
     <string name="NeoDonateThankYou">Дзякуй!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Час у секундах</string>
     <string name="NeoJumpToBeginning">Перайсці ў пачатак</string>
     <string name="NeoProviderDeepLTranslate">DeepL перакладчык</string>

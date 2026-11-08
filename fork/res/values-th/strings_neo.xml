@@ -83,8 +83,6 @@
     <string name="NeoDisableInstantCamera">ปิดใช้งานกล้องถ่ายภาพ</string>
     <string name="NeoOpenAllLinksInInstantView">ลองเปิดลิงก์ทั้งหมดใน InstantView</string>
     <string name="NeoDonateThankYou">ขอบคุณ!</string>
-    <string name="NeoFormatterDay24HSec">ชม:น:วิน</string>
-    <string name="NeoFormatterDay12HSec">ชม:น:วิน a</string>
     <string name="NeoFormatWithSeconds">รูปแบบเวลาด้วยวินาที</string>
     <string name="NeoJumpToBeginning">ข้ามไปยังจุดเริ่มต้น</string>
     <string name="NeoProviderDeepLTranslate">DeepL Translate</string>

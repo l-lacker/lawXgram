@@ -74,8 +74,6 @@
     <string name="NeoDisableInstantCamera">Inaktivera snabbkameran</string>
     <string name="NeoOpenAllLinksInInstantView">Försök öppna alla länkar i InstantView</string>
     <string name="NeoDonateThankYou">Tack!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Formatera tid med sekunder</string>
     <string name="NeoJumpToBeginning">Hoppa till början</string>
     <string name="NeoProviderDeepLTranslate">DeepL Översätt</string>

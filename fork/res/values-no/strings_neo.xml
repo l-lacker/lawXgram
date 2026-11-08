@@ -64,8 +64,6 @@
     <string name="NeoDisableInstantCamera">Deaktiver øyeblikkelig kamera</string>
     <string name="NeoOpenAllLinksInInstantView">Prøv å åpne alle koblinger i InstantView</string>
     <string name="NeoDonateThankYou">Tusen takk!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Formater tiden med sekunder</string>
     <string name="NeoJumpToBeginning">Gå til begynnelsen</string>
     <string name="NeoProviderDeepLTranslate">DeepL oversett</string>

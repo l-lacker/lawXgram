@@ -110,6 +110,12 @@ Repository secrets used by the workflows: `NEO_TELEGRAM_API_ID`, `NEO_TELEGRAM_A
 Put the SHA-256 of the release certificate into `signing.releaseCertSha256` in
 `fork/branding.properties` and the release workflow refuses APKs signed with another key.
 
+Release builds made with a keystore also carry a native check of their own signature
+(`fork/jni/colorado`, patch `misc/signature-check`): the expected certificate is read from the
+keystore at build time, and a direct (non-Play) build that finds itself re-signed with another key
+stops. `python tools/apkcheck.py signature <apk> [--cert release.pem]` shows the certificate an APK
+carries, the same way the native check reads it.
+
 ## Updating Telegram
 
 ```

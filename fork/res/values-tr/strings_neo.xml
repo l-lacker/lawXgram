@@ -79,8 +79,6 @@
     <string name="NeoDisableInstantCamera">Anında kamerayı devre dışı bırakın </string>
     <string name="NeoOpenAllLinksInInstantView">Anlık Görünümde tüm bağlantıları açmayı dene</string>
     <string name="NeoDonateThankYou">Teşekkürler!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Sürelerde saniyeyi de göster</string>
     <string name="NeoJumpToBeginning">Başlangıçta atlayın</string>
     <string name="NeoProviderDeepLTranslate">DeepL Çeviri*</string>

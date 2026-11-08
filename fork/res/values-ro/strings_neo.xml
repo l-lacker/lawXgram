@@ -83,8 +83,6 @@
     <string name="NeoDisableInstantCamera">Dezactivează camera instantanee</string>
     <string name="NeoOpenAllLinksInInstantView">Încercați să deschideți toate link-urile în InstantView</string>
     <string name="NeoDonateThankYou">Îți mulțumesc!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Formatați ora cu secunde</string>
     <string name="NeoJumpToBeginning">Sari la început</string>
     <string name="NeoProviderDeepLTranslate">Traducere DeepL</string>

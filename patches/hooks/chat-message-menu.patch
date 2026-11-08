@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: hooks/chat-message-menu: extension points of the chat message menu
+
+ChatActivity.fillMessageMenu ends with NeoMessageMenu.fill, which may add Neogram items
+(ids from 1000, far from the stock OPTION_* values) or remove stock ones;
+processSelectedOption gets a default branch that hands unknown ids to
+NeoMessageMenu.onSelected before the stock cleanup. neo_runOption runs a stock option for
+a message without the menu (double tap), and forwardMessages is public so features can
+forward with the stock slow-mode and thread handling. Shared by the message menu extras,
+double tap and the translator.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -14956,7 +14956,7 @@ public class ChatActivity extends BaseFragment implements
+         getConnectionsManager().bindRequestToGuid(linkSearchRequestId, classGuid);
+     }
+ 
+-    private void forwardMessages(ArrayList<MessageObject> arrayList, boolean fromMyName, boolean hideCaption, boolean notify, int scheduleDate, long payStars) {
++    public void forwardMessages(ArrayList<MessageObject> arrayList, boolean fromMyName, boolean hideCaption, boolean notify, int scheduleDate, long payStars) {
+         if (arrayList == null || arrayList.isEmpty()) {
+             return;
+         }
+@@ -35251,6 +35251,10 @@ public class ChatActivity extends BaseFragment implements
+                 }, getResourceProvider(), AlertsCreator.SUGGEST_DATE_PICKER_MODE_EDIT).show(), AmountUtils.Amount.of(suggestedPost != null ? suggestedPost.price : null), !ChatObject.canManageMonoForum(currentAccount, getDialogId()));
+                 break;
+             }
++            default: {
++                ru.llacker.neogram.chat.NeoMessageMenu.onSelected(this, option, selectedObject, selectedObjectGroup);
++                break;
++            }
+         }
+         selectedObject = null;
+         selectedObjectGroup = null;
+@@ -35258,6 +35262,13 @@ public class ChatActivity extends BaseFragment implements
+         closeMenu(!preserveDim);
+     }
+ 
++    /** Neogram: runs a message menu option for a message without opening the menu (double tap). */
++    public void neo_runOption(MessageObject message, MessageObject.GroupedMessages group, int option) {
++        selectedObject = message;
++        selectedObjectGroup = group;
++        processSelectedOption(option);
++    }
++
+     public void showSuggestionOfferForEditMessage(MessageSuggestionParams oldParams) {
+         if (editingMessageObject == null) {
+             return;
+@@ -47032,6 +47043,7 @@ public class ChatActivity extends BaseFragment implements
+             options.add(OPTION_WELCOME_REVERT);
+             icons.add(R.drawable.outline_revert_24);
+         }
++        ru.llacker.neogram.chat.NeoMessageMenu.fill(this, message, groupedMessages, icons, items, options);
+     }
+ 
+     private boolean showWelcomeMessageRevertOption(MessageObject messageObject) {

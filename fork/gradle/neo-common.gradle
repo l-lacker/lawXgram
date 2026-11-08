@@ -67,4 +67,34 @@ neo.upstreamVersion = patchset.getProperty('upstream.version', '')
 neo.upstreamCommit = patchset.getProperty('upstream.commit', '')
 neo.javaString = { String s -> '"' + (s ?: '').replace('\\', '\\\\').replace('"', '\\"') + '"' }
 
+// Certificate of the release keystore, for the APK signature check of release builds
+// (patch misc/signature-check): CRC-32 and size of its DER encoding, as fork/jni/colorado reads
+// them from the signed APK, plus its SHA-256. Null without a keystore.
+neo.releaseCertificate = { ->
+    if (neo.containsKey('releaseCertificateCache')) {
+        return neo.releaseCertificateCache
+    }
+    def result = null
+    def storeFile = neo.secretFile('signing.storeFile')
+    if (storeFile != null && storeFile.exists()) {
+        def password = neo.secret('signing.storePassword')
+        def keyStore = java.security.KeyStore.getInstance('JKS') // also reads PKCS12 (JDK 9+ dual format)
+        storeFile.withInputStream { keyStore.load(it, password.toCharArray()) }
+        def certificate = keyStore.getCertificate(neo.secret('signing.keyAlias'))
+        if (certificate == null) {
+            throw new GradleException("signing.keyAlias '${neo.secret('signing.keyAlias')}' is not in ${storeFile}")
+        }
+        byte[] der = certificate.encoded
+        def crc = new java.util.zip.CRC32()
+        crc.update(der)
+        result = [
+                crc   : crc.value,
+                size  : der.length,
+                sha256: java.security.MessageDigest.getInstance('SHA-256').digest(der).encodeHex().toString()
+        ]
+    }
+    neo.releaseCertificateCache = result
+    return result
+}
+
 rootProject.ext.neo = neo

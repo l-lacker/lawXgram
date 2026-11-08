@@ -80,8 +80,6 @@
     <string name="NeoDisableInstantCamera">Онемогући инстант камеру</string>
     <string name="NeoOpenAllLinksInInstantView">Отварање свих веза у InstantView</string>
     <string name="NeoDonateThankYou">Хвала вам!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Форматирај време са секундама</string>
     <string name="NeoJumpToBeginning">Скочи на почетак</string>
     <string name="NeoProviderDeepLTranslate">DeepL преводилац</string>

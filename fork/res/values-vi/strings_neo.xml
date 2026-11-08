@@ -83,8 +83,6 @@
     <string name="NeoDisableInstantCamera">Vô hiệu máy ảnh tức thì</string>
     <string name="NeoOpenAllLinksInInstantView">Cố gắng mở tất cả các liên kết trong xem tức thì</string>
     <string name="NeoDonateThankYou">Cảm ơn! ♥️</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Định dạng thời gian bằng giây</string>
     <string name="NeoJumpToBeginning">Di chuyển đến đầu trang</string>
     <string name="NeoProviderDeepLTranslate">DeepL Dịch</string>

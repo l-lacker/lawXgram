@@ -80,8 +80,6 @@
     <string name="NeoDisableInstantCamera">Wyłącz natychmiastową kamerę</string>
     <string name="NeoOpenAllLinksInInstantView">Otwieraj wszystkie linki w Widoku błyskawicznym</string>
     <string name="NeoDonateThankYou">Dziękuję!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Format czasu z sekundami</string>
     <string name="NeoJumpToBeginning">Skocz na początek</string>
     <string name="NeoProviderDeepLTranslate">Tłumacz DeepL</string>

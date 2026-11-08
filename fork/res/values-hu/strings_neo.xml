@@ -83,8 +83,6 @@
     <string name="NeoDisableInstantCamera">Azonnali kamera letiltása</string>
     <string name="NeoOpenAllLinksInInstantView">Próbáljon meg minden hivatkozást megnyitni az InstantView-ban</string>
     <string name="NeoDonateThankYou">Köszönöm!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Idő formázása másodpercben</string>
     <string name="NeoJumpToBeginning">Ugrás az elejére</string>
     <string name="NeoProviderDeepLTranslate">DeepL Fordító</string>

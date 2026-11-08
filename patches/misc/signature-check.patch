@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: misc/signature-check: native APK signature check for direct release builds
+
+TMessagesProj/jni/CMakeLists.txt includes fork/jni/colorado/colorado.cmake when the build
+passes NEO_COLORADO, which fork/gradle/neo-library.gradle does only for release builds that
+have a release keystore, together with the CRC-32 and size of the keystore certificate and
+the application id. The sources are compiled into libtmessages itself so the JNI entry point
+NeoSignature.nativeVerify is always linked (exported through the Java_* rule of exports.map).
+The Java side runs it after the first activity loaded the native library, only in direct
+builds (Google Play re-signs Play builds), and only a certificate that was read and differs
+stops the app.
+---
+ TMessagesProj/jni/CMakeLists.txt | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/TMessagesProj/jni/CMakeLists.txt b/TMessagesProj/jni/CMakeLists.txt
+index 0000000..0000000 100644
+--- a/TMessagesProj/jni/CMakeLists.txt
++++ b/TMessagesProj/jni/CMakeLists.txt
+@@ -327,6 +327,11 @@ target_link_libraries(${NATIVE_LIB}
+         cpufeatures
+         breakpad)
+ 
++# Neogram APK signature check: release builds with a release keystore (fork/gradle/neo-library.gradle)
++if (NEO_COLORADO)
++    include(${NEO_COLORADO})
++endif ()
++
+ #if (${ANDROID_ABI} STREQUAL "x86" OR ${ANDROID_ABI} STREQUAL "x86_64")
+ #    target_link_libraries(${NATIVE_LIB}
+ #            -Wl,--whole-archive vpxasm -Wl,--no-whole-archive

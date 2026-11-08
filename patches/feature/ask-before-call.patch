@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Neogram Patchset <patches@neogram.invalid>
+Subject: feature/ask-before-call: confirm before starting a voice or video call
+
+VoIPHelper.startCall (the user overload, every 1:1 call entry point goes through it) asks
+NeoCalls.askFirst after the stock frozen-account and calls-forbidden checks: with the
+Neogram option ask_before_call on, a confirmation with the stock call alert texts is shown
+and the call is repeated on confirm. A confirmed person is not asked about again for a
+minute, which covers the stock re-entry after the microphone or camera permission.
+---
+ TMessagesProj/src/main/java/org/telegram/ui/Components/voip/VoIPHelper.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/voip/VoIPHelper.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/voip/VoIPHelper.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/voip/VoIPHelper.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/voip/VoIPHelper.java
+@@ -83,6 +83,9 @@ public class VoIPHelper {
+ 			AlertsCreator.showCallsForbidden(activity, accountInstance.getCurrentAccount(), user.id, null);
+ 			return;
+ 		}
++		if (ru.llacker.neogram.NeoCalls.askFirst(user, videoCall, activity, () -> startCall(user, videoCall, canVideoCall, activity, userFull, accountInstance))) {
++			return;
++		}
+ 		if (ConnectionsManager.getInstance(UserConfig.selectedAccount).getConnectionState() != ConnectionsManager.ConnectionStateConnected) {
+ 			boolean isAirplaneMode = Settings.System.getInt(activity.getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) != 0;
+ 			AlertDialog.Builder bldr = new AlertDialog.Builder(activity)

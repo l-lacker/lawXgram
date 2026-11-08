@@ -83,8 +83,6 @@
     <string name="NeoDisableInstantCamera">غیرفعال کردن دوربین فوری</string>
     <string name="NeoOpenAllLinksInInstantView">تلاش برای باز کردن همه لینک ها با InstantView</string>
     <string name="NeoDonateThankYou">متشکریم!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">فرمت زمان با ثانیه</string>
     <string name="NeoJumpToBeginning">رفتن به ابتدا</string>
     <string name="NeoProviderDeepLTranslate">ترجمه DeepL</string>

@@ -80,8 +80,6 @@
     <string name="NeoDisableInstantCamera">Απεν/ποίηση άμεσης κάμερας</string>
     <string name="NeoOpenAllLinksInInstantView">Άνοιγμα Συνδέσμ. σε \"Άμεση Προβολή\"</string>
     <string name="NeoDonateThankYou">Ευχαριστούμε!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Διαμόρφωση ώρας με δευτ.</string>
     <string name="NeoJumpToBeginning">Μετάβαση στην αρχή</string>
     <string name="NeoProviderDeepLTranslate">DeepL</string>

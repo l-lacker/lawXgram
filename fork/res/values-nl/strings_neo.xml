@@ -82,8 +82,6 @@
     <string name="NeoDisableInstantCamera">Instant camera uitschakelen</string>
     <string name="NeoOpenAllLinksInInstantView">Probeer alle koppelingen te openen in InstantView</string>
     <string name="NeoDonateThankYou">Bedankt!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Tijd formatteren incl. seconden</string>
     <string name="NeoJumpToBeginning">Ga naar het begin</string>
     <string name="NeoProviderDeepLTranslate">DeepL Vertalen</string>

@@ -74,8 +74,6 @@
     <string name="NeoDisableInstantCamera">Deaktivér øjeblikkeligt kamera</string>
     <string name="NeoOpenAllLinksInInstantView">Prøv at åbne alle links i Øjeblikkelig visning</string>
     <string name="NeoDonateThankYou">Mange tak!</string>
-    <string name="NeoFormatterDay24HSec">HH:mm:ss</string>
-    <string name="NeoFormatterDay12HSec">h:mm:ss a</string>
     <string name="NeoFormatWithSeconds">Formatér tid med sekunder</string>
     <string name="NeoJumpToBeginning">Gå til begyndelsen</string>
     <string name="NeoProviderDeepLTranslate">DeepL Oversæt</string>
