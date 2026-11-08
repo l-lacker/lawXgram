@@ -33,8 +33,8 @@ def git(cwd, *args, check=True):
     proc = subprocess.run(["git", *args], cwd=str(cwd), env=env, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
     if check and proc.returncode != 0:
-        raise AssertionError(f"git {' '.join(args)} failed:\n{proc.stdout.decode()}{proc.stderr.decode()}")
-    return proc.stdout.decode().strip()
+        raise AssertionError(f"git {' '.join(args)} failed:\n{proc.stdout.decode('utf-8', 'replace')}{proc.stderr.decode('utf-8', 'replace')}")
+    return proc.stdout.decode("utf-8", "replace").strip()
 
 
 def write(path: Path, data, newline="\n"):
@@ -105,7 +105,8 @@ class Fixture:
         env["GIT_ALLOW_PROTOCOL"] = "file:https:ssh:git"
         proc = subprocess.run(cmd, cwd=str(self.root), env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               input=input)
-        out = proc.stdout.decode() + proc.stderr.decode()
+        # the tool prints UTF-8; git messages may come in the console code page on Windows
+        out = proc.stdout.decode("utf-8", "replace") + proc.stderr.decode("utf-8", "replace")
         if check and proc.returncode != 0:
             raise AssertionError(f"patchset {' '.join(args)} failed ({proc.returncode}):\n{out}")
         return proc.returncode, out

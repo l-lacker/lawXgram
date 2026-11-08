@@ -1443,7 +1443,7 @@ def cmd_doctor(ctx: Ctx, args: argparse.Namespace) -> int:
 
     report(sys.version_info >= (3, 9), f"python {sys.version.split()[0]} (>= 3.9)")
     gv = run(["git", "--version"], check=False)
-    version = gv.stdout.decode().strip() if gv.returncode == 0 else "missing"
+    version = gv.stdout.decode("utf-8", "replace").strip() if gv.returncode == 0 else "missing"
     m = re.search(r"(\d+)\.(\d+)", version)
     report(bool(m) and (int(m.group(1)), int(m.group(2))) >= (2, 35), f"{version} (>= 2.35)")
     java = shutil.which("java")
@@ -1608,7 +1608,19 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def use_utf8_output() -> None:
+    """Windows consoles default to a legacy code page: print UTF-8 instead of failing on non-ASCII text."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                pass
+
+
 def main(argv: Optional[List[str]] = None) -> int:
+    use_utf8_output()
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == "_todo":
         return todo_editor(argv[1:])
