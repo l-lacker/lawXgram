@@ -1,26 +1,17 @@
-.idea/
+# Upstream checkout with the patches applied (created by `patchset setup`)
+/worktree/
+# Local secrets: API id/hash, signing, google-services, Sentry credentials
+/local/
+
 .gradle/
 build/
-obj/
+.idea/
 *.iml
 local.properties
-TMessagesProj/.cxx/
-TMessagesProj/jniLibs/
-TMessagesProj/jniRes/
-**/.DS_Store
-TMessagesProj/afat/
-TMessagesProj_App/afat/
-TMessagesProj_AppHockeyApp/afat/
-TMessagesProj_AppStandalone/afat/
-TMessagesProj_AppHuawei/afat/
-TMessagesProj_App/debug/
 google-services.json
 sentry.properties
-.codemagic.local.env
-CODEMAGIC.local.md
-codemagic.yaml
-.project
-.classpath
-.settings/
-/.gradle-home
-TMessagesProj/jni/ffmpeg/build_android
+*.jks
+*.keystore
+__pycache__/
+*.pyc
+.DS_Store

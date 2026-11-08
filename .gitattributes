@@ -1,0 +1,19 @@
+* text=auto eol=lf
+
+# Patch files are byte-exact exports (some stock files are CRLF): never convert them.
+*.patch -text
+
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+*.png binary
+*.webp binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ttf binary
+*.otf binary
+*.jar binary
+*.so binary
+*.zip binary
+*.bin binary
